@@ -512,6 +512,7 @@ struct WeaponFireEvent
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
     bool                 windup{false}; /*!< A strike begun: its swing plays, nothing lands yet */
     bool                 zoomed{false}; /*!< Through a scope: a trigger with error only unzoomed has none */
+    libc_types::f32      error{0.f};    /*!< How far held fire has spread it, 0 to 1 of the error angles */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */

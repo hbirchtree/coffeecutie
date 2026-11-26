@@ -69,6 +69,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  striking{0.f};     /* melee, seconds left */
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
         f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
+        f32  error{0.f};        /* held fire's spread, 0 to 1 of its error angles */
         bool spins{false};      /* the trigger winds up at all */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
@@ -317,10 +318,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                         if(ammo)
                             heat_up(p, ent.id(), *ammo, gun_tag, pulled);
                         pull(p, ent.id(), info, cam, *weapon_tag, false,
-                             static_cast<u16>(fires));
+                             static_cast<u16>(fires), state.error);
                     }
                 }
                 state.firing = held;
+                /* Held, the spread widens over the error acceleration time;
+                 * let go, it narrows over the deceleration time */
+                if(held && ready)
+                    state.error = trigger.error_acceleration_time > 0.f
+                                      ? std::min(state.error + dt / trigger.error_acceleration_time, 1.f)
+                                      : 1.f;
+                else
+                    state.error = trigger.error_deceleration_time > 0.f
+                                      ? std::max(state.error - dt / trigger.error_deceleration_time, 0.f)
+                                      : 0.f;
                 state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
                 if(held2)
                 {
@@ -571,7 +582,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
         bool                melee   = false,
-        u16                 trigger = 0)
+        u16                 trigger = 0,
+        f32                 error   = 0.f)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -584,6 +596,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .trigger    = trigger,
             .melee      = melee,
             .zoomed     = equip && equip->zoom > 0,
+            .error      = error,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
@@ -721,7 +734,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool const steady =
                 shot.zoomed &&
                 (trigger.flags & trigger_t::flags_t::use_error_when_unzoomed) != trigger_t::flags_t::none;
-            f32 const error = steady ? 0.f : std::max(trigger.error_angle.x, trigger.minimum_error);
+            f32 const error = steady ? 0.f
+                                     : glm::mix(std::max(trigger.error_angle.x, trigger.minimum_error),
+                                                std::max(trigger.error_angle.y, trigger.minimum_error),
+                                                glm::clamp(shot.error, 0.f, 1.f));
             for(i32 i = 0; i < count; i++)
             {
                 f32 const spread =
