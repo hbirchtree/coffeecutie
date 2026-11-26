@@ -717,6 +717,16 @@ i32 blam_main()
                 plug.ticks_per_second = TickClock::rate;
                 plug.tick_clock       = [&clock = e.subsystem_cast<TickClock>()]()
                     -> std::optional<libc_types::u64> { return clock.simulated(); };
+                /* Plug time is the frame clock's */
+                plug.tick_round = [&clock = e.subsystem_cast<TickClock>()](
+                                      compo::clock::duration at) -> compo::clock::duration {
+                    using std::chrono::microseconds;
+                    libc_types::i64 const abs =
+                        std::chrono::duration_cast<microseconds>(at).count();
+                    libc_types::i64 const past = std::max<libc_types::i64>(abs - clock.origin_us(), 0);
+                    libc_types::i64 const next = (past + TickClock::tick_us - 1) / TickClock::tick_us * TickClock::tick_us;
+                    return at + microseconds(next - past);
+                };
             }
 #endif
 #if defined(BLAM_CURSED_ENABLED)
