@@ -77,6 +77,7 @@ void TickClock::start_restricted(Proxy& p, time_point const& t)
     i64 const origin_us =
         follow ? follow->start_us - static_cast<i64>(follow->tick) * tick_us
                : m_paused_us;
+    m_origin_us = origin_us;
     /* A slowed server's ticks come slower, and so do ours */
     i64 const now_us =
         follow ? static_cast<i64>(follow->tick) * tick_us +

@@ -59,6 +59,11 @@ struct Config : comp_app::Config<Config>
     std::function<std::optional<libc_types::u64>()> tick_clock{};
     libc_types::u32                                 ticks_per_second{30};
 
+    /*! A plug time rounded up to when the app's next tick begins: input is
+     *  put in place then, so it lands on the same tick at any frame rate
+     *  no longer than a tick */
+    std::function<compo::clock::duration(compo::clock::duration)> tick_round{};
+
     /*! Set by the input recorder: the app calls it with the pad state its
      *  simulation consumed from a tick on, so the recording holds exactly
      *  what was played */
