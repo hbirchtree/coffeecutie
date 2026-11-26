@@ -795,6 +795,21 @@ struct BlamScript
             for(u64 id : objects_of(p, arg(0)))
                 despawn(p, id);
             return {};
+        /* Every object but the players and what they hold: x30 clears the
+         * level, its Covenant too, so nothing can kill the held player */
+        case op::object_destroy_all: {
+            std::vector<u64> gone;
+            for(auto ent : p.template select<NetworkInfo, Model>())
+            {
+                auto const* held = p.template get<Attachment>(ent.id());
+                if(p.template get<PlayerInfo>(ent.id()) || (held && p.template get<PlayerInfo>(held->parent)))
+                    continue;
+                gone.push_back(ent.id());
+            }
+            for(u64 id : gone)
+                despawn(p, id);
+            return {};
+        }
         case op::object_create_containing:
         case op::object_create_anew_containing:
         case op::object_destroy_containing:
