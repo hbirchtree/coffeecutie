@@ -332,6 +332,10 @@ static void load_resources(
     for(auto player : e.select<PlayerInfo, PlayerInput, PlayerCamera>())
     {
         auto [info, input, camera] = player.components();
+        /* Powerups belong to the game they were picked up in */
+        info.powerups       = {};
+        info.camouflaged    = false;
+        info.teleport_flash = 0.f;
         if(info.is_remote())
             continue;
         input.input_mode = in_menu ? PlayerInput::input_mode_t::menu
