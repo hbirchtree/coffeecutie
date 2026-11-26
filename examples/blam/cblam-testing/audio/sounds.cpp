@@ -356,16 +356,16 @@ struct SoundSystem
             auto const& track = item.tracks.at(i);
             auto&       meta  = sound.tracks.at(i);
 
-            if(meta.queued_bufs.size() >= 4)
+            if(meta.source && meta.queued_bufs.size() >= 4)
             {
                 auto [queued, processed] = meta.source->buffer_queue();
                 if(queued >= 4 && processed == 0)
                     continue;
-                for(auto _ : stl_types::range<size_t>(processed))
-                {
-                    meta.source->unqueue(*meta.queued_bufs.front());
+                /* The source may hold played buffers this track never queued */
+                if(processed > 0)
+                    meta.source->unqueue_processed(processed);
+                for(u32 n = 0; n < processed && !meta.queued_bufs.empty(); n++)
                     meta.queued_bufs.pop_front();
-                }
             }
 
             auto props_it = track.props.find(meta.active.role);

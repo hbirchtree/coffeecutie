@@ -2,6 +2,7 @@
 
 #include <coffee/components/types.h>
 #include <memory>
+#include <vector>
 #include <peripherals/concepts/sound_api.h>
 #include <peripherals/error/result.h>
 #include <peripherals/semantic/handle.h>
@@ -208,6 +209,14 @@ struct source_t
     {
         ALuint hnd = buf.m_handle;
         alSourceUnqueueBuffers(m_handle, 1, &hnd);
+        detail::check_error("alSourceUnqueueBuffers");
+    }
+
+    /* The oldest `count` played buffers, whichever they are */
+    void unqueue_processed(u32 count)
+    {
+        std::vector<ALuint> handles(count);
+        alSourceUnqueueBuffers(m_handle, static_cast<ALsizei>(count), handles.data());
         detail::check_error("alSourceUnqueueBuffers");
     }
 
