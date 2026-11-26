@@ -3364,6 +3364,10 @@ struct MeshRenderer
             [](auto const& a, auto const& b) {
                 return a.seat_idx < b.seat_idx;
             });
+        /* The menu's backdrop is one view, whoever joined a split screen game */
+        if(auto const* map = p.template subsystem<BlamFiles<Version>>().container.map;
+           map && map->map_type == blam::maptype_t::ui && m_players.size() > 1)
+            m_players.resize(1);
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
