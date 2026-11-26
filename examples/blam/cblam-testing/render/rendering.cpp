@@ -995,12 +995,23 @@ struct DrawListBuilder
                     bsp_draw.draw.data.front(), bsp.sort_center, mat_cls);
             else
             {
-                /* Opaque BSP keeps its single instanced bucket; only record
-                 * which family it holds. */
+                /* Opaque BSP keeps one instanced bucket per shader family,
+                 * as each family is its own program */
                 wf.bucket_classes.resize(wf.draws.size(), 0);
-                wf.bucket_classes[0] |= mat_cls;
-                wf.draws[0].push_back(bsp_draw.draw.data.front());
-                slot.draw = static_cast<u16>(wf.draws[0].size() - 1);
+                u8 const family = wf.split_family(mat_cls);
+                size_t   bucket = 0;
+                while(bucket < wf.draws.size() && !wf.draws[bucket].empty() &&
+                      wf.split_family(wf.bucket_classes[bucket]) != family)
+                    bucket++;
+                if(bucket == wf.draws.size())
+                {
+                    wf.draws.emplace_back();
+                    wf.bucket_classes.push_back(0);
+                }
+                wf.bucket_classes[bucket] |= mat_cls;
+                wf.draws[bucket].push_back(bsp_draw.draw.data.front());
+                slot.bucket = static_cast<u16>(bucket);
+                slot.draw   = static_cast<u16>(wf.draws[bucket].size() - 1);
             }
             if(per_draw_cubes)
                 record_reflection_cube(wf, bsp.shader, slot.bucket, slot.draw);
