@@ -1584,6 +1584,10 @@ struct BlamScript
                     Vecf3{cp * std::cos(flag->facing.x), cp * std::sin(flag->facing.x), std::sin(flag->facing.y)});
             }
             return {};
+        /* A damage effect at a flag, from nobody: a10's shield test zap */
+        case op::damage_new:
+            damage_at(p, static_cast<u32>(arg(0).integer), text_of(arg(1)));
+            return {};
         case op::effect_new_on_object_marker:
             for(u64 id : objects_of(p, arg(1)))
                 if(auto const* model = p.template get<Model>(id))
@@ -1952,6 +1956,40 @@ struct BlamScript
                     else
                         actor->follow_players = true;
                 }
+            return {};
+        case op::ai_follow_target_ai: {
+            auto const leaders = ai_actors(p, text_of(arg(1)));
+            u64 leader         = 0;
+            for(u64 id : leaders)
+                if(auto const* status = p.template get<BipedStatus>(id); status && !status->dead)
+                {
+                    leader = id;
+                    break;
+                }
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id); actor && id != leader)
+                    actor->follow_leader = leader;
+            return {};
+        }
+        case op::ai_follow_distance:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->follow_distance = arg(1).real;
+            return {};
+        /* On a vehicle, its riders: a dropship's gunners */
+        case op::object_set_melee_attack_inhibited:
+        case op::object_set_ranged_attack_inhibited:
+            for(u64 id : objects_of(p, arg(0)))
+            {
+                std::vector<u64> units{id};
+                for(auto const& rider : m_riders)
+                    if(rider.vehicle == id)
+                        units.push_back(rider.unit);
+                for(u64 unit : units)
+                    if(auto* actor = p.template get<Actor>(unit))
+                        (opcode == op::object_set_melee_attack_inhibited ? actor->no_melee : actor->no_ranged) =
+                            arg(1).truthy();
+            }
             return {};
         case op::ai_disregard:
             /* The named objects are left alone; today only the target drops */
@@ -2469,6 +2507,17 @@ struct BlamScript
     }
 
     /* Onto a cutscene flag, facing its way */
+    void damage_at(Proxy& p, u32 tag_id, std::string_view flag_name)
+    {
+        auto const* flag = named(m_scenario->cutscene.flags, flag_name);
+        auto const  tag  = m_tags.find(tag_id);
+        if(!flag || tag == m_tags.end() || !(*tag).matches(blam::tag_class_t::jpt))
+            return;
+        GameEvent       ev{.type = GameEvent::AreaDamage};
+        AreaDamageEvent area{.damage = (*tag).as_ref(), .position = flag->position};
+        p.template subsystem<GameEventBus>().inject(ev, &area);
+    }
+
     void teleport(Proxy& p, u64 id, std::string_view flag_name)
     {
         auto const* flag = named(m_scenario->cutscene.flags, flag_name);

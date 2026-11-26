@@ -1209,6 +1209,10 @@ struct Actor
     bool            blind{false};
     bool            deaf{false};
     bool            follow_players{false}; /*!< ai_follow_target_players: always knows where they are */
+    libc_types::u64 follow_leader{0};      /*!< ai_follow_target_ai: idle, it keeps near this actor */
+    f32             follow_distance{3.f};  /*!< wu, ai_follow_distance */
+    bool            no_melee{false};       /*!< object_set_melee_attack_inhibited */
+    bool            no_ranged{false};      /*!< object_set_ranged_attack_inhibited */
     order_t         order{order_t::none};
     state_t         state{state_t::idle};
 

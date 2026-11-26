@@ -234,6 +234,29 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         }
     }
 
+    /* Told to follow another actor: idle, it keeps within its follow
+     * distance of it, running when far behind */
+    bool follows(Proxy& p, u64 id, Actor& actor, Model& model, AnimationPlayback& anim, kind_t const& kind, f32 dt)
+    {
+        if(!actor.follow_leader)
+            return false;
+        auto const* status = p.template get<BipedStatus>(actor.follow_leader);
+        auto const* leader = p.template get<Model>(actor.follow_leader);
+        if(!status || status->dead || !leader)
+        {
+            actor.follow_leader = 0;
+            return false;
+        }
+        f32 const apart = glm::distance(Vecf2(model.position), Vecf2(leader->position));
+        if(apart <= actor.follow_distance)
+        {
+            actor.post = model.position;
+            return false;
+        }
+        move_toward(p, id, actor, model, anim, kind, leader->position, dt, apart > actor.follow_distance * 3.f);
+        return true;
+    }
+
     /* The difficulty's scale on a row, 1 without a globals block */
     f32 scaled(f32 const (blam::globals::difficulty::*row)[4]) const
     {
@@ -420,6 +443,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if((actor.migrated || actor.order == Actor::order_t::attack) && actor.position >= 0)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+            else if(follows(p, id, actor, model, anim, kind, dt))
+                ;
             else if(!patrol(p, id, actor, model, anim, kind, dt))
                 move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
             glance(actor, model, anim, actr, dt);
@@ -453,9 +478,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             bool const seen   = actor.seen_ago < look_period * 2.f;
             f32 const  begin  = actv.melee_range;
             f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.25f);
-            if(begin > 0.f && seen && apart < (actor.charging ? give_up : begin))
+            if(begin > 0.f && seen && !actor.no_melee && apart < (actor.charging ? give_up : begin))
                 actor.charging = true;
-            else if(!seen || apart > give_up || begin <= 0.f)
+            else if(!seen || apart > give_up || begin <= 0.f || actor.no_melee)
                 actor.charging = false;
             /* To arm's reach to strike; with a gun but nowhere to fight
              * from, only to the far edge of the range it fights at */
@@ -2063,7 +2088,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto*       equip = p.template get<BipedEquipment>(id);
         auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
-        if(!gun || !gun->tag)
+        if(!gun || !gun->tag || actor.no_ranged)
             return;
         firing_t const firing = firing_of(gun->tag);
         /* A charging trigger shows how far along it is */
@@ -2520,7 +2545,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         actor.melee_in -= look_period / 8.f;
-        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
+        if(actor.no_melee || actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
         {
             /* Out of reach: a swing under way is called off */
             actor.swinging  = false;
