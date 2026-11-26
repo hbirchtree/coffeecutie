@@ -285,7 +285,36 @@ struct UIElementCache
     {
         index = blam::tag_index_view(map);
         magic = map.magic;
+        if(m_loc)
+            index.add_atlas(blam::atlas_type_t::localization, *m_loc);
         evict_all();
+    }
+
+    /* The string lists a Custom Edition map indexes live in loc.map */
+    inline void localize(std::optional<blam::map_ptr> loc)
+    {
+        m_loc = loc;
+        if(m_loc)
+            index.add_atlas(blam::atlas_type_t::localization, *m_loc);
+    }
+
+    /* A string list's strings, an empty one for each that won't read */
+    std::vector<std::u16string> strings_of(blam::tag_t const& tag) const
+    {
+        std::vector<std::u16string> out;
+        auto read = [&](blam::ui::unicode_string_list const* us, blam::map_ptr const& at) {
+            if(auto subs = us->data.data(at); subs.has_value())
+                for(auto const& ref : subs.value())
+                {
+                    auto s = ref.str(at);
+                    out.emplace_back(s.has_error() ? std::u16string() : std::u16string(s.value()));
+                }
+        };
+        if(auto loc = index.template localized<blam::ui::unicode_string_list>(tag); loc)
+            read(loc->first, loc->second);
+        else if(auto us = tag.template data<blam::ui::unicode_string_list>(magic); us.has_value())
+            read(us.value(), magic);
+        return out;
     }
 
     virtual UIElementItem predict_impl(blam::tagref_t const& ui_tag)
@@ -353,24 +382,8 @@ struct UIElementCache
             if(tb.font.valid())
                 out.font_id = font_cache.predict(tb.font);
             if(tb.unicode_strings.valid())
-            {
-                if(auto us_data = index.template data<blam::ui::unicode_string_list>(
-                       tb.unicode_strings);
-                   us_data.has_value())
-                {
-                    auto const* us = us_data.value();
-                    if(auto subs = us->data.data(magic); subs.has_value())
-                    {
-                        for(auto const& ref : subs.value())
-                        {
-                            if(auto s = ref.str(magic); !s.has_error())
-                                out.text_strings.emplace_back(s.value());
-                            else
-                                out.text_strings.emplace_back();
-                        }
-                    }
-                }
-            }
+                if(auto it = index.find(tb.unicode_strings); it != index.end())
+                    out.text_strings = strings_of(*it);
             break;
         }
         default:
@@ -408,7 +421,8 @@ struct UIElementCache
         return root_widgets;
     }
 
-    blam::tag_index_view<V> index;
+    blam::tag_index_view<V>      index;
+    std::optional<blam::map_ptr> m_loc{};
     blam::map_ptr           magic;
     BitmapCache<V>&         bitm_cache;
     FontCache<V>&           font_cache;

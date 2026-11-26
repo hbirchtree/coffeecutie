@@ -2852,21 +2852,12 @@ void load_ui_items(
         if(name.find("pause_game_options") == std::string_view::npos)
             continue;
 
-        auto us_opt =
-            tag.template data<blam::ui::unicode_string_list>(data.container.magic);
-        if(!us_opt.has_value())
-            continue;
-        auto subs_opt = us_opt.value()->data.data(data.container.magic);
-        if(!subs_opt.has_value() || subs_opt.value().empty())
-            continue;
-
         std::vector<std::u16string> strings;
-        for(auto const& ref : subs_opt.value())
-        {
-            auto s = ref.str(data.container.magic);
-            if(!s.has_error() && !s.value().empty())
-                strings.emplace_back(s.value());
-        }
+        for(auto& text : ui_elements.strings_of(tag))
+            if(!text.empty())
+                strings.push_back(std::move(text));
+        if(strings.empty())
+            continue;
 
         bool is_mp = name.find("multiplayer") != std::string_view::npos;
         if(is_mp || pause_strings.empty())
