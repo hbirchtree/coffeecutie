@@ -1924,11 +1924,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     void stop(Proxy& p, u64 id, Actor& actor)
     {
         /* Standing, it holds its ground: a push from a mate beside it
-         * would have it slide about where it stands */
+         * would have it slide about where it stands. Not a walk someone
+         * else gives it, a script's recording */
         if(!actor.moving)
         {
             auto const* physics = p.template get<ObjectPhysics>(id);
-            if(!physics || glm::length(Vecf2(physics->linear_velocity)) < drift_speed)
+            if(!physics || glm::length(Vecf2(physics->linear_velocity)) < drift_speed ||
+               glm::length(Vecf2(physics->walking)) > drift_speed)
                 return;
         }
         actor.moving = false;
