@@ -1,5 +1,6 @@
 #include "ui/ui.h"
 
+#include <glm/gtc/packing.hpp>
 #include <bit>
 #include <cctype>
 #include <set>
@@ -163,6 +164,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         premultiplied = 0x8, /* the texel's color is its coverage, and the
                               * color's alpha how much it covers */
         darken = 0x10, /* the texel's brightness is how dark what is behind turns */
+        plasma = 0x20, /* Xbox: noise veins over the texel; y the noise's layer, z/w its atlas rect as halves,
+                        * bits 16+ of x the time */
     };
 
     struct atlas_intermediate_t
@@ -271,6 +274,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     bool                            m_click_pending{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
+    /* Xbox: the noise its selected items and their descriptions carry */
+    generation_idx_t                m_plasma_noise;
     generation_idx_t                m_default_font; /*!< for text with none */
     generation_idx_t                m_hud_font;     /*!< hudg's, for messages */
     VirtualKeyboardData             m_keyboard;
@@ -351,6 +356,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         bool                        row{false}; /*!< item is a row's; its text only replaces when given */
         /* A column list's row: 1 the focused one, 0 another, -1 not a row */
         libc_types::i8 column_row{-1};
+        /* The root of a list's description of its focused item, or of a
+         * panel placed for one controller (a split screen seat's) */
+        bool describes{false};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -427,6 +435,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .list   = described,
                     .item   = described ? std::optional<u16>(described->get()) : std::nullopt,
                     .row    = described != nullptr,
+                    .describes = true,
                 },
                 visit);
         }
@@ -515,6 +524,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .column_row  = std::find(shown.begin(), shown.end(), i) == shown.end() ? libc_types::i8(-1)
                                    : item == rows->get()                              ? libc_types::i8(1)
                                                                                       : libc_types::i8(0),
+                    .describes = (static_cast<u32>(meta.flags) &
+                                  static_cast<u32>(blam::ui_element::child_widget_t::flags_t::use_custom_controller_index)) != 0,
                 },
                 visit);
         }
@@ -1575,6 +1586,23 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         push_quad(data, min, max, im, Vecf4(0, 0, imscale.x, imscale.y));
     }
 
+    /* Engine-drawn plasma over an Xbox panel: the noise's place in the
+     * atlas and a time that wraps every 65536 / 100 s */
+    void add_plasma(instance_vertex_t& inst)
+    {
+        if(!m_plasma_noise.valid())
+            return;
+        atlas_intermediate_t noise{};
+        bitm_cache.assign_atlas_data(noise, m_plasma_noise);
+        auto const ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now().time_since_epoch())
+                            .count();
+        inst.extra[0] |= plasma | (static_cast<u32>(ms / 10) << 16);
+        inst.extra[1] = noise.layer;
+        inst.extra[2] = glm::packHalf2x16(noise.atlas_scale);
+        inst.extra[3] = glm::packHalf2x16(noise.atlas_offset);
+    }
+
     /* A quad sampling `uv` (left, top, right, bottom) of an image, tinted */
     void push_quad(
         widget_data_t&          data,
@@ -1929,6 +1957,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             ? el.background[1]
                             : el.background[0];
                     push_image(data, min, max, im);
+                    if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
+                    {
+                        /* The selected item, and the panel describing it */
+                        bool const selected = !item_image && !layout.index && (el.focused || chosen) &&
+                                              el.background.size() >= 2;
+                        if(selected || layout.describes)
+                            add_plasma(data.instance_data.back());
+                    }
                 }
 
                 bool const is_spinner = el.ui_element->widget_type ==
@@ -3144,6 +3180,21 @@ std::vector<std::u16string> texts;
     }
 
     fonts.allocate_font_texture();
+    if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
+        for(blam::tag_t const& tag : tag_view)
+        {
+            if(!tag.matches(blam::tag_class_t::bitm))
+                continue;
+            if(tag.to_name().to_string(data.container.magic) != "characters\\jackal\\bitmaps\\shield noise")
+                continue;
+            try
+            {
+                e.subsystem_cast<UIRenderer>().m_plasma_noise = bitmaps.predict(tag.as_ref(), 0);
+            } catch(...)
+            {
+            }
+            break;
+        }
     for(blam::tag_t const& tag : tag_view)
     {
         if(!tag.matches(blam::tag_class_t::bitm))
