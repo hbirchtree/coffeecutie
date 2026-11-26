@@ -2132,7 +2132,8 @@ struct BlamScript
                 {
                     it->second.waiting = false;
                     it->second.at++;
-                }
+                } else if(it != m_commands.end() && !it->second.done)
+                    it->second.advanced = true;
             return {};
         case op::ai_command_list_status: {
             /* 0 none, 1 finished, 2 at its loop or waiting, 3 running */
@@ -3390,6 +3391,7 @@ struct BlamScript
         f32  radius{.5f}; /* near enough a point */
         bool looped{false};
         bool waiting{false};
+        bool advanced{false}; /* advanced before reaching its wait: it passes the next one */
         bool done{false};
     };
 
@@ -4096,6 +4098,11 @@ struct BlamScript
                     break;
                 }
                 case atom::wait:
+                    if(std::exchange(run.advanced, false))
+                    {
+                        next();
+                        break;
+                    }
                     run.waiting = true;
                     waits       = true;
                     break;
