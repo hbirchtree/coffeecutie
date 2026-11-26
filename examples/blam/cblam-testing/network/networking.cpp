@@ -3537,7 +3537,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .flags            = static_cast<ObjectSync::flags_t>(
                     (physics.sleeping ? ObjectSync::sleeping : ObjectSync::none) |
                     (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none) |
-                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none)),
+                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none) |
+                    (anim ? static_cast<u32>(anim->dodge) << ObjectSync::dodge_shift : 0u)),
             };
             /* Where a unit aims and looks; one doing either is kept current */
             bool const aims  = anim && glm::dot(anim->aiming, anim->aiming) > 1e-6f;
@@ -6290,9 +6291,12 @@ struct ObjectFollower
                 if(auto* anim = p.get<AnimationPlayback>(object.id());
                    anim && !p.get<PlayerInfo>(object.id()) &&
                    (anim->stance == "stand" || anim->stance == "crouch" || anim->stance == "asleep"))
+                {
                     anim->stance = (to.flags & ObjectSync::asleep)     ? "asleep"
                                    : (to.flags & ObjectSync::crouched) ? "crouch"
                                                                        : "stand";
+                    anim->dodge = static_cast<u8>((to.flags & ObjectSync::dodge) >> ObjectSync::dodge_shift);
+                }
                 /* And its gaze, which lapses unless the server keeps it up */
                 if(auto* anim = p.get<AnimationPlayback>(object.id());
                    anim && !p.get<PlayerInfo>(object.id()) &&

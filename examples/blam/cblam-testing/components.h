@@ -1195,6 +1195,8 @@ struct Actor
     libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
     f32             dodge_in{0.f};      /*!< s left getting away from dodge_from */
     Vecf3           dodge_from{};
+    libc_types::u8  dodges{0};          /*!< Dodges begun, which its animation follows */
+    bool            diving{false};      /*!< The dodge is from a grenade, not a shot */
     f32             evade_in{0.f};      /*!< s until it sidesteps another shot */
     bool            fallen{false};      /*!< Its death has been seen by those it led */
     bool            panicking{false};   /*!< Fleeing in a panic: it runs in its flee stance */

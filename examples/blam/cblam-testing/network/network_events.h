@@ -746,7 +746,9 @@ struct alignas(8) ObjectSync
         asleep   = 0x4,  /*!< A unit lying asleep: its stance */
         aiming   = 0x8,  /*!< A unit aiming off its body: `aim` */
         looking  = 0x10, /*!< A unit looking off its aim: `look` */
+        dodge    = 0xff00, /*!< A unit's dodge under way: AnimationPlayback::dodge */
     };
+    static constexpr libc_types::u32 dodge_shift = 8;
 
     u64     tick{0}; /*!< Server tick this is the state after */
     Quatf   rotation;

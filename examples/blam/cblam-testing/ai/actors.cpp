@@ -1184,6 +1184,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 return;
             actor.dodge_from = nearest;
             actor.dodge_in   = grenade_dodge_time;
+            actor.diving     = true;
+            actor.dodges++;
             return;
         }
     }
@@ -1206,6 +1208,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             off = model.rotation * Vecf3{0.f, chance(.5f) ? 1.f : -1.f, 0.f};
         actor.dodge_from = model.position - glm::normalize(off);
         actor.dodge_in   = evade_time;
+        actor.diving     = false;
+        actor.dodges++;
     }
 
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)

@@ -9,6 +9,7 @@
 #include "animation/model_markers.h"
 #include "audio/sounds.h"
 #include "ticks.h"
+#include "network/networking.h"
 
 #include <blam/volta/blam_effects.h>
 #include <blam/volta/blam_shaders.h>
@@ -40,6 +41,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         ModelCache<halo_version>,
         const BlamFiles<halo_version>,
         const LoadingStatus,
+        const NetworkState,
         const TickClock>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
@@ -440,6 +442,7 @@ struct AnimationController
             ping(p, id, anim);
         }
         settle_ping(p, id, anim);
+        dodge(p, id, anim, unit, weapon);
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
@@ -651,6 +654,61 @@ struct AnimationController
         };
         walker.ping_clip = clip;
         walker.ping_hard = hard;
+    }
+
+    /* An actor's dodge: it evades a shot to one side and dives from a
+     * grenade, by where it is getting away to. Peers play what it is sent */
+    void dodge(Proxy& p, u64 id, AnimationPlayback& anim, std::string const& unit, std::string const& weapon)
+    {
+        auto& walker = m_walkers[id];
+        auto& layer  = anim.layers[AnimationPlayback::action_slot];
+        if(auto const* actor = p.template get<Actor>(id); actor && !p.template subsystem<NetworkState>().replica)
+        {
+            if(actor->dodges != walker.dodges)
+            {
+                walker.dodges     = actor->dodges;
+                auto const* model = p.template get<Model>(id);
+                anim.dodge        = model ? dodge_slot(p, anim, *model, *actor, unit, weapon) : 0;
+                walker.dodge      = 0;
+            } else if(anim.dodge && walker.dodge == anim.dodge &&
+                      (!layer.graph || layer.finished || layer.target == 0.f))
+                anim.dodge = 0;
+        }
+        if(anim.dodge == walker.dodge)
+            return;
+        walker.dodge = anim.dodge;
+        if(!anim.dodge)
+            return;
+        i32 const clip = stance(p, anim.graph, unit, weapon)[static_cast<Slot>(anim.dodge - 1)];
+        if(clip < 0)
+            return;
+        /* Over the walk it moves by, in full */
+        layer = AnimationLayer{
+            .graph         = anim.graph,
+            .animation     = static_cast<u32>(clip),
+            .weight        = 0.f,
+            .target        = 1.f,
+            .fade          = 1.f / .1f,
+            .animated_only = true,
+            .loop          = false,
+        };
+    }
+
+    u8 dodge_slot(
+        Proxy& p, AnimationPlayback const& anim, Model const& model, Actor const& actor, std::string const& unit,
+        std::string const& weapon)
+    {
+        auto const& st  = stance(p, anim.graph, unit, weapon);
+        Vecf3 const away = model.position - actor.dodge_from;
+        f32 const   ahead = glm::dot(away, model.rotation * Vecf3{1.f, 0.f, 0.f});
+        f32 const   left  = glm::dot(away, model.rotation * Vecf3{0.f, 1.f, 0.f});
+        Slot const  evade = left >= 0.f ? Slot::evade_left : Slot::evade_right;
+        Slot const  side  = left >= 0.f ? Slot::dive_left : Slot::dive_right;
+        Slot const  dive  = std::abs(ahead) <= std::abs(left) ? side : ahead >= 0.f ? Slot::dive_front : Slot::dive_back;
+        for(Slot slot : actor.diving ? std::array{dive, side, evade} : std::array{evade, side, side})
+            if(st[slot] >= 0)
+                return static_cast<u8>(slot + 1);
+        return 0;
     }
 
     /* The flinch fades out as it ends, rather than chaining into its other
@@ -1821,6 +1879,8 @@ struct AnimationController
         i32   land_animation{-1};
         bool  killed{false}; /*!< Dead by a unit damage clip, kept to its end */
         u8    pings{0};      /*!< BipedStatus::pings last flinched at */
+        u8    dodges{0};     /*!< Actor::dodges last animated */
+        u8    dodge{0};      /*!< AnimationPlayback::dodge last played */
         i32   ping_clip{-1}; /*!< the flinch it plays */
         bool  ping_hard{false};
         /* The seat it sits in, {0, -1} standing */

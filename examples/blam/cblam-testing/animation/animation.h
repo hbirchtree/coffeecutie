@@ -91,6 +91,8 @@ struct AnimationPlayback
 
     /* The unit (stance) its animations come from, as unit_set_seat picks */
     std::string stance{"stand"};
+    /* Units: 1 + the unit weapon slot (evade, dive) of a dodge under way */
+    libc_types::u8 dodge{0};
 
     /* Faces: how open the mouth is (0-1), and the emotion frame shown */
     libc_types::f32 mouth{0.f};
