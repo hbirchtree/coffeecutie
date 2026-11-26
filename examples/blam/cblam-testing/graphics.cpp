@@ -202,6 +202,9 @@ i32 blam_main()
              "join string, which carries the key",
              cxxopts::value<std::string>());
         options.add_options("Game")(
+            "difficulty",
+            "Campaign difficulty: easy, normal, heroic or legendary (default normal)",
+            cxxopts::value<std::string>())(
             "game-type",
             "Multiplayer game type a map given on the command line is played as, offline or "
             "hosting (a client plays the server's): slayer, ctf, oddball, juggernaut, koth, race",
@@ -668,6 +671,15 @@ i32 blam_main()
                 /* Juggernaut is one of Oddball's ball types */
                 if(name == "juggernaut")
                     setup.options.emplace_back("ball_type", "2");
+            }
+            if(arguments.count("difficulty"))
+            {
+                auto const name = arguments["difficulty"].as<std::string>();
+                constexpr std::array<std::string_view, 4> levels{"easy", "normal", "heroic", "legendary"};
+                if(auto it = std::find(levels.begin(), levels.end(), name); it != levels.end())
+                    e.subsystem_cast<GameSetup>().difficulty = static_cast<u16>(it - levels.begin());
+                else
+                    cWarning("Unknown difficulty {}", name);
             }
             if(arguments.count("game-variant") && !arguments.count("server"))
             {

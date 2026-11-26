@@ -748,6 +748,7 @@ void create_resources(compo::EntityContainer& e)
                          state["game"] = {
                              {"kind", static_cast<int>(game->kind)},
                              {"phase", static_cast<int>(game->phase)},
+                             {"difficulty", game->difficulty},
                              {"winner", game->winner},
                              {"time_left", game->time_left},
                              {"team_scores", game->team_scores},
