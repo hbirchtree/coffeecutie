@@ -1058,6 +1058,7 @@ struct PlayerInfo
 
     /*! False while held before spawning */
     bool spawned{true};
+    bool suspended{false}; /*!< unit_suspended: held where it is, no gravity */
 
     /*! The vehicle seat this player sits in, while vehicle != 0 */
     struct

@@ -337,6 +337,7 @@ static void load_resources(
         info.powerups       = {};
         info.camouflaged    = false;
         info.teleport_flash = 0.f;
+        info.suspended      = false;
         info.damage_flash   = {};
         if(info.is_remote())
             continue;

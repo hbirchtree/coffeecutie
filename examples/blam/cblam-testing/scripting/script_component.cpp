@@ -421,7 +421,8 @@ struct BlamScript
         for(auto& [conv, c] : m_conversations)
             finish_conversation(p, c);
         m_scaling.clear();
-        m_suspended.clear();
+        for(u64 id : std::exchange(m_suspended, {}))
+            carry(p, id, false);
         m_speakers   = std::move(speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -4217,7 +4218,14 @@ struct BlamScript
 
     void carry(Proxy& p, u64 id, bool scripted)
     {
-        scripted      = scripted || m_suspended.contains(id);
+        scripted = scripted || m_suspended.contains(id);
+        /* A player's body is held by its PlayerInfo instead */
+        if(auto const* info = p.template get<PlayerInfo>(id); info && info->suspended != scripted)
+        {
+            GameEvent          ev{.type = GameEvent::PlayerSuspend};
+            PlayerSuspendEvent suspend{.entity_id = id, .suspended = scripted};
+            p.template subsystem<GameEventBus>().inject(ev, &suspend);
+        }
         auto* physics = p.template get<ObjectPhysics>(id);
         if(!physics || physics->scripted == scripted)
             return;
