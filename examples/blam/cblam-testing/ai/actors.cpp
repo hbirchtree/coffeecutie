@@ -1908,6 +1908,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
+        /* A goal moved by less than a replan still ends the path */
+        if(!actor.path.empty())
+            actor.path.back() = goal;
         /* Points reached, or that can be cut straight past, are dropped */
         while(actor.path.size() > 1 &&
               (glm::distance(Vecf2(model.position), Vecf2(actor.path.front())) < arrive_radius * 2.f ||
