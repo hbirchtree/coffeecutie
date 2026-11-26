@@ -211,6 +211,10 @@ void create_resources(compo::EntityContainer& e)
 
         auto& gbus = e.subsystem_cast<GameEventBus>();
         auto& pbus = e.subsystem_cast<PhysicsBus>();
+        gbus.addEventFunction<PlayerSuspendEvent>(1024, [&e](GameEvent&, PlayerSuspendEvent* suspend) {
+            if(auto* info = e.get<PlayerInfo>(suspend->entity_id))
+                info->suspended = suspend->suspended;
+        });
         gbus.addEventFunction<PlayerTeleportEvent>(
             1024, [&e, &pbus](GameEvent&, PlayerTeleportEvent* teleport) {
                 cDebug(

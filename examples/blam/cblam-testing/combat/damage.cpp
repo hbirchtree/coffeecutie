@@ -994,7 +994,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             auto const* info     = p.template get<PlayerInfo>(ent.id());
             auto const* object   = p.template get<ObjectPhysics>(ent.id());
             auto const* body     = p.template get<PhysicsData>(ent.id());
-            bool const  held     = (info && (info->riding.vehicle || !info->mode.physics)) ||
+            bool const  held     = (info && (info->riding.vehicle || !info->mode.physics || info->suspended)) ||
                               (object && (object->scripted || object->seated || object->teleported));
             bool const grounded = (body && body->grounded) || (object && object->grounded);
             /* A fall is counted from where the unit was first seen */

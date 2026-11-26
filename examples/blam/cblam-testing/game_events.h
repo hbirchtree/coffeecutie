@@ -111,6 +111,7 @@ struct GameEvent
         ChatSay,
         ChatLine,
         PostgameChoice,
+        PlayerSuspend,
     };
 
     EventType type{None};
@@ -844,6 +845,15 @@ struct PlayerTeleportEvent
     libc_types::u32      seat_idx{0};
     Vecf3                position{};
     std::optional<Quatf> rotation{};
+};
+
+/*! unit_suspended on a player: gravity stops acting on its body */
+struct PlayerSuspendEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerSuspend;
+
+    libc_types::u64 entity_id{0};
+    bool            suspended{false};
 };
 
 struct PlayerCameraLerpEvent

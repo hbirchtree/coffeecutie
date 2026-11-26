@@ -1185,7 +1185,7 @@ struct PhysicsSystem
             u64 const  id     = player.id();
             /* Riders: hittable in the seat, but don't collide */
             bool const riding = info.riding.vehicle != 0;
-            bool const kinematic = riding ||
+            bool const kinematic = riding || info.suspended ||
                                    (info.is_remote() && !info.mode.simulated) ||
                                    !info.mode.physics;
             auto const shape = info.biped;

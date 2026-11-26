@@ -421,7 +421,8 @@ struct BlamScript
         for(auto& [conv, c] : m_conversations)
             finish_conversation(p, c);
         m_scaling.clear();
-        m_suspended.clear();
+        for(u64 id : std::exchange(m_suspended, {}))
+            carry(p, id, false);
         m_speakers   = std::move(speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -794,6 +795,21 @@ struct BlamScript
             for(u64 id : objects_of(p, arg(0)))
                 despawn(p, id);
             return {};
+        /* Every object but the players and what they hold: x30 clears the
+         * level, its Covenant too, so nothing can kill the held player */
+        case op::object_destroy_all: {
+            std::vector<u64> gone;
+            for(auto ent : p.template select<NetworkInfo, Model>())
+            {
+                auto const* held = p.template get<Attachment>(ent.id());
+                if(p.template get<PlayerInfo>(ent.id()) || (held && p.template get<PlayerInfo>(held->parent)))
+                    continue;
+                gone.push_back(ent.id());
+            }
+            for(u64 id : gone)
+                despawn(p, id);
+            return {};
+        }
         case op::object_create_containing:
         case op::object_create_anew_containing:
         case op::object_destroy_containing:
@@ -1584,6 +1600,10 @@ struct BlamScript
                     Vecf3{cp * std::cos(flag->facing.x), cp * std::sin(flag->facing.x), std::sin(flag->facing.y)});
             }
             return {};
+        /* A damage effect at a flag, from nobody: a10's shield test zap */
+        case op::damage_new:
+            damage_at(p, static_cast<u32>(arg(0).integer), text_of(arg(1)));
+            return {};
         case op::effect_new_on_object_marker:
             for(u64 id : objects_of(p, arg(1)))
                 if(auto const* model = p.template get<Model>(id))
@@ -1953,6 +1973,40 @@ struct BlamScript
                         actor->follow_players = true;
                 }
             return {};
+        case op::ai_follow_target_ai: {
+            auto const leaders = ai_actors(p, text_of(arg(1)));
+            u64 leader         = 0;
+            for(u64 id : leaders)
+                if(auto const* status = p.template get<BipedStatus>(id); status && !status->dead)
+                {
+                    leader = id;
+                    break;
+                }
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id); actor && id != leader)
+                    actor->follow_leader = leader;
+            return {};
+        }
+        case op::ai_follow_distance:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->follow_distance = arg(1).real;
+            return {};
+        /* On a vehicle, its riders: a dropship's gunners */
+        case op::object_set_melee_attack_inhibited:
+        case op::object_set_ranged_attack_inhibited:
+            for(u64 id : objects_of(p, arg(0)))
+            {
+                std::vector<u64> units{id};
+                for(auto const& rider : m_riders)
+                    if(rider.vehicle == id)
+                        units.push_back(rider.unit);
+                for(u64 unit : units)
+                    if(auto* actor = p.template get<Actor>(unit))
+                        (opcode == op::object_set_melee_attack_inhibited ? actor->no_melee : actor->no_ranged) =
+                            arg(1).truthy();
+            }
+            return {};
         case op::ai_disregard:
             /* The named objects are left alone; today only the target drops */
             for(u64 id : objects_of(p, arg(0)))
@@ -2070,6 +2124,10 @@ struct BlamScript
             auto const units = opcode == op::ai_command_list ? ai_actors(p, text_of(arg(0))) : objects_of(p, arg(0));
             for(u64 id : units)
                 start_commands(p, id, *list);
+            /* Placed this tick: it gets the list once it is there */
+            if(opcode == op::ai_command_list)
+                for(u32 net_id : ai_spawning(text_of(arg(0))))
+                    m_deferred.emplace_back(net_id, [this, list](Proxy& p, u64 id) { start_commands(p, id, *list); });
             return {};
         }
         case op::ai_command_list_advance:
@@ -2078,7 +2136,8 @@ struct BlamScript
                 {
                     it->second.waiting = false;
                     it->second.at++;
-                }
+                } else if(it != m_commands.end() && !it->second.done)
+                    it->second.advanced = true;
             return {};
         case op::ai_command_list_status: {
             /* 0 none, 1 finished, 2 at its loop or waiting, 3 running */
@@ -2469,6 +2528,17 @@ struct BlamScript
     }
 
     /* Onto a cutscene flag, facing its way */
+    void damage_at(Proxy& p, u32 tag_id, std::string_view flag_name)
+    {
+        auto const* flag = named(m_scenario->cutscene.flags, flag_name);
+        auto const  tag  = m_tags.find(tag_id);
+        if(!flag || tag == m_tags.end() || !(*tag).matches(blam::tag_class_t::jpt))
+            return;
+        GameEvent       ev{.type = GameEvent::AreaDamage};
+        AreaDamageEvent area{.damage = (*tag).as_ref(), .position = flag->position};
+        p.template subsystem<GameEventBus>().inject(ev, &area);
+    }
+
     void teleport(Proxy& p, u64 id, std::string_view flag_name)
     {
         auto const* flag = named(m_scenario->cutscene.flags, flag_name);
@@ -3325,6 +3395,7 @@ struct BlamScript
         f32  radius{.5f}; /* near enough a point */
         bool looped{false};
         bool waiting{false};
+        bool advanced{false}; /* advanced before reaching its wait: it passes the next one */
         bool done{false};
     };
 
@@ -3345,6 +3416,7 @@ struct BlamScript
         {
             using flags_t   = blam::scn::ai::command_list::flags_t;
             actor->scripted = true;
+            actor->shoot_at.reset();
             actor->release  = false;
             actor->may_fight =
                 (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
@@ -3362,7 +3434,7 @@ struct BlamScript
     void stop_commands(Proxy& p, u64 id)
     {
         if(auto* actor = p.template get<Actor>(id))
-            actor->scripted = false;
+            actor->scripted = false, actor->shoot_at.reset();
         if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
             stand(p, id);
     }
@@ -4030,7 +4102,27 @@ struct BlamScript
                         waits = true;
                     break;
                 }
+                case atom::shoot: {
+                    /* Its gun fires at the point for param1 seconds */
+                    auto* actor = p.template get<Actor>(it->first);
+                    auto const at = point(c.point_1);
+                    if(!actor || !at || run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
+                    {
+                        if(actor)
+                            actor->shoot_at.reset();
+                        next();
+                        break;
+                    }
+                    actor->shoot_at = *at;
+                    waits           = true;
+                    break;
+                }
                 case atom::wait:
+                    if(std::exchange(run.advanced, false))
+                    {
+                        next();
+                        break;
+                    }
                     run.waiting = true;
                     waits       = true;
                     break;
@@ -4168,7 +4260,14 @@ struct BlamScript
 
     void carry(Proxy& p, u64 id, bool scripted)
     {
-        scripted      = scripted || m_suspended.contains(id);
+        scripted = scripted || m_suspended.contains(id);
+        /* A player's body is held by its PlayerInfo instead */
+        if(auto const* info = p.template get<PlayerInfo>(id); info && info->suspended != scripted)
+        {
+            GameEvent          ev{.type = GameEvent::PlayerSuspend};
+            PlayerSuspendEvent suspend{.entity_id = id, .suspended = scripted};
+            p.template subsystem<GameEventBus>().inject(ev, &suspend);
+        }
         auto* physics = p.template get<ObjectPhysics>(id);
         if(!physics || physics->scripted == scripted)
             return;

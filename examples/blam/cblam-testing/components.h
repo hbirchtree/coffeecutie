@@ -1058,6 +1058,7 @@ struct PlayerInfo
 
     /*! False while held before spawning */
     bool spawned{true};
+    bool suspended{false}; /*!< unit_suspended: held where it is, no gravity */
 
     /*! The vehicle seat this player sits in, while vehicle != 0 */
     struct
@@ -1202,6 +1203,7 @@ struct Actor
     bool            panicking{false};   /*!< Fleeing in a panic: it runs in its flee stance */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
+    std::optional<Vecf3> shoot_at{};    /*!< A command list's shoot, fired at by its held gun */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
     f32                  walk_stall{0.f}; /*!< s since it last got nearer */
     bool                 walk_done{false}; /*!< walk_to given up as out of reach */
@@ -1220,6 +1222,10 @@ struct Actor
     bool            blind{false};
     bool            deaf{false};
     bool            follow_players{false}; /*!< ai_follow_target_players: always knows where they are */
+    libc_types::u64 follow_leader{0};      /*!< ai_follow_target_ai: idle, it keeps near this actor */
+    f32             follow_distance{3.f};  /*!< wu, ai_follow_distance */
+    bool            no_melee{false};       /*!< object_set_melee_attack_inhibited */
+    bool            no_ranged{false};      /*!< object_set_ranged_attack_inhibited */
     order_t         order{order_t::none};
     state_t         state{state_t::idle};
 
