@@ -337,6 +337,7 @@ static void load_resources(
         info.powerups       = {};
         info.camouflaged    = false;
         info.teleport_flash = 0.f;
+        info.damage_flash   = {};
         if(info.is_remote())
             continue;
         input.input_mode = in_menu ? PlayerInput::input_mode_t::menu

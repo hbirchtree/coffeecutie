@@ -104,6 +104,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         for(auto const& hit : hits)
             shove(p, hit);
         ting(p, hits, areas);
+        feel(p, hits, areas, dt);
         bool const authority = !p.template subsystem<NetworkState>().replica;
         for(auto const& pickup : pickups)
             power_up(p, pickup, authority);
@@ -643,6 +644,70 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     /* In multiplayer a shot of a local player's that strikes another player
      * tings for them, once a frame however many pellets landed */
+    /* What a damage effect does to those it reaches besides hurting them:
+     * its sound where it lands, and its screen flash for a local player */
+    void feel(Proxy& p, std::vector<ObjectHitEvent> const& hits, std::vector<AreaDamageEvent> const& areas, f32 dt)
+    {
+        for(auto player : p.template select<PlayerInfo>())
+        {
+            auto& flash = player.template get<PlayerInfo>().damage_flash;
+            flash.left  = std::max(flash.left - dt, 0.f);
+        }
+        auto const flash = [&](u64 unit, blam::scn::damage_effect const& jpt, f32 scale) {
+            auto* info = p.template get<PlayerInfo>(unit);
+            auto const& sf = jpt.screen_flash;
+            if(!info || info->is_remote() || sf.type == blam::scn::damage_effect::screen_flash_type_t::none ||
+               sf.duration <= 0.f || sf.maximum_intensity * scale <= 0.f)
+                return;
+            auto& now = info->damage_flash;
+            if(now.left > 0.f && static_cast<u16>(sf.priority) < now.priority)
+                return;
+            now = {
+                .color     = Vecf3(sf.color.y, sf.color.z, sf.color.w), /* argb */
+                .type      = static_cast<u16>(sf.type),
+                .priority  = static_cast<u16>(sf.priority),
+                .intensity = std::min(sf.maximum_intensity * scale, 1.f),
+                .duration  = sf.duration,
+                .left      = sf.duration,
+            };
+        };
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto const sound = [&](blam::scn::damage_effect const& jpt, Vecf3 const& at) {
+            if(!sounds || !jpt.sound.valid())
+                return;
+            SoundEvent     ev{.type = SoundEvent::play_sound};
+            PlaySoundEvent play{.sound = &static_cast<blam::tagref_t const&>(jpt.sound), .position = at};
+            sounds->inject(ev, &play);
+        };
+        for(auto const& hit : hits)
+            if(auto const* jpt = damage_of(hit.damage))
+            {
+                flash(hit.target, *jpt, 1.f);
+                if(p.template get<BipedStatus>(hit.target))
+                    sound(*jpt, hit.point);
+            }
+        for(auto const& area : areas)
+        {
+            auto const* jpt = damage_of(area.damage);
+            if(!jpt || jpt->radius.y <= 0.f)
+                continue;
+            sound(*jpt, area.position);
+            /* Full within the inner radius, none at the outer */
+            for(auto unit : p.template select<PlayerInfo, BipedStatus>())
+            {
+                auto const centre = centre_of(p, unit.id());
+                if(!centre || unit.template get<BipedStatus>().dead)
+                    continue;
+                f32 const d = glm::distance(*centre, area.position);
+                if(d > jpt->radius.y || shielded(p, area.position, *centre, unit.id()))
+                    continue;
+                f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
+                f32 const scale = d <= inner ? 1.f : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
+                flash(unit.id(), *jpt, scale);
+            }
+        }
+    }
+
     void ting(Proxy& p, std::vector<ObjectHitEvent> const& hits, std::vector<AreaDamageEvent> const& areas)
     {
         if(p.template subsystem<GameState>().kind != GameState::kind_t::multiplayer)

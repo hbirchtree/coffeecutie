@@ -1100,6 +1100,16 @@ struct PlayerInfo
         f32 vision{0.f};
     } powerups;
     f32 teleport_flash{0.f}; /*!< A teleporter's flash on its screen: 1 at the hop, fading to 0 */
+    /*! The screen flash of the last damage effect to reach it */
+    struct damage_flash_t
+    {
+        Vecf3 color{0.f};
+        u16   type{0};      /*!< blam::damage_effect::screen_flash_type_t */
+        u16   priority{0};
+        f32   intensity{0.f};
+        f32   duration{0.f};
+        f32   left{0.f};    /*!< s */
+    } damage_flash;
 
     /*! Double speed scales walking, firing and reloading */
     f32 speed_scale() const
