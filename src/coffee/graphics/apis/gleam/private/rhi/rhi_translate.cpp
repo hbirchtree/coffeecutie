@@ -279,9 +279,13 @@ std::tuple<T, group::pixel_type, group::pixel_format> to(
 
     for(auto const& format : compressed_formats<T>(features))
     {
+        /* BC1 keeps its punch-through alpha, as D3D decodes it, unless RGB is asked for */
+        const bool bc1 = fmt.pixfmt == P::BCn && fmt.cmpflg == typing::pixels::comp_flags::BC1;
         const bool matching =
-            fmt.pixfmt == format.desc.pixfmt && fmt.comp == format.desc.comp &&
-            fmt.cmpflg == format.desc.cmpflg &&
+            fmt.pixfmt == format.desc.pixfmt && fmt.cmpflg == format.desc.cmpflg &&
+            (bc1 ? (fmt.pixflg == typing::pixels::pix_flags::RGB) ==
+                       (format.desc.pixflg == typing::pixels::pix_flags::RGB)
+                 : fmt.comp == format.desc.comp) &&
             (fmt.pixfmt != P::ETC2 || fmt.pixflg == format.desc.pixflg);
         if(matching && format.condition)
             return format.out;
