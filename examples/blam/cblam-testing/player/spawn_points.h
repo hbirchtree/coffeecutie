@@ -72,6 +72,20 @@ inline bool vehicle_in(blam::scn::vehicle_spawn::multiplayer_spawn_flags_t flags
     return (flags & wanted) != f::none_spawn;
 }
 
+/* A placed vehicle the game type allows, past its default set */
+inline bool vehicle_allowed(blam::scn::vehicle_spawn::multiplayer_spawn_flags_t flags, GameSetup::game_type_t type)
+{
+    using f = blam::scn::vehicle_spawn::multiplayer_spawn_flags_t;
+    using t = GameSetup::game_type_t;
+    if(flags == f::none_spawn)
+        return true;
+    f const wanted = type == t::ctf       ? f::ctf_allowed
+                     : type == t::koth    ? f::king_allowed
+                     : type == t::oddball ? f::oddball_allowed
+                                          : f::slayer_allowed;
+    return (flags & wanted) != f::none_spawn;
+}
+
 /* The facing a teleport turns the camera to; its inverse, pitch left out */
 inline f32 facing_of(PlayerCamera const& cam)
 {

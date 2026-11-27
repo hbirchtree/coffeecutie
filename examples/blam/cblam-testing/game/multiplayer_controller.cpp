@@ -145,6 +145,8 @@ struct MultiplayerController
         m_lives          = static_cast<i32>(option("lives"));
         m_growth         = option("respawn_growth");
         state.no_tracker = option("no_tracker") != 0.f;
+        state.player_health = option("health") > 0.f ? option("health") : 1.f;
+        m_rally             = option("rally") != 0.f;
         state.unseen     = static_cast<GameState::unseen_t>(std::clamp(static_cast<i32>(option("unseen")), 0, 2));
         m_vm.reset();
         m_local_vm.reset();
@@ -501,8 +503,13 @@ struct MultiplayerController
         case mode_op::race_advance:
             if(arg(0) >= 0.f && !m_track.empty())
             {
-                auto& next = m_race_next[static_cast<u32>(arg(0))];
-                next       = static_cast<i16>((next + 1) % static_cast<i16>(m_track.size()));
+                auto&     next  = m_race_next[static_cast<u32>(arg(0))];
+                i16 const count = static_cast<i16>(m_track.size());
+                /* A rally's next flag point is any other, at random */
+                if(m_rally && count > 1)
+                    next = static_cast<i16>((next + 1 + std::uniform_int_distribution<i16>(0, count - 2)(m_random)) % count);
+                else
+                    next = static_cast<i16>((next + 1) % count);
             }
             return {};
         case mode_op::capture_blocked_set:
@@ -828,6 +835,7 @@ struct MultiplayerController
     std::vector<hills::hill_t>      m_hills;
     std::vector<Vecf3>              m_track;         /*!< Race checkpoints in order */
     std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
+    bool                            m_rally{false};  /*!< Race flag points come at random, each one scoring */
     std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
     std::map<u32, size_t>      m_last_spot; /*!< Each player's last start point */

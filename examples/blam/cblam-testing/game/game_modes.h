@@ -535,7 +535,8 @@ hsc_builder::program_t<BC> koth()
 
 /* Race: the track is the race_track flags in order. Reaching the one a
  * player goes for moves them on; past the last they have run a lap and
- * score. First to the laps wins */
+ * score. First to the laps wins. A rally sends them to the flag points at
+ * random, each one reached scoring */
 template<typename BC>
 hsc_builder::program_t<BC> race()
 {
@@ -544,7 +545,8 @@ hsc_builder::program_t<BC> race()
     hsc_builder::builder<BC> b;
     auto const player = [&b] { return b.global("event_player", type_t::short_); };
 
-    b.declare_global("score_limit", type_t::short_, b.short_(3)); /* laps */
+    b.declare_global("score_limit", type_t::short_, b.short_(3)); /* laps, or a rally's flag points */
+    b.declare_global("rally", type_t::short_, b.short_(0));
     b.declare_global("respawn_delay", type_t::real_, b.real(3.f));
     b.declare_global("event_killer", type_t::short_, b.short_(-1));
     b.declare_global("event_victim", type_t::short_, b.short_(-1));
@@ -564,9 +566,13 @@ hsc_builder::program_t<BC> race()
             b.call(op<BC>(mode_op::race_advance), type_t::void_, {player()}),
             b.if_(
                 b.call(
-                    BC::equal,
+                    BC::or_,
                     type_t::bool_,
-                    {b.call(op<BC>(mode_op::race_next), type_t::short_, {player()}), b.short_(0)}),
+                    {b.call(BC::nequal, type_t::bool_, {b.global("rally", type_t::short_), b.short_(0)}),
+                     b.call(
+                         BC::equal,
+                         type_t::bool_,
+                         {b.call(op<BC>(mode_op::race_next), type_t::short_, {player()}), b.short_(0)})}),
                 b.begin({
                     b.call(op<BC>(mode_op::score_add), type_t::void_, {player(), b.short_(1)}),
                     b.if_(
