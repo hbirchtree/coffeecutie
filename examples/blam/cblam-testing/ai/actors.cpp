@@ -2145,6 +2145,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .shooter    = id,
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
+            .error      = actor.spread,
             .position   = muzzle,
             .direction  = dir,
             .target     = actor.target,
@@ -2154,6 +2155,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+        spread(actor, firing, actor.burst_left > 0 ? actor.fire_in : 0.f, actor.fire_in);
     }
 
     /* How far ahead of a moving target it aims: its variant's leading, as
@@ -2339,6 +2341,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32  rate{3.f};
         f32  charging{0.f};
         bool single{false};
+        f32  error_rise{0.f}; /* s to full error held, 0 = at once */
+        f32  error_fall{0.f}; /* s back to none let go */
     };
 
     firing_t firing_of(blam::tag_t const* tag) const
@@ -2353,10 +2357,22 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                     auto const& trigger = triggers.value()[0];
                     if(trigger.maximum_rate_of_fire.y > 0.f)
                         out.rate = trigger.maximum_rate_of_fire.y;
-                    out.charging = trigger.charging_time;
+                    out.charging   = trigger.charging_time;
+                    out.error_rise = trigger.error_acceleration_time;
+                    out.error_fall = trigger.error_deceleration_time;
                     out.single   = (trigger.flags & flags_t::does_not_repeat_automatically) != flags_t::none;
                 }
         return out;
+    }
+
+    /* Its gun spreads as a player's does under held fire: through a burst
+     * the trigger is held, over the separation after it let go */
+    static void spread(Actor& actor, firing_t const& firing, f32 held, f32 released)
+    {
+        if(held > 0.f)
+            actor.spread = firing.error_rise > 0.f ? std::min(actor.spread + held / firing.error_rise, 1.f) : 1.f;
+        else
+            actor.spread = firing.error_fall > 0.f ? std::max(actor.spread - released / firing.error_fall, 0.f) : 0.f;
     }
 
     /* Starts a burst: so many shots at the rate, or one shot a pull after
@@ -2486,6 +2502,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .vehicle    = vehicle,
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
+            .error      = actor.spread,
             .position   = muzzle,
             .direction  = dir,
             .target     = actor.target,
@@ -2495,6 +2512,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+        spread(actor, firing, actor.burst_left > 0 ? actor.fire_in : 0.f, actor.fire_in);
     }
 
     /* A kill it saw is crowed over, one voice at a time */

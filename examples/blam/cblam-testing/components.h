@@ -1190,6 +1190,7 @@ struct Actor
     bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
     Vecf3           burst_aim{};        /*!< Where the burst is aimed now: off the target at first, returning */
     Vecf3           burst_from{};       /*!< The target as the burst tracks it */
+    libc_types::f32 spread{0.f};        /*!< Its gun's error from held fire, 0 to 1 of the error angles */
     libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
