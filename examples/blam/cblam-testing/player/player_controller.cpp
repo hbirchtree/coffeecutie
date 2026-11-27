@@ -624,14 +624,19 @@ struct PlayerController
         input.accel    = 1.f;
     }
 
-    /* A local game stands still while any seat has its menu open; a
-     * networked one runs on, as its peers do */
+    /* A local game stands still while any seat has its menu open, as does
+     * a hosted one with nobody joined or a hosted campaign, whose clients
+     * follow its clock; a multiplayer game with peers runs on */
     void pause_for_menus(Proxy& p)
     {
         auto const& net = p.subsystem<NetworkState>();
-        if(net.client_state != NetworkState::ClientState::None ||
-           net.server_state != NetworkState::ServerState::None)
+        if(net.client_state != NetworkState::ClientState::None)
             return;
+        if(net.server_state != NetworkState::ServerState::None &&
+           p.subsystem<GameState>().kind != GameState::kind_t::campaign)
+            for(auto ent : p.select<PlayerInfo>())
+                if(ent.template get<PlayerInfo>().is_remote())
+                    return;
         bool in_menu = false;
         for(auto ent : p.select<PlayerInput>())
             in_menu |= ent.template get<PlayerInput>().input_mode == PlayerInput::input_mode_t::menu;
