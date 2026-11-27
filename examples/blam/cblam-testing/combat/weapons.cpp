@@ -243,7 +243,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                    ammo->rounds_loaded < magazine->rounds_loaded_maximum &&
                    (reload || !loaded))
                 {
-                    state.reloading = std::max(magazine->reload_time, dt);
+                    /* Held through the first-person reload, as Halo does
+                     * for a magazine with no reload time of its own */
+                    state.reloading = std::max(
+                        {magazine->reload_time,
+                         fp_reload_seconds(p, gun_tag, ammo->rounds_loaded == 0),
+                         dt});
                     reload          = false;
                 }
                 if(ammo)
@@ -1115,6 +1120,33 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     }
 
     using fp_slot = blam::antr::first_person_weapon;
+
+    /* How long a weapon's first-person reload clip plays, at 30 frames a
+     * second; 0 without one */
+    f32 fp_reload_seconds(Proxy& p, blam::scn::weapon const& gun, bool empty)
+    {
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const& magic = files.container.magic;
+        blam::tag_index_view<halo_version> index(files.container);
+        auto tag = index.find(gun.first_person_animations.tag_id);
+        if(!gun.first_person_animations.valid() || tag == index.end())
+            return 0.f;
+        auto graph = (*tag).template data<blam::antr::header>(magic);
+        if(!graph.has_value())
+            return 0.f;
+        auto fp = graph.value()[0].first_person_weapons.data(magic);
+        auto anims = graph.value()[0].animations.data(magic);
+        if(!fp.has_value() || fp.value().empty() || !anims.has_value())
+            return 0.f;
+        auto slots = fp.value()[0].animations.data(magic);
+        size_t const slot = empty ? fp_slot::reload_empty : fp_slot::reload_full;
+        if(!slots.has_value() || slots.value().size() <= slot)
+            return 0.f;
+        i32 const clip = slots.value()[slot].animation;
+        if(clip < 0 || static_cast<size_t>(clip) >= anims.value().size())
+            return 0.f;
+        return std::max<f32>(anims.value()[static_cast<size_t>(clip)].frame_count, 0.f) / 30.f;
+    }
 
     static i32 fp_clip(AnimationPlayback const& anim, blam::map_ptr const& magic, size_t slot)
     {
