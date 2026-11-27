@@ -1344,8 +1344,11 @@ struct PhysicsSystem
                 frozen.insert(id);
                 continue;
             }
+            /* A flyer may be placed in mid-air, with no ground under it */
+            bool const flies = physics.drive && (physics.drive->type == VehicleDrive::alien_fighter ||
+                                                 physics.drive->type == VehicleDrive::human_plane);
             if(moves && !simulated &&
-               (!in_active_section(model.position) || !grounded(model.position)))
+               (!in_active_section(model.position) || (!flies && !grounded(model.position))))
                 continue;
             if(moves && section != m_object_sections.end())
                 section->second = m_built_section;
