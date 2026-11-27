@@ -141,6 +141,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto ent : p.template select<Actor, Model, AnimationPlayback, BipedStatus, ObjectPhysics>())
         {
             auto [actor, model, anim, status, physics] = ent.components();
+            /* Its variant's vitality, whatever it is doing: an infection form
+             * is one blow, scripted or not */
+            if(!status.dead)
+                if(auto const* kind = kind_of(p, actor); kind && kind->variant)
+                    toughen(actor, status, *kind->variant);
             /* Seated: it fights from where it sits */
             if(physics.seated && actor.active() && !actor.braindead && !status.dead)
             {
