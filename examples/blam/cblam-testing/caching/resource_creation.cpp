@@ -975,6 +975,15 @@ void create_resources(compo::EntityContainer& e)
                      GameEvent call_ev{.type = GameEvent::ScriptCall};
                      e.subsystem_cast<GameEventBus>().inject(call_ev, &call);
                  }
+                 if(ev.event == "invulnerable")
+                 {
+                     /* {"seat": n, "on": bool}: that seat's player takes no damage */
+                     u32 const  seat = ev.data.value("seat", 0u);
+                     bool const on   = ev.data.value("on", true);
+                     for(auto en : e.select<PlayerInfo, BipedStatus>())
+                         if(en.template get<PlayerInfo>().seat_idx == seat && !en.template get<PlayerInfo>().is_remote())
+                             en.template get<BipedStatus>().invulnerable = on;
+                 }
                  if(ev.event == "kill")
                  {
                      /* {"seat": n}: that seat's player dies, as by unit_kill */
