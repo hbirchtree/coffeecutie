@@ -118,7 +118,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                         break_object(p, hit.target, *coll, *jpt, 1.f);
                         continue;
                     }
-                    if(hit.behind && assassinate(p, hit.target, player_of(p, hit.shooter)))
+                    /* Only a blow lethal to the unsuspecting kills from behind */
+                    if(hit.behind &&
+                       jpt->side_effect == blam::scn::damage_effect::side_effect_t::lethal_to_the_unsuspecting &&
+                       assassinate(p, hit.target, player_of(p, hit.shooter)))
                         continue;
                     hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter), hit.direction, hit.point);
                 }
