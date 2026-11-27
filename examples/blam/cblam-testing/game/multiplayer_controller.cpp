@@ -7,6 +7,7 @@
 #include "game/game_modes.h"
 #include "game/hills.h"
 #include "network/networking.h"
+#include "physics.h"
 #include "scripting/script_vm.h"
 #include "selected_version.h"
 #include "audio/sounds.h"
@@ -45,6 +46,7 @@ using MultiplayerManifest = compo::SubsystemManifest<
     type_list_t<
         GameState,
         GameEventBus,
+        PhysicsBus,
         const NetworkState,
         const LoadingStatus,
         const GameSetup,
@@ -764,10 +766,21 @@ struct MultiplayerController
                 continue;
             around.standing.push_back(feet);
             if(!(me && them && me->team >= 0 && me->team == them->team))
+            {
                 around.enemies.push_back(feet);
+                Vecf3 const look = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+                around.views.push_back({cam.camera.position, look});
+            }
         }
         if(auto last = m_last_spot.find(info.player_idx); last != m_last_spot.end())
             around.last = last->second;
+        /* The level and its scenery block sight; bodies do not */
+        around.clear = [&p](Vecf3 const& from, Vecf3 const& to) {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            return !ray.hit || ray.entity_id != 0;
+        };
         /* Infection's sides share the free for all start points */
         i16 const team = me && state.game_type != GameSetup::game_type_t::infection ? me->team : i16(-1);
         auto picked = spawn_points::pick(files, m_random, around, spawn_points::game_mode_of(state.game_type), team);
