@@ -535,8 +535,12 @@ struct AnimationController
                     layer.fade   = 1.f / blend_time;
                 }
             }
+            /* Without strides to blend to, it idles on the move */
+            bool const strides = std::ranges::any_of(moves, [&st](auto m) {
+                return st[m] >= 0 && st[m] != st[Slot::idle];
+            });
             if(st[Slot::idle] >= 0)
-                anim.blend(graph, st[Slot::idle], 1.f - moving, blend_time);
+                anim.blend(graph, st[Slot::idle], strides ? 1.f - moving : 1.f, blend_time);
             for(u32 i = 0; i < 4; i++)
             {
                 i32 const move = st[moves[i]];

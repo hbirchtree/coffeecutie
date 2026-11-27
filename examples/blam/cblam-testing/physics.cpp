@@ -1401,6 +1401,14 @@ struct PhysicsSystem
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
                     m_bodies.at(id).world_body->setFriction(1.f);
+                /* A flier hangs where it is until it moves itself */
+                if(physics.upright && physics.flying && m_bodies.contains(id))
+                {
+                    auto& flier = *m_bodies.at(id).world_body;
+                    flier.setFlags(flier.getFlags() | BT_DISABLE_WORLD_GRAVITY);
+                    flier.setGravity(btVector3(0, 0, 0));
+                    m_flyers.insert(id);
+                }
                 if(m_bodies.contains(id))
                 {
                     auto& body = *m_bodies.at(id).world_body;
@@ -3523,8 +3531,9 @@ struct PhysicsSystem
         body.walked    = btVector3(vel.x(), vel.y(), 0.f);
         body.walked_at = m_frame;
         vel += body.carried;
+        /* A flier keeps its height unless it is asked to climb */
         if(velocity.preserve_z)
-            vel.setZ(body.world_body->getLinearVelocity().z());
+            vel.setZ(m_flyers.contains(velocity.entity_id) ? 0.f : body.world_body->getLinearVelocity().z());
         bool const grounded = on_ground(*body.world_body, true);
         bool const sliding  = velocity.preserve_z && hold_off_steep(body, vel).sliding();
         /* Grip while standing still, or slopes slide it; a body on its way
@@ -4113,6 +4122,7 @@ struct PhysicsSystem
     std::set<u64>        m_passing; /* remote bodies inside another, not pushing */
     std::set<u64>        m_scripted; /* placed by a script, as its riders are */
     std::set<u64>        m_recorded; /* vehicles a recording drives */
+    std::set<u64>        m_flyers;   /* bipeds that fly */
     std::vector<u64>     m_released; /* let go by a script this frame */
     /* Bodies let go inside another (a rider in its seat): neither touches
      * the other until they are apart */

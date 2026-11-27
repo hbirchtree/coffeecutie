@@ -2874,6 +2874,9 @@ struct ResourceLoader
                 .collision = std::move(collision),
                 .mass      = 1.f,
                 .upright   = true,
+                .flying    = biped.has_value() &&
+                          (biped.value()->biped_flags & blam::scn::biped::biped_flags_t::flying) !=
+                              blam::scn::biped::biped_flags_t::none,
                 .max_slope = biped.has_value() ? biped.value()->maximum_slope_angle : 0.f,
             };
         }

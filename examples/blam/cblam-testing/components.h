@@ -866,6 +866,7 @@ struct ObjectPhysics
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */
     bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
+    bool  flying{false};  /*!< Bipeds that fly (sentinels, monitors): no gravity, they hold their height */
     /*! Items: Hz of a spring turning the model's +X (its tip) up, 0 = none */
     f32   tip_up{0.f};
     bool  player_enterable{true}; /*!< unit_set_enterable_by_player */

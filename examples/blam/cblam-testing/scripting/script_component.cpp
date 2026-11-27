@@ -3281,8 +3281,8 @@ struct BlamScript
     {
         if(walks(p, id))
             walk(p, id, {});
-        else
-            carry(p, id, false);
+        /* Let go unless something else still holds it */
+        carry(p, id, carried(p, id));
     }
 
     /* ---- Attachments ---- */

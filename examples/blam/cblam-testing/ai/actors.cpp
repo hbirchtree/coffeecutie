@@ -298,6 +298,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 drive_pass_distance = 8.f; /* wu: passing this near, its run is over */
     static constexpr f32 fixed_gun_cos   = .985f; /* about 10 degrees: a fixed gun's target ahead */
     static constexpr f32 arrive_radius   = .35f; /* wu */
+    static constexpr f32 flier_hover     = 1.5f; /* wu a flier fights above its position */
     static constexpr f32 retreat_reach   = 8.f;  /* wu a retreat with no position puts between it and the threat */
     static constexpr f32 drift_speed     = .05f; /* wu/s a standing actor is let slide before it is held */
     static constexpr f32 post_leeway     = 1.f;  /* wu a standing actor may be pushed off its spot before it walks back */
@@ -1092,7 +1093,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 const   heard   = (seen.hearing_dist > 0.f ? seen.hearing_dist : 15.f) * footstep_share;
         u64   best     = 0;
         f32   best_d   = std::numeric_limits<f32>::max();
+        /* Only blows to fight with: what flies is out of its reach */
+        bool const grounded_only = !holds_gun(p, id);
         auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet, bool cloaked) {
+            if(grounded_only)
+                if(auto const* flier = p.template get<ObjectPhysics>(other); flier && flier->flying)
+                    return;
             Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
             /* A preferred target counts as much nearer */
@@ -1269,6 +1275,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             bool const nearby    = theirs.team == actor.team &&
                                 glm::distance(target.position, model->position) <= reach;
             if(!encounter && !nearby)
+                continue;
+            /* A flier is no target for one with only blows */
+            if(auto const* flier = p.template get<ObjectPhysics>(actor.target);
+               flier && flier->flying && !holds_gun(p, other.id()))
                 continue;
             theirs.target    = actor.target;
             theirs.last_seen = actor.last_seen;
@@ -1653,6 +1663,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             stop(p, id, actor);
             return;
         }
+        /* A graph with no strides keeps the unit where it stands, facing
+         * its way (c10's crazy marine) */
+        if(auto const* physics = p.template get<ObjectPhysics>(id);
+           strides(p, id, anim).rooted && !(physics && physics->flying))
+        {
+            stop(p, id, actor);
+            turn(actor, model, goal, dt, true);
+            return;
+        }
         /* Around what is in the way, by its encounter's positions */
         Vecf3 to = waypoint(p, id, actor, model, kind, goal, dt) - model.position;
         to.z     = 0.f;
@@ -1694,6 +1713,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity walking{
             .entity_id = id, .velocity = dir * std::min(speed, left / std::max(dt, 1e-3f)), .preserve_z = true};
+        /* A flier rises or sinks to its goal: a script's point as given, a
+         * place to fight from at a hover over it */
+        if(auto const* physics = p.template get<ObjectPhysics>(id); physics && physics->flying)
+        {
+            f32 const height = goal.z + (actor.scripted ? 0.f : flier_hover) - model.position.z;
+            walking.velocity.z = std::clamp(height * 2.f, -speed, speed);
+            walking.preserve_z = false;
+        }
         p.template subsystem<PhysicsBus>().process(ev, &walking);
         actor.moving = true;
     }
@@ -2033,14 +2060,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     struct stride_t
     {
         f32 speed{0.f};
-        u8  clips{0}; /*!< Bits in moves order: which strides it has */
+        u8   clips{0}; /*!< Bits in moves order: which strides it has */
+        bool rooted{false}; /*!< No stride holding anything at all */
     };
 
     /* Its run and the strides it has, from its move clips holding what it
      * holds */
     stride_t const& strides(Proxy& p, u64 id, AnimationPlayback const& anim)
     {
-        static stride_t const none{.speed = default_speed, .clips = 0xf};
+        static stride_t const none{.speed = default_speed, .clips = 0xf, .rooted = false};
         if(!anim.graph)
             return none;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
@@ -2055,8 +2083,30 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             for(size_t i = 0; i < 4; i++)
                 if(move_clip(*anim.graph, moves[i], *s_magic, "stand", weapon) >= 0)
                     it->second.clips |= static_cast<u8>(1u << i);
+            it->second.rooted = it->second.clips == 0 && !any_stride(*anim.graph);
         }
         return it->second;
+    }
+
+    /* A move clip in any weapon block of its stand */
+    static bool any_stride(blam::antr::header const& graph)
+    {
+        auto units = graph.units.data(*s_magic);
+        if(!units.has_value())
+            return false;
+        for(auto const& unit : units.value())
+        {
+            if(unit.label.str() != "stand")
+                continue;
+            auto weapons = unit.weapons.data(*s_magic);
+            if(!weapons.has_value())
+                continue;
+            for(auto const& weapon : weapons.value())
+                for(auto slot : moves)
+                    if(move_clip(graph, slot, *s_magic, "stand", weapon.name.str()) >= 0)
+                        return true;
+        }
+        return false;
     }
 
     f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
