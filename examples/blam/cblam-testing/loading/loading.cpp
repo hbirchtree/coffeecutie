@@ -1231,6 +1231,12 @@ struct ResourceLoader
         i16 const  section =
             p.template subsystem<BSPCache<Ver>>().active_section;
 
+        /* A variant's extra Scorpions: the allowed tank placement nearest
+         * each team's flag base */
+        std::set<u32> extra_tanks;
+        if constexpr(std::is_same_v<T, blam::scn::vehicle_spawn>)
+            if(multiplayer && scorpions_wanted(p.template subsystem<GameSetup>()))
+                extra_tanks = tanks_by_base(files, palette, instances, p.template subsystem<GameSetup>().game_type);
         for(u32 i = 0; i < instances.size(); ++i)
         {
             auto const net_id = SpawnObjectEvent::scenario_net_id(group_id, i);
@@ -1250,7 +1256,8 @@ struct ResourceLoader
             /* A multiplayer map's vehicles are each in some game types' sets */
             if constexpr(std::is_same_v<T, blam::scn::vehicle_spawn>)
                 if(multiplayer &&
-                   !spawn_points::vehicle_in(instance.spawn_flags, p.template subsystem<GameSetup>().game_type))
+                   !spawn_points::vehicle_in(instance.spawn_flags, p.template subsystem<GameSetup>().game_type) &&
+                   !extra_tanks.contains(i))
                     continue;
             raise_spawn((*entry)[0], instance.pos, net_id);
         }
@@ -2616,6 +2623,57 @@ struct ResourceLoader
         if(!geometry->nodes.empty())
             out = std::move(geometry);
         return out;
+    }
+
+    /* A variant asking for the map's Scorpions on top of its vehicle set */
+    static bool scorpions_wanted(GameSetup const& setup)
+    {
+        return std::any_of(setup.variant_options.begin(), setup.variant_options.end(), [](auto const& option) {
+            return option.first == "scorpions" && option.second != "0";
+        });
+    }
+
+    /* Of the tank placements the game type allows, the nearest to each
+     * team's flag; without flags, all of them */
+    template<typename Palette, typename Instances>
+    std::set<u32> tanks_by_base(
+        BlamFiles<Ver> const& files, Palette const& palette, Instances const& instances, GameSetup::game_type_t type)
+    {
+        auto const& magic = files.container.magic;
+        std::vector<u32> tanks;
+        for(u32 i = 0; i < instances.size(); ++i)
+            if(auto const* entry = instances[i].ref.resolve(palette);
+               entry && spawn_points::vehicle_allowed(instances[i].spawn_flags, type) && is_tank((*entry)[0], magic))
+                tanks.push_back(i);
+        std::vector<Vecf3> bases;
+        if(auto const* scenario = files.container.scenario().value_or(nullptr))
+            if(auto flags = scenario->netgame.flags.data(magic); flags.has_value())
+                for(auto const& flag : flags.value())
+                    if(flag.type == blam::scn::multiplayer_flag::flag_type_t::ctf_flag)
+                        bases.push_back(flag.pos);
+        if(bases.empty())
+            return {tanks.begin(), tanks.end()};
+        std::set<u32> out;
+        for(Vecf3 const& base : bases)
+        {
+            auto nearest = std::min_element(tanks.begin(), tanks.end(), [&](u32 a, u32 b) {
+                return glm::distance(instances[a].pos, base) < glm::distance(instances[b].pos, base);
+            });
+            if(nearest != tanks.end())
+                out.insert(*nearest);
+        }
+        return out;
+    }
+
+    /* A tank by its vehicle type, as protected maps keep no names */
+    bool is_tank(blam::tagref_t const& ref, blam::map_ptr const& magic)
+    {
+        auto tag = index.find(ref.tag_id);
+        if(!ref.valid() || tag == index.end())
+            return false;
+        auto vehicle = (*tag).template data<blam::scn::vehicle>(magic);
+        return vehicle.has_value() &&
+               static_cast<VehicleDrive::type_t>(vehicle.value()[0].vehicle_type) == VehicleDrive::human_tank;
     }
 
     /*! A vehi tag's speeds and turning, from Halo's 30 Hz ticks */

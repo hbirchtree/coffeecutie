@@ -118,6 +118,7 @@ struct GameState : compo::SubsystemBase
     i32                   juggernaut{-1}; /*!< Juggernaut: the player index who is it */
     bool                  timed{false};   /*!< Scores are seconds (King of the hill, Oddball) */
     bool                  no_tracker{false}; /*!< Nobody has a motion tracker */
+    libc_types::f32       player_health{1.f}; /*!< Players' body vitality, times the coll's */
     /*! Who is camouflaged by the game: nobody, everyone, or whoever is "it" */
     enum class unseen_t : libc_types::u8
     {

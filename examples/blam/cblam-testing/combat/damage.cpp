@@ -335,6 +335,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 allegiance.betray(team, amount / std::max(status->maximum_body(), 1.f));
             }
         }
+        /* A variant's player health: as much more for the body to take */
+        if(p.template get<PlayerInfo>(unit))
+            body_mult /= std::max(p.template subsystem<GameState>().player_health, .01f);
         /* A spent arm shield is down: what struck it reaches the body */
         if(body_mult <= 0.f && status->shield <= 0.f)
             body_mult = 1.f;
