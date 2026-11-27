@@ -2124,6 +2124,10 @@ struct BlamScript
             auto const units = opcode == op::ai_command_list ? ai_actors(p, text_of(arg(0))) : objects_of(p, arg(0));
             for(u64 id : units)
                 start_commands(p, id, *list);
+            /* Placed this tick: it gets the list once it is there */
+            if(opcode == op::ai_command_list)
+                for(u32 net_id : ai_spawning(text_of(arg(0))))
+                    m_deferred.emplace_back(net_id, [this, list](Proxy& p, u64 id) { start_commands(p, id, *list); });
             return {};
         }
         case op::ai_command_list_advance:
