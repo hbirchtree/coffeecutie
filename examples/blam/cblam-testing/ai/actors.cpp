@@ -2128,8 +2128,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
         /* None given: as fast as its weapon fires */
-        f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
-                         scaled(&blam::globals::difficulty::rate_of_fire);
+        /* No faster than its weapon fires, whatever its variant asks */
+        f32 const asked = actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate;
+        f32 const scaled_rate = asked * scaled(&blam::globals::difficulty::rate_of_fire);
+        f32 const rate        = firing.cap > 0.f ? std::min(scaled_rate, firing.cap) : scaled_rate;
         bool const starting = actor.burst_left <= 0;
         /* A burst starts on a target in view, not at the cover it went behind */
         if(starting && actor.seen_ago > sighting_memory)
@@ -2193,7 +2195,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(!gun || !gun->tag)
             return;
         firing_t const firing = firing_of(gun->tag);
-        f32 const      rate   = kind.variant && kind.variant->rate_of_fire > 0.f ? kind.variant->rate_of_fire : firing.rate;
+        f32 const      asked  = kind.variant && kind.variant->rate_of_fire > 0.f ? kind.variant->rate_of_fire : firing.rate;
+        f32 const      rate   = firing.cap > 0.f ? std::min(asked, firing.cap) : asked;
         Vecf3 const    eye    = eye_of(p, id);
         Vecf3 const    muzzle = trigger_of(p, *gun).value_or(
             eye + glm::normalize(at - eye) * WeaponFireEvent::muzzle_distance);
@@ -2394,6 +2397,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     struct firing_t
     {
         f32  rate{3.f};
+        f32  cap{0.f}; /* the trigger's top rate; 0 none given */
         f32  charging{0.f};
         bool single{false};
         f32  error_rise{0.f}; /* s to full error held, 0 = at once */
@@ -2411,7 +2415,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 {
                     auto const& trigger = triggers.value()[0];
                     if(trigger.maximum_rate_of_fire.y > 0.f)
-                        out.rate = trigger.maximum_rate_of_fire.y;
+                        out.rate = out.cap = trigger.maximum_rate_of_fire.y;
                     out.charging   = trigger.charging_time;
                     out.error_rise = trigger.error_acceleration_time;
                     out.error_fall = trigger.error_deceleration_time;
