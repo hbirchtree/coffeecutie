@@ -272,8 +272,9 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
         Proxy& p, u64 player, PlayerInfo const& info, PlayerCamera const& cam)
     {
         auto const* equip = p.template get<BipedEquipment>(player);
-        if(!equip || !equip->weapons[1].weapon)
+        if(!equip)
             return std::nullopt;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
         if(!std::exchange(m_flag_looked, true))
             m_flag = flag_weapon(p.template subsystem<BlamFiles<halo_version>>());
         std::optional<std::pair<u64, f32>> best;
@@ -283,8 +284,14 @@ struct Gameplay : compo::RestrictedSubsystem<Gameplay, GameplayManifest>
             auto const* tag   = model.origin_object;
             if(!tag || !tag->matches(blam::tag_class_t::weap) || tag == m_flag || net.instance_id == 0 ||
                SpawnObjectEvent::is_impostor(net.instance_id) ||
-               p.template get<PlayerInfo>(item.id()) || equip->weapons[0].tag == tag ||
-               equip->weapons[1].tag == tag || !within_pickup_reach(info, cam, model.position))
+               p.template get<PlayerInfo>(item.id()) || !within_pickup_reach(info, cam, model.position))
+                continue;
+            /* One of a kind carried only for its fresher battery; another
+             * kind only once both hands are full */
+            auto const* same = equip->weapons[0].tag == tag   ? &equip->weapons[0]
+                               : equip->weapons[1].tag == tag ? &equip->weapons[1]
+                                                              : nullptr;
+            if(same ? !fresher_battery(*same, model.item_age, magic) : !equip->weapons[1].weapon)
                 continue;
             f32 const square = facing(cam, model.position);
             if(!best || square > best->second)

@@ -459,13 +459,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 auto const* same = equip.weapons[0].tag == tag   ? &equip.weapons[0]
                                    : equip.weapons[1].tag == tag ? &equip.weapons[1]
                                                                  : nullptr;
+                /* The same battery weapon with more charge is a swap */
+                bool const fresher = same && fresher_battery(*same, model.item_age, files.container.magic);
+                if(fresher)
+                    same = nullptr;
                 bool const carried = grenade || powerup || ammo || same;
                 /* A swap takes a press, and only for the weapon on offer:
                  * a seat nearer the centre of the view wins the press */
-                if(!carried && equip.weapons[1].weapon &&
-                   (!(pressed || held) || info.offered.weapon != item.id()))
+                bool const swap = !carried && (equip.weapons[1].weapon || fresher);
+                if(swap && (!(pressed || held) || info.offered.weapon != item.id()))
                     continue;
-                if(!carried && equip.weapons[1].weapon)
+                if(swap)
                     spent_press = true;
                 auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
                 if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)

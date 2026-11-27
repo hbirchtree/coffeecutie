@@ -61,6 +61,16 @@ inline libc_types::i32 reserve_room(
     return std::max(magazine->rounds_reserved_maximum - carried.rounds_total, 0);
 }
 
+/* A battery weapon lying with more charge left than the one carried of its
+ * kind: taken in its place, as Halo swaps them */
+inline bool fresher_battery(
+    BipedEquipment::weapon_t const& carried, libc_types::f32 item_age, blam::map_ptr const& magic)
+{
+    auto const* magazine = first_magazine(carried.weapon, magic);
+    bool const  battery  = !magazine || magazine->rounds_loaded_maximum <= 0;
+    return carried.weapon && battery && item_age + .01f < carried.age;
+}
+
 /* Rounds an ammo pack adds to a carried weapon's reserve: what its magazine
  * objects give for it, up to the reserve's maximum */
 inline libc_types::i32 ammo_pack_rounds(

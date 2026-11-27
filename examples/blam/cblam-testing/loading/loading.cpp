@@ -3264,6 +3264,15 @@ struct ResourceLoader
             for(auto* carried : {&held, &slung})
                 if(carried->tag == tag)
                 {
+                    /* A fresher battery of its kind replaces it, dropped */
+                    if(fresher_battery(*carried, change.age, files.container.magic))
+                    {
+                        if(!info.is_remote() || info.mode.simulated)
+                            drop(*carried, cam, info.biped.eye_height);
+                        *carried     = armed(tag, files);
+                        carried->age = change.age;
+                        return;
+                    }
                     /* Into the reserve, as much as fits */
                     carried->rounds_total = static_cast<u16>(
                         carried->rounds_total +

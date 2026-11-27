@@ -730,6 +730,7 @@ void create_resources(compo::EntityContainer& e)
                                          {"tag_id", weapon.tag ? weapon.tag->tag_id.value() : 0},
                                          {"loaded", weapon.rounds_loaded},
                                          {"reserve", weapon.rounds_total},
+                                         {"age", weapon.age},
                                      });
                                  player["weapons"] = std::move(weapons);
                                  player["zoom"]    = entity.template get<BipedEquipment>().zoom;
