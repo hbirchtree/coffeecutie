@@ -26,7 +26,7 @@
 namespace h2 {
 
 using H2RendererManifest = compo::SubsystemManifest<
-    compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model>,
+    compo::type_list_t<const PlayerCamera, const PlayerInfo, const Model, const BipedEquipment>,
     compo::type_list_t<
         const H2Scene,
         const H2Visibility,
@@ -70,6 +70,7 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
             m_vao->set_buffer(gfx::buffers::element, scene.element_buf);
             m_draws.assign(scene.materials.size(), {});
             m_generation = scene.generation;
+            m_action     = nullptr;
         }
         PlayerCamera const* camera{};
         PlayerInfo const*   player{};
@@ -80,6 +81,8 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 continue;
             camera = &cam;
             player = &info;
+            if(auto const* equip = p.template get<BipedEquipment>(e.id()))
+                act(scene, m_actions.observe(*equip));
             break;
         }
         if(!camera)
@@ -507,26 +510,64 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
         return static_cast<u32>(1 + scene.moving_objects.size() + j);
     }
 
+    /* The view models' clip for what the weapon began doing; it plays to
+     * its end, then the idle again */
+    void act(H2Scene const& scene, world::view_actions_t::kind_t kind)
+    {
+        using kind_t = world::view_actions_t::kind_t;
+        auto const& fp = scene.first_person;
+        auto const* clip = kind == kind_t::fire           ? &fp.fire
+                           : kind == kind_t::reload_full  ? &fp.reload_full
+                           : kind == kind_t::reload_empty ? &fp.reload_empty
+                                                          : nullptr;
+        if(clip && (clip->hands >= 0 || clip->weapon >= 0))
+        {
+            m_action       = clip;
+            m_action_start = m_seconds;
+        }
+        if(!m_action)
+            return;
+        f32 length = 0.f;
+        for(i32 a : {m_action->hands, m_action->weapon})
+            if(a >= 0)
+            {
+                auto const& anim = scene.animations[static_cast<size_t>(a)];
+                length           = std::max(length, static_cast<f32>(anim.frames - 1) / anim.rate);
+            }
+        f32 const into = m_seconds - m_action_start;
+        if(into < 0.f || into >= length)
+            m_action = nullptr;
+    }
+
     /* An animated object's skin matrices this frame, worked out once */
     std::array<Matf4, 64> const& posed(H2Scene const& scene, size_t j)
     {
         if(!m_posed[j])
         {
             auto const& object = scene.animated_objects[j];
-            pose(scene.animations[object.animation], m_seconds);
+            auto const& fp     = scene.first_person;
+            i32 const   played = !m_action                                ? -1
+                                 : static_cast<i32>(j) == fp.hands  ? m_action->hands
+                                 : static_cast<i32>(j) == fp.weapon ? m_action->weapon
+                                                                    : -1;
+            if(played >= 0)
+                pose(scene.animations[static_cast<size_t>(played)], m_seconds - m_action_start, false);
+            else
+                pose(scene.animations[object.animation], m_seconds);
             m_poses[j] = m_bones;
             m_posed[j] = 1;
         }
         return m_poses[j];
     }
 
-    /* An animation's skin matrices at `seconds`, looping, between frames
-     * blended */
-    void pose(H2Scene::animation_t const& animation, f32 seconds)
+    /* An animation's skin matrices at `seconds`, looping or held on its
+     * last frame, between frames blended */
+    void pose(H2Scene::animation_t const& animation, f32 seconds, bool loop = true)
     {
         if(animation.frames == 0)
             return;
-        auto const [f0, f1, t] = world::loop_frame(seconds * animation.rate, animation.frames);
+        auto const [f0, f1, t] = loop ? world::loop_frame(seconds * animation.rate, animation.frames)
+                                      : world::once_frame(seconds * animation.rate, animation.frames);
         u32 const n            = std::min<u32>(animation.nodes, m_bones.size());
         for(u32 i = 0; i < n; i++)
             m_bones[i] = animation.palette[f0 * animation.nodes + i] * (1.f - t) +
@@ -1010,6 +1051,9 @@ struct H2Renderer : compo::RestrictedSubsystem<H2Renderer, H2RendererManifest>
                 {"bones"}, semantic::Span<const Matf4>(m_bones.data(), m_bones.size())});
     std::vector<gfx::draw_command::data_t> m_draws_scratch;
     f32                                    m_seconds{0.f};
+    world::view_actions_t                  m_actions;
+    H2Scene::first_person_t::clip_t const* m_action{nullptr}; /* Playing over the idle */
+    f32                                    m_action_start{0.f};
 };
 
 void alloc_h2_renderer(compo::EntityContainer& e)
