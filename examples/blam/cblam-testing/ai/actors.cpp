@@ -2453,7 +2453,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.look_in <= 0.f)
         {
             actor.look_in = look_period;
-            if(u64 const seen = actor.blind ? 0 : look(p, id, actor, model, *kind.actor, true))
+            if(u64 const seen = actor.blind            ? 0
+                                : actor.follow_players ? nearest_player(p, model)
+                                                       : look(p, id, actor, model, *kind.actor, true))
             {
                 if(seen != actor.target)
                 {
@@ -2466,8 +2468,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.seen_ago = 0.f;
             }
         }
-        if(!actor.target || actor.seen_ago > look_period * 2.f || !alive(p, actor.target))
-            return;
         auto const* vehicle = p.template get<Model>(physics.seated_in);
         if(!vehicle || !vehicle->origin_object)
             return;
@@ -2477,7 +2477,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto seats = unit.value()[0].seats.data(*s_magic);
         if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size())
             return;
-        auto const flags = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        auto const flags  = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        bool const engaged = actor.target && actor.seen_ago <= look_period * 2.f && alive(p, actor.target);
+        /* Carriers fly by their scripts, never by their pilots */
+        bool const carrier = std::any_of(seats.value().begin(), seats.value().end(), [](auto const& seat) {
+            return (seat.flags & flags_t::allow_ai_noncombatants) != flags_t::none;
+        });
+        if((flags & flags_t::driver) != flags_t::none && !carrier && !actor.scripted)
+            drive(p, actor, physics.seated_in, *vehicle, kind, engaged);
+        if(!engaged)
+            return;
         /* A carrier's seats take AI as passengers, not fighters */
         if((flags & flags_t::allow_ai_noncombatants) != flags_t::none)
             return;
@@ -2485,6 +2494,62 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind);
         else if((flags & flags_t::allows_weapons) != flags_t::none)
             fire(p, id, actor, model, kind, dt);
+    }
+
+    /* At the wheel: closes to its combat range of the target, flyers above
+     * it, pulls away when too close and comes round again; ground vehicles
+     * circle once in range. A script's recording drives it instead */
+    void drive(Proxy& p, Actor& actor, u64 vehicle, Model const& body, kind_t const& kind, bool engaged)
+    {
+        auto const* ride = p.template get<ObjectPhysics>(vehicle);
+        if(!ride || !ride->drive || ride->recorded || ride->scripted || ride->drive->type == VehicleDrive::turret)
+            return;
+        bool const  flies   = ride->drive->type == VehicleDrive::alien_fighter || ride->drive->type == VehicleDrive::human_plane;
+        Vecf3 const forward = body.rotation * Vecf3{1.f, 0.f, 0.f};
+        Physics::Drive input{.vehicle = vehicle, .aim = forward};
+        if(engaged)
+        {
+            Vecf2 const range = kind.variant->desired_combat_range.y > 0.f ? kind.variant->desired_combat_range
+                                                                           : Vecf2{5.f, 15.f};
+            Vecf3 goal = actor.last_seen;
+            if(flies)
+                goal.z += std::max(range.x * .25f, 3.f);
+            Vecf3 to   = goal - body.position;
+            f32 const flat = glm::length(Vecf2(to));
+            if(flat < range.x)
+                actor.breaking_off = true;
+            else if(flat > (range.x + range.y) * .5f)
+                actor.breaking_off = false;
+            if(!flies)
+                to.z = 0.f;
+            Vecf3 const dir = glm::dot(to, to) > 1e-4f ? glm::normalize(to) : forward;
+            if(actor.breaking_off)
+            {
+                /* Away and to one side, so it passes rather than reverses */
+                Vecf3 away = -dir + glm::cross(Vecf3{0.f, 0.f, 1.f}, dir) * .5f;
+                away.z     = 0.f;
+                if(flies)
+                    away = glm::normalize(away) + Vecf3{0.f, 0.f, 1.f}; /* climbing clear */
+                input.aim      = glm::normalize(away);
+                input.throttle = 1.f;
+            } else if(flat > range.y)
+            {
+                input.aim      = dir;
+                input.throttle = 1.f;
+            } else if(flies)
+            {
+                input.aim      = dir;
+                input.throttle = .5f;
+            } else
+            {
+                /* In range on the ground: round it, facing half in */
+                Vecf3 const round = glm::cross(Vecf3{0.f, 0.f, 1.f}, dir);
+                input.aim      = glm::normalize(round + dir * .5f);
+                input.throttle = .6f;
+            }
+        }
+        Physics::Event ev{Physics::Event::Drive};
+        p.template subsystem<PhysicsBus>().process(ev, &input);
     }
 
     /* The vehicle's gun, from its trigger marker as the vehicle is posed */

@@ -1204,6 +1204,7 @@ struct Actor
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
     std::optional<Vecf3> shoot_at{};    /*!< A command list's shoot, fired at by its held gun */
+    bool                 breaking_off{false}; /*!< Driving: too close, it pulls away before coming round */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
     f32                  walk_stall{0.f}; /*!< s since it last got nearer */
     bool                 walk_done{false}; /*!< walk_to given up as out of reach */
