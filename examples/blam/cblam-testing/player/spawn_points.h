@@ -6,6 +6,7 @@
 #include "ui/ui_game_setup.h"
 
 #include <algorithm>
+#include <functional>
 #include <optional>
 #include <random>
 #include <vector>
@@ -26,6 +27,8 @@ constexpr f32    height    = 1.f; /* wu */
 constexpr size_t choices   = 3;
 constexpr f32    enemy_reach = 10.f; /* wu; an enemy closer makes a spot unsafe */
 constexpr f32    death_reach = 6.f;  /* wu; so does someone just killed there */
+constexpr f32    sight_reach = 40.f; /* wu an enemy's view counts out to */
+constexpr f32    sight_cos   = .6f;  /* about 53 degrees off where an enemy looks */
 
 inline blam::scn::gamemode_t game_mode_of(GameSetup::game_type_t type)
 {
@@ -83,12 +86,29 @@ struct around_t
     std::vector<Vecf3> standing; /*!< Anyone alive, who blocks a spot */
     std::vector<Vecf3> deaths;   /*!< Where bodies just fell */
     std::optional<size_t> last;  /*!< Not the same spot twice running */
+    /*! Enemies' eyes and where they look */
+    std::vector<std::pair<Vecf3, Vecf3>> views;
+    /*! Whether nothing stands between two points */
+    std::function<bool(Vecf3 const&, Vecf3 const&)> clear;
 };
 
+/* In view of an enemy: within its reach and view cone, unobstructed */
+inline bool seen(around_t const& around, Vecf3 const& at)
+{
+    Vecf3 const chest = at + Vecf3{0.f, 0.f, height * .6f};
+    return std::any_of(around.views.begin(), around.views.end(), [&](auto const& view) {
+        Vecf3 const to = chest - view.first;
+        f32 const   d  = glm::length(to);
+        if(d > sight_reach || d < 1e-3f || glm::dot(to / d, view.second) < sight_cos)
+            return false;
+        return !around.clear || around.clear(view.first, chest);
+    });
+}
+
 /* Of the start points for this game type and team that nobody stands on,
- * any safe one at random: no enemy near, nobody just killed close by, not
- * where it last put this player. None safe: one of the few furthest from
- * the enemy. None free and it waits */
+ * any safe one at random: no enemy near or looking at it, nobody just
+ * killed close by, not where it last put this player. None safe: one of the
+ * few out of sight and furthest from the enemy. None free and it waits */
 inline std::optional<std::pair<spot_t, size_t>> pick(
     BlamFiles<halo_version> const& files,
     std::mt19937&                  random,
@@ -127,8 +147,10 @@ inline std::optional<std::pair<spot_t, size_t>> pick(
         f32 nearest = std::numeric_limits<f32>::max();
         for(Vecf3 const& enemy : around.enemies)
             nearest = std::min(nearest, glm::distance(enemy, spot.pos));
-        ranked.push_back({nearest, i});
-        if(nearest >= enemy_reach && !within(around.deaths, spot.pos, death_reach))
+        bool const watched = seen(around, spot.pos);
+        /* Out of sight ranks ahead of any distance */
+        ranked.push_back({nearest + (watched ? 0.f : 1e6f), i});
+        if(nearest >= enemy_reach && !watched && !within(around.deaths, spot.pos, death_reach))
             safe.push_back(i);
     }
     if(ranked.empty() && any_fit)
