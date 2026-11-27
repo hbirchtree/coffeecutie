@@ -292,6 +292,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
   private:
     static constexpr f32 look_period     = .25f; /* s between looks around */
+    static constexpr f32 drive_turn_rate = 1.2f; /* rad/s an AI driver swings its heading */
+    static constexpr f32 drive_lookahead = 12.f; /* wu it looks ahead for what it would hit */
+    static constexpr f32 drive_pull_up   = 12.f; /* wu out a flyer pulls up over its target */
+    static constexpr f32 drive_pass_distance = 8.f; /* wu: passing this near, its run is over */
+    static constexpr f32 fixed_gun_cos   = .985f; /* about 10 degrees: a fixed gun's target ahead */
     static constexpr f32 arrive_radius   = .35f; /* wu */
     static constexpr f32 retreat_reach   = 8.f;  /* wu a retreat with no position puts between it and the threat */
     static constexpr f32 drift_speed     = .05f; /* wu/s a standing actor is let slide before it is held */
@@ -2468,7 +2473,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.look_in <= 0.f)
         {
             actor.look_in = look_period;
-            if(u64 const seen = actor.blind ? 0 : look(p, id, actor, model, *kind.actor, true))
+            if(u64 const seen = actor.blind            ? 0
+                                : actor.follow_players ? nearest_player(p, model)
+                                                       : look(p, id, actor, model, *kind.actor, true))
             {
                 if(seen != actor.target)
                 {
@@ -2481,8 +2488,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.seen_ago = 0.f;
             }
         }
-        if(!actor.target || actor.seen_ago > look_period * 2.f || !alive(p, actor.target))
-            return;
         auto const* vehicle = p.template get<Model>(physics.seated_in);
         if(!vehicle || !vehicle->origin_object)
             return;
@@ -2492,19 +2497,133 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto seats = unit.value()[0].seats.data(*s_magic);
         if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size())
             return;
-        auto const flags = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        auto const flags  = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        bool const engaged = actor.target && actor.seen_ago <= look_period * 2.f && alive(p, actor.target);
+        /* Carriers fly by their scripts, never by their pilots */
+        bool const carrier = std::any_of(seats.value().begin(), seats.value().end(), [](auto const& seat) {
+            return (seat.flags & flags_t::allow_ai_noncombatants) != flags_t::none;
+        });
+        if((flags & flags_t::driver) != flags_t::none && !carrier && !actor.scripted)
+            drive(p, id, actor, physics.seated_in, *vehicle, kind, engaged, dt);
+        if(!engaged)
+            return;
         /* A carrier's seats take AI as passengers, not fighters */
         if((flags & flags_t::allow_ai_noncombatants) != flags_t::none)
             return;
+        /* A driver's guns are fixed to the hull, save a tank's turret */
+        auto const* hull  = p.template get<ObjectPhysics>(physics.seated_in);
+        bool const  fixed = (flags & flags_t::driver) != flags_t::none &&
+                           !(hull && hull->drive && hull->drive->type == VehicleDrive::human_tank);
         if((flags & flags_t::gunner) != flags_t::none)
-            fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind);
+            fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind, fixed);
         else if((flags & flags_t::allows_weapons) != flags_t::none)
             fire(p, id, actor, model, kind, dt);
     }
 
+    /* At the wheel. Flyers make attack runs: in at the target, past it and
+     * out to the far edge of their combat range, then round again; ground
+     * vehicles close in and circle. The heading turns at a rate, and swings
+     * up and aside from what lies ahead. A script's recording drives it
+     * instead */
+    void drive(Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, kind_t const& kind, bool engaged, f32 dt)
+    {
+        auto const* ride = p.template get<ObjectPhysics>(vehicle);
+        if(!ride || !ride->drive || ride->recorded || ride->scripted || ride->drive->type == VehicleDrive::turret)
+            return;
+        bool const  flies   = ride->drive->type == VehicleDrive::alien_fighter || ride->drive->type == VehicleDrive::human_plane;
+        Vecf3 const forward = body.rotation * Vecf3{1.f, 0.f, 0.f};
+        Vecf3       want    = forward;
+        f32         throttle = 0.f;
+        if(engaged)
+        {
+            Vecf2 const range = kind.variant->desired_combat_range.y > 0.f ? kind.variant->desired_combat_range
+                                                                           : Vecf2{5.f, 15.f};
+            Vecf3 const target = actor.last_seen + chest_of(p, actor.target);
+            Vecf3       to     = target - body.position;
+            f32 const   flat   = glm::length(Vecf2(to));
+            if(flies)
+            {
+                /* Over it, it runs on to the far edge before turning back */
+                if(glm::length(to) < drive_pass_distance)
+                    actor.breaking_off = true;
+                else if(flat > range.y * .8f)
+                    actor.breaking_off = false;
+                if(actor.breaking_off)
+                {
+                    /* Straight on, or away from it when the nose points up */
+                    Vecf3 out = Vecf3(Vecf2(forward), 0.f);
+                    if(glm::dot(out, out) < .1f)
+                        out = -Vecf3(Vecf2(to), 0.f);
+                    out = glm::dot(out, out) > 1e-4f ? glm::normalize(out) : Vecf3{1.f, 0.f, 0.f};
+                    /* Climbing back to its attack height on the way out */
+                    f32 const climb = std::clamp((target.z + range.x * .4f - body.position.z) * .1f, -.3f, .4f);
+                    want            = glm::normalize(out + Vecf3{0.f, 0.f, climb});
+                } else
+                {
+                    /* Close in, it pulls up to pass over rather than into it */
+                    Vecf3 const over = glm::length(to) < drive_pull_up ? to + Vecf3{0.f, 0.f, drive_pull_up * .6f} : to;
+                    want             = glm::normalize(over);
+                }
+                throttle = 1.f;
+            } else
+            {
+                to.z           = 0.f;
+                Vecf3 const in = glm::dot(to, to) > 1e-4f ? glm::normalize(to) : forward;
+                if(flat > range.y)
+                    want = in, throttle = 1.f;
+                else
+                {
+                    /* In range: round it, facing half in */
+                    want     = glm::normalize(glm::cross(Vecf3{0.f, 0.f, 1.f}, in) + in * .5f);
+                    throttle = .6f;
+                }
+            }
+        }
+        if(throttle > 0.f)
+            want = clear_way(p, id, vehicle, body.position, want, flies);
+        /* It turns as a driver would, not in one frame */
+        Vecf3 aim = actor.drive_aim.value_or(forward);
+        f32 const angle = std::acos(std::clamp(glm::dot(aim, want), -1.f, 1.f));
+        f32 const step  = drive_turn_rate * dt;
+        if(angle > step && angle > 1e-3f)
+        {
+            Vecf3 axis = glm::cross(aim, want);
+            if(glm::dot(axis, axis) < 1e-6f)
+                axis = Vecf3{0.f, 0.f, 1.f};
+            aim = glm::normalize(glm::angleAxis(step, glm::normalize(axis)) * aim);
+        } else
+            aim = want;
+        actor.drive_aim = aim;
+        Physics::Drive input{.vehicle = vehicle, .throttle = throttle, .aim = aim};
+        Physics::Event ev{Physics::Event::Drive};
+        p.template subsystem<PhysicsBus>().process(ev, &input);
+    }
+
+    /* Swings a heading up and to the clearer side when it runs into
+     * something within reach */
+    Vecf3 clear_way(Proxy& p, u64 driver, u64 vehicle, Vecf3 const& from, Vecf3 const& want, bool flies)
+    {
+        auto blocked = [&](Vecf3 const& dir) {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = from + dir * drive_lookahead, .ignore = vehicle, .ignore_also = driver};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            return ray.hit && ray.entity_id == 0 ? ray.fraction : 1.f;
+        };
+        if(blocked(want) >= 1.f)
+            return want;
+        Vecf3 const side = glm::normalize(glm::cross(Vecf3{0.f, 0.f, 1.f}, want) + Vecf3{0.f, 0.f, 1e-4f});
+        Vecf3 const up   = flies ? Vecf3{0.f, 0.f, .7f} : Vecf3{};
+        Vecf3 const left = glm::normalize(want + side + up), right = glm::normalize(want - side + up);
+        f32 const   l = blocked(left), r = blocked(right);
+        if(flies && l < 1.f && r < 1.f)
+            return glm::normalize(want * .3f + Vecf3{0.f, 0.f, 1.f});
+        return l >= r ? left : right;
+    }
+
     /* The vehicle's gun, from its trigger marker as the vehicle is posed */
     void fire_mounted(
-        Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, blam::scn::unit const& unit, kind_t const& kind)
+        Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, blam::scn::unit const& unit, kind_t const& kind,
+        bool fixed)
     {
         actv_t const& actv = *kind.variant;
         if(actor.fire_in > 0.f)
@@ -2530,7 +2649,24 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             at = at * anim->pose[static_cast<size_t>(marker->node)];
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
-        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true), leading(actv));
+        auto const  arc    = arc_of(p, &(*weapon), true);
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc, leading(actv));
+        /* Fixed guns fire along the barrel, once the target is ahead of it;
+         * a lobbing one keeps its elevation */
+        if(fixed)
+        {
+            Vecf3 barrel = Vecf3((at * marker->transform) * Vecf4{1.f, 0.f, 0.f, 0.f});
+            if(glm::dot(barrel, barrel) < 1e-6f)
+                return;
+            barrel = glm::normalize(barrel);
+            Vecf2 const flat = Vecf2(barrel);
+            Vecf3 const along = arc && arc->gravity > 0.f && glm::dot(flat, flat) > 1e-6f
+                                    ? glm::normalize(Vecf3(glm::normalize(flat) * glm::length(Vecf2(dir)), dir.z))
+                                    : barrel;
+            if(glm::dot(along, dir) < fixed_gun_cos)
+                return;
+            dir = along;
+        }
         if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
