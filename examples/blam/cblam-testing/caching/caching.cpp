@@ -1236,6 +1236,8 @@ void ModelCache<V>::evaluate_pose(
     }
 
     f32 base_weight = 0.f;
+    /* Base weight of world-relative clips, of all clips */
+    f32 world_weight = 0.f, all_weight = 0.f;
     for(auto const& layer : anim.layers)
     {
         if(!layer.active())
@@ -1244,6 +1246,12 @@ void ModelCache<V>::evaluate_pose(
         auto const* clip = find_animation(layer);
         if(!clip)
             continue;
+        if(clip->type == blam::antr::anim_type::base && !layer.animated_only)
+        {
+            all_weight += std::clamp(layer.weight, 0.f, 1.f);
+            if(clip->is_world_relative())
+                world_weight += std::clamp(layer.weight, 0.f, 1.f);
+        }
 
         f32 const rate  = clip->frame_rate();
         u32 const count = static_cast<u32>(clip->frame_count);
@@ -1353,6 +1361,10 @@ void ModelCache<V>::evaluate_pose(
                          ? m_world[parent] * local
                          : local;
     }
+    /* Root placed in the world by the clip: back into the object's space */
+    if(world_weight > 0.f && world_weight * 2.f >= all_weight)
+        for(auto& node : m_world)
+            node = Matf4a(anim.object_inverse) * node;
 
     if(anim.reach)
     {

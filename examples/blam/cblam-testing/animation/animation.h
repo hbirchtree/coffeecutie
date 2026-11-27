@@ -135,6 +135,10 @@ struct AnimationPlayback
     /* Seconds past the last tick to draw it at, so it moves between ticks */
     libc_types::f32 lookahead{0.f};
 
+    /* The object's transform undone: a world-relative clip's root is
+     * already where the object stands */
+    typing::vector_types::Matf4 object_inverse{1.f};
+
     /* Where this instance's bones landed in its bucket's window, negative if
      * unposed. Scratch owned by DrawListBuilder. */
     libc_types::i32 bone_base{-1};

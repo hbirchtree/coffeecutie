@@ -158,6 +158,7 @@ struct BlamScript
         m_recreate.clear();
         m_deferred.clear();
         m_queued_recordings.clear();
+        m_queued_custom.clear();
         m_log.clear();
 
         auto strings = scenario->string_segment(map.magic);
@@ -244,7 +245,10 @@ struct BlamScript
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
                 u64 const id = live_entity(p, net_id);
                 if(id)
+                {
                     enlist(p, id, net_id);
+                    m_queued_custom.erase(net_id);
+                }
                 return id != 0;
             });
             place_initial(p);
@@ -291,6 +295,7 @@ struct BlamScript
             .deferred   = m_deferred,
             .spawning   = m_spawning,
             .queued     = m_queued_recordings,
+            .queued_custom = m_queued_custom,
             .slots      = m_actor_slots,
             .objective  = p.template subsystem<CinematicState>().objective,
             .allegiances = p.template subsystem<AllegianceState>().pairs,
@@ -440,6 +445,7 @@ struct BlamScript
         m_deferred          = std::move(saved.deferred);
         m_spawning          = std::move(saved.spawning);
         m_queued_recordings = std::move(saved.queued);
+        m_queued_custom     = std::move(saved.queued_custom);
         m_actor_slots       = std::move(saved.slots);
         m_despawning.clear();
         m_recreate.clear();
@@ -1498,6 +1504,7 @@ struct BlamScript
         /* Animations of the unit's own, or the cutscene's */
         case op::custom_animation:
         case op::custom_animation_list:
+            queue_custom(arg(0), graph_of(arg(1)), text_of(arg(2)), 0);
             with_objects(
                 p,
                 arg(0),
@@ -1522,6 +1529,7 @@ struct BlamScript
                              : 0](Proxy& p, u64 id) { custom_animation(p, id, graph, name, false, frame); });
             return {};
         case op::unit_custom_animation_at_frame:
+            queue_custom(arg(0), graph_of(arg(1)), text_of(arg(2)), static_cast<i32>(arg(4).as_real()));
             with_objects(
                 p,
                 arg(0),
@@ -1636,6 +1644,9 @@ struct BlamScript
             for(u64 id : objects_of(p, arg(0)))
                 if(auto it = m_custom.find(id); it != m_custom.end())
                     left = std::max(left, static_cast<f32>(it->second.clip->frame_count - it->second.frame));
+            for(u32 net_id : spawning_of(arg(0)))
+                if(auto it = m_queued_custom.find(net_id); it != m_queued_custom.end())
+                    left = std::max(left, static_cast<f32>(it->second));
             if(opcode == op::unit_is_playing_custom_animation)
                 return value_t::boolean(left > 0.f);
             return value_t::number(type_t::short_, left);
@@ -2448,6 +2459,15 @@ struct BlamScript
                 return;
             despawn(p, existing);
         }
+        /* Anew while still spawning: the coming object is the new one, so
+         * what was queued for the old one is dropped */
+        else if(anew && m_spawning.contains(net_id) && !m_despawning.contains(net_id))
+        {
+            std::erase_if(m_deferred, [net_id](auto const& d) { return d.first == net_id; });
+            m_queued_custom.erase(net_id);
+            m_queued_recordings.erase(net_id);
+            return log(fmt::format("object_create: {} (anew, still spawning)", name));
+        }
         log(fmt::format("object_create: {}", name));
         m_spawning.insert(net_id);
         /* Same net id: only once the old one is gone */
@@ -3097,6 +3117,21 @@ struct BlamScript
         return header.has_value() ? &header.value()[0] : nullptr;
     }
 
+    /* Waiting on its object, a clip still has all of its frames */
+    void queue_custom(value_t const& v, blam::antr::header const* graph, std::string_view name, i32 frame)
+    {
+        auto const spawning = spawning_of(v);
+        if(spawning.empty() || !graph)
+            return;
+        auto anims = graph->animations.data(m_magic);
+        if(!anims.has_value())
+            return;
+        for(auto const& clip : anims.value())
+            if(lowered(clip.name.str()) == lowered(name))
+                for(u32 net_id : spawning)
+                    m_queued_custom[net_id] = std::max(0, clip.frame_count - frame);
+    }
+
     void custom_animation(
         Proxy&                    p,
         u64                       id,
@@ -3133,8 +3168,10 @@ struct BlamScript
             p.template subsystem<GameEventBus>().inject(ev, &play);
             bool const moves = clip.frame_info_type_ != blam::antr::frame_info_type::none;
             m_custom[id]     = {.clip = &clip, .frame = frame, .moves = moves};
-            if(moves && !walks(p, id))
-                carry(p, id, true);
+            if(auto const* net = p.template get<NetworkInfo>(id))
+                m_queued_custom.erase(net->instance_id);
+            /* Held still by the clip, or moved by its root */
+            carry(p, id, carried(p, id));
             return;
         }
         log(fmt::format("custom_animation: no animation {}", name));
@@ -3181,8 +3218,12 @@ struct BlamScript
         GameEvent               ev{.type = GameEvent::PlayModelAnimation};
         PlayModelAnimationEvent stop{.entity = id};
         p.template subsystem<GameEventBus>().inject(ev, &stop);
-        if(moves && !playing_recording(id) && !m_hovering.contains(id))
+        if(playing_recording(id) || m_hovering.contains(id))
+            return;
+        if(moves)
             stand(p, id);
+        else if(!carried(p, id))
+            carry(p, id, false);
     }
 
     bool playing_recording(u64 id) const
@@ -3198,7 +3239,8 @@ struct BlamScript
         auto const custom = m_custom.find(id);
         bool const moved  = (playing_recording(id) && !rolls(p, id)) ||
                            (custom != m_custom.end() && custom->second.moves);
-        return m_hovering.contains(id) || riding(id) || listed(id) ||
+        bool const still  = custom != m_custom.end() && !custom->second.moves;
+        return m_hovering.contains(id) || riding(id) || listed(id) || still ||
                std::any_of(m_attached.begin(), m_attached.end(), [id](attached_t const& a) { return a.child == id; }) ||
                (moved && !walks(p, id));
     }
@@ -5356,6 +5398,7 @@ struct BlamScript
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
     std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
+    std::map<u32, i32>                      m_queued_custom;     /* spawning net id: its custom clip's frames left */
     std::map<std::tuple<blam::antr::header const*, std::string, std::string>, Vecf2> m_walk_speeds;
     /* Squads of the units ai_place is spawning, by net id */
     struct actor_slot_t
@@ -5398,6 +5441,7 @@ struct BlamScript
         std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> deferred;
         std::set<u32>                           spawning;
         std::map<u32, i32>                      queued;
+        std::map<u32, i32>                      queued_custom;
         std::map<u32, actor_slot_t>             slots;
         std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
         std::string                             objective;
