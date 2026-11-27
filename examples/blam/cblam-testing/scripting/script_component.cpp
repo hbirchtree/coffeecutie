@@ -3416,6 +3416,7 @@ struct BlamScript
         {
             using flags_t   = blam::scn::ai::command_list::flags_t;
             actor->scripted = true;
+            actor->shoot_at.reset();
             actor->release  = false;
             actor->may_fight =
                 (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
@@ -3433,7 +3434,7 @@ struct BlamScript
     void stop_commands(Proxy& p, u64 id)
     {
         if(auto* actor = p.template get<Actor>(id))
-            actor->scripted = false;
+            actor->scripted = false, actor->shoot_at.reset();
         if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
             stand(p, id);
     }
@@ -4099,6 +4100,21 @@ struct BlamScript
                         next();
                     else
                         waits = true;
+                    break;
+                }
+                case atom::shoot: {
+                    /* Its gun fires at the point for param1 seconds */
+                    auto* actor = p.template get<Actor>(it->first);
+                    auto const at = point(c.point_1);
+                    if(!actor || !at || run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
+                    {
+                        if(actor)
+                            actor->shoot_at.reset();
+                        next();
+                        break;
+                    }
+                    actor->shoot_at = *at;
+                    waits           = true;
                     break;
                 }
                 case atom::wait:

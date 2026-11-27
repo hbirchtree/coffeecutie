@@ -213,6 +213,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                         move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
                 } else if(actor.walk_to)
                     stop(p, ent.id(), actor);
+                if(actor.shoot_at)
+                    shoot_scripted(p, ent.id(), actor, model, *kind, dt);
                 if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
                 {
                     actor.look_in = look_period;
@@ -2156,6 +2158,39 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
         spread(actor, firing, actor.burst_left > 0 ? actor.fire_in : 0.f, actor.fire_in);
+    }
+
+    /* A command list's shoot: at its point, as fast as the variant fires */
+    void shoot_scripted(Proxy& p, u64 id, Actor& actor, Model& model, kind_t const& kind, f32 dt)
+    {
+        Vecf3 const at = *actor.shoot_at;
+        turn(actor, model, at, dt, false);
+        if((actor.fire_in -= dt) > 0.f)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto*       equip = p.template get<BipedEquipment>(id);
+        auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
+        if(!gun || !gun->tag)
+            return;
+        firing_t const firing = firing_of(gun->tag);
+        f32 const      rate   = kind.variant && kind.variant->rate_of_fire > 0.f ? kind.variant->rate_of_fire : firing.rate;
+        Vecf3 const    eye    = eye_of(p, id);
+        Vecf3 const    muzzle = trigger_of(p, *gun).value_or(
+            eye + glm::normalize(at - eye) * WeaponFireEvent::muzzle_distance);
+        Vecf3 const to = at - muzzle;
+        if(glm::dot(to, to) < 1e-6f)
+            return;
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .weapon     = gun->tag->as_ref(),
+            .shooter    = id,
+            .player_idx = ObjectHitEvent::no_player,
+            .seed       = static_cast<u32>(m_random()),
+            .position   = muzzle,
+            .direction  = glm::normalize(to),
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+        actor.fire_in = 1.f / std::max(rate, .1f);
     }
 
     /* How far ahead of a moving target it aims: its variant's leading, as
