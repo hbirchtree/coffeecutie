@@ -446,6 +446,13 @@ struct animation
                static_cast<u16>(anim_flags::compressed_data);
     }
 
+    /*! Root node in world space, not the object's */
+    bool is_world_relative() const
+    {
+        return static_cast<u16>(from_le(flags)) &
+               static_cast<u16>(anim_flags::world_relative);
+    }
+
     /*! Authored at 30Hz; PAL tags flag themselves as 25Hz */
     f32 frame_rate() const
     {

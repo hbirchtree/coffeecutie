@@ -327,6 +327,7 @@ struct BitmapItem
         Vecf2 scale{};
         Veci2 gutter{}; /*!< wrap padding reserved around the tile */
         f32   bias{0.f};
+        u32   levels{0}; /*!< Levels uploaded from the base; past them the bucket holds nothing */
     } image;
 
     struct

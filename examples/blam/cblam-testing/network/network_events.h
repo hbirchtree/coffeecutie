@@ -328,6 +328,7 @@ struct PlayerJoin
 
     blam::bl_string player_name;
     u32             seat{0}; /*!< Which of the client's own seats */
+    u32             color{0xFFFF}; /*!< Their profile's armour colour */
 };
 
 struct PlayerJoinConfirm
@@ -360,7 +361,8 @@ struct alignas(8) CameraSync
         crouched  = 0x4, /*!< PlayerInfo::crouched */
     };
 
-    Vecf4   position; /*!< In the deck's frame when standing on one */
+    Vecf4   position; /*!< In the deck's frame when standing on one; w is
+                       *   PlayerInfo::crouch, how far down the eye has gone */
     Quatf   rotation;
     u32     target_player{0xFFFF};
     f32     fade{1.f};
@@ -516,6 +518,8 @@ struct alignas(8) WeaponFire
     u32 target{0};                 /*!< Net id of the unit aimed at, when not a player */
     u32 target_player{0xFFFFFFFF}; /*!< Its player index when it is */
     u32 shooter{0};                /*!< Net id of a shooter that is no player: an actor */
+    f32 error{0.f};                /*!< Held fire's spread, 0 to 1 */
+    u64 target_tick{0};            /*!< Server tick `target` was shown at, 0 = view_tick */
 };
 
 /*! A hit the server decided (ObjectHitEvent), to every peer */
@@ -548,9 +552,9 @@ struct alignas(8) UnitVitality
     f32 shield{1.f};
     u32 dead{0}; /*!< 1: dead, 2: violently, 4: destroyed */
     u32 respawned{0}; /*!< Brought back at `respawn`, facing its w; 2: with the respawn effect, 4: re-equipped */
-    Vecf4 respawn{};
+    Vecf4 respawn{}; /*!< Dying instead: the killing blow's way */
     f32   overcharge_decay{0.f}; /*!< Over shield lost per second */
-    u32   padding{0};
+    u32   blow_flags{0};         /*!< Dying: BipedStatus::blow_flags */
 };
 
 /*! The game being played, as the server keeps it (GameState) */
@@ -569,9 +573,16 @@ struct alignas(8) GameStateSync
     u16             nav_points{0}; /*!< How many NavPointSync follow */
     u32             saves{0};
     u32             reverts{0};
-    i16             flag_carrier[2]{-1, -1}; /*!< Capture the flag, by team */
-    u8              flag_taken[2]{};
-    u32             padding2{0};
+    i16             flag_carrier[3]{-1, -1, -1}; /*!< Capture the flag by team, then Oddball's ball */
+    u8              flag_taken[3]{};
+    u8              timed{0};
+    i32             juggernaut{-1};
+    i16             hill{-1};
+    i16             hill_holder{-1};
+    i16             capture_blocked{-1};
+    u8              no_tracker{0};
+    u8              unseen{0};
+    u32             padding4{0};
 
     bool operator==(GameStateSync const&) const = default;
 };
@@ -735,7 +746,9 @@ struct alignas(8) ObjectSync
         asleep   = 0x4,  /*!< A unit lying asleep: its stance */
         aiming   = 0x8,  /*!< A unit aiming off its body: `aim` */
         looking  = 0x10, /*!< A unit looking off its aim: `look` */
+        dodge    = 0xff00, /*!< A unit's dodge under way: AnimationPlayback::dodge */
     };
+    static constexpr libc_types::u32 dodge_shift = 8;
 
     u64     tick{0}; /*!< Server tick this is the state after */
     Quatf   rotation;
@@ -815,6 +828,8 @@ struct alignas(8) EntitySpawn
     blam::tag_index<> held{}; /*!< A unit's weapon, weap tag id */
     u32       change_colors[4]{}; /*!< See SpawnObjectEvent::change_colors */
     u32       camouflaged{0};     /*!< See SpawnObjectEvent::camouflaged */
+    f32       velocity[3]{};      /*!< What it was thrown or dropped with */
+    u32       padding{0};
 };
 
 struct alignas(8) PlayerSpawn
@@ -853,9 +868,11 @@ struct alignas(8) PlayerSyncEntry
     u32             loading_progress{100};
     u32             connected{0x0};
     u32             spawned{0x0};
+    u32             color{0xFFFF}; /*!< Their profile's armour colour */
+    u32             padding{0};
 };
 
-static_assert(sizeof(PlayerSyncEntry) == 48);
+static_assert(sizeof(PlayerSyncEntry) == 56);
 
 struct alignas(8) NegotiateExtension
 {
@@ -908,10 +925,10 @@ static_assert(sizeof(Message<GameJoin>) == 68);
 static_assert(sizeof(Message<MapVerify>) == 32);
 static_assert(sizeof(Message<ClientAuth>) == sizeof(MessageBase) + 64);
 static_assert(sizeof(EntityTag) == 12);
-static_assert(sizeof(EntitySpawn) == 80);
+static_assert(sizeof(EntitySpawn) == 96);
 static_assert(sizeof(SpawnRequest) == 64);
 static_assert(sizeof(Message<ClockSync>) == 48);
-static_assert(sizeof(Message<PlayerJoin>) == 52);
+static_assert(sizeof(Message<PlayerJoin>) == 56);
 static_assert(sizeof(Message<CameraSync>) == 72);
 static_assert(sizeof(ObjectSync) == 88);
 static_assert(sizeof(SeatSync) == 16);
@@ -923,7 +940,7 @@ static_assert(sizeof(ObjectCensus) == 8);
 static_assert(sizeof(ObjectRequest) == 4);
 static_assert(sizeof(SyncPoint) == 64);
 static_assert(sizeof(DriveInput) == 32);
-static_assert(sizeof(WeaponFire) == 72);
+static_assert(sizeof(WeaponFire) == 88);
 static_assert(sizeof(ObjectHit) == 72);
 static_assert(sizeof(GrabInput) == 40);
 static_assert(sizeof(GrabState) == 8);

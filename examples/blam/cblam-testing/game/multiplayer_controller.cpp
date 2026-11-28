@@ -5,12 +5,15 @@
 #include "data.h"
 #include "game_events.h"
 #include "game/game_modes.h"
+#include "game/hills.h"
 #include "network/networking.h"
+#include "physics.h"
 #include "scripting/script_vm.h"
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "player/spawn_points.h"
 #include "ticks.h"
+#include "ui/ui_profile.h"
 
 #include <blam/volta/blam_globals.h>
 
@@ -23,15 +26,32 @@
 
 /* Sound entity ids for the announcer, one per line so a line restarts */
 constexpr libc_types::u64 announcer_sound_base = 0x414e4e4f00000000ULL; /* 'ANNO' */
+constexpr std::string_view juggernaut_marker   = "juggernaut";
+constexpr std::string_view hill_marker         = "koth:hill";
+/* How long a blocked capture stays known after the rules last saw it, s */
+constexpr libc_types::f32 capture_blocked_hold = .5f;
+/* A hill's reach, my picks: below and above its flags, and around a hill
+ * of fewer than three */
+constexpr std::string_view race_marker = "race:";
+/* How near a race checkpoint counts as reaching it, wu; my pick, wide for
+ * vehicles */
+constexpr libc_types::f32 checkpoint_reach = 3.f;
+/* Where a seat's line comes from, inside the default reference distance so
+ * it is no quieter: half ahead, most of the way to its side */
+constexpr libc_types::f32 announcer_pan = .7f;
+constexpr libc_types::f32 announcer_ahead = .5f;
 
 using MultiplayerManifest = compo::SubsystemManifest<
     type_list_t<const PlayerInfo, const PlayerCamera, const BipedStatus, const Attachment, Model>,
     type_list_t<
         GameState,
         GameEventBus,
+        PhysicsBus,
         const NetworkState,
         const LoadingStatus,
         const GameSetup,
+        const PlayerProfile,
+        const LocalLobby,
         const BlamFiles<halo_version>>,
     empty_list_t>;
 
@@ -54,9 +74,13 @@ struct MultiplayerController
 
     void start_restricted(Proxy& p, time_point const&)
     {
-        f32 dt = 0.f;
+        f32 dt    = 0.f;
+        u32 steps = 0;
         for(auto const& tick : m_ticks->take())
+        {
             dt += tick.seconds;
+            steps++;
+        }
         m_kill_queue->poll();
         m_rejoin_queue->poll();
         m_touch_queue->poll();
@@ -74,7 +98,7 @@ struct MultiplayerController
         if(state.kind != GameState::kind_t::multiplayer)
             return;
         state.over_for = state.phase == GameState::phase_t::over ? state.over_for + dt : 0.f;
-        announcer(p, state, dt);
+        announcer(p, state, dt, steps);
         team_colors(p, state);
         if(replica)
             return;
@@ -83,9 +107,14 @@ struct MultiplayerController
         for(u64 unit : rejoins)
             m_waiting[unit] = m_respawn_delay;
         m_proxy = &p;
+        hold_hill(p, state);
+        if((state.capture_blocked_for -= dt) <= 0.f)
+            state.capture_blocked = -1;
+        run_track(p, state);
         for(auto const& touch : touches)
             touched(state, touch);
-        if(m_vm && state.phase == GameState::phase_t::playing && dt > 0.f)
+        /* Once a game tick, so the rules' sleeps are in ticks */
+        for(u32 i = 0; m_vm && state.phase == GameState::phase_t::playing && i < steps; i++)
             m_vm->tick();
         m_proxy = nullptr;
         if(state.time_left > 0.f && (state.time_left -= dt) <= 0.f)
@@ -102,6 +131,23 @@ struct MultiplayerController
         m_load_generation = files.load_generation;
         m_waiting.clear();
         m_placed.clear();
+        m_last_spot.clear();
+        m_deaths.clear();
+        /* Lives and respawn growth are the engine's, by the variant's word */
+        auto const option = [&setup](std::string_view name) {
+            f32 out = 0.f;
+            for(auto const* from : {&setup.variant_options, &setup.options})
+                for(auto const& [key, value] : *from)
+                    if(key == name)
+                        out = std::strtof(value.c_str(), nullptr);
+            return out;
+        };
+        m_lives          = static_cast<i32>(option("lives"));
+        m_growth         = option("respawn_growth");
+        state.no_tracker = option("no_tracker") != 0.f;
+        state.player_health = option("health") > 0.f ? option("health") : 1.f;
+        m_rally             = option("rally") != 0.f;
+        state.unseen     = static_cast<GameState::unseen_t>(std::clamp(static_cast<i32>(option("unseen")), 0, 2));
         m_vm.reset();
         m_local_vm.reset();
         m_seen.clear();
@@ -125,13 +171,136 @@ struct MultiplayerController
                 return native(*m_state, opcode, args);
             });
         configure(*m_vm, setup);
+        state.juggernaut  = -1;
+        /* Oddball's Juggernaut variant counts kills */
+        auto const* ball_type = m_vm->global("ball_type");
+        state.timed           = setup.game_type == GameSetup::game_type_t::koth ||
+                      (setup.game_type == GameSetup::game_type_t::oddball && (!ball_type || ball_type->as_real() != 2.f));
+        state.hill        = -1;
+        state.hill_holder = -1;
+        build_hills(files);
+        build_track(files);
+        m_race_next.clear();
+        m_at_checkpoint.clear();
+    }
+
+    /* ---- Race ---- */
+
+    /* The race_track flags, in their index order */
+    void build_track(BlamFiles<halo_version> const& files)
+    {
+        m_track.clear();
+        auto const* scenario = files.container.scenario().value_or(nullptr);
+        if(!scenario)
+            return;
+        auto flags = scenario->netgame.flags.data(files.container.magic);
+        if(!flags.has_value())
+            return;
+        std::vector<std::pair<u16, Vecf3>> points;
+        for(auto const& flag : flags.value())
+            if(flag.type == blam::scn::multiplayer_flag::flag_type_t::race_track)
+                points.emplace_back(flag.team_index, flag.pos);
+        std::stable_sort(points.begin(), points.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
+        for(auto const& [_, at] : points)
+            m_track.push_back(at);
+    }
+
+    /* A player reaching the checkpoint they go for: the rules hear it once
+     * as they arrive. Each is shown the way to theirs */
+    void run_track(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::race || m_track.empty() || !m_vm ||
+           state.phase != GameState::phase_t::playing)
+            return;
+        std::set<u32> arrived;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            if((status && status->dead) || !state.player(idx))
+                continue;
+            auto const next = static_cast<size_t>(m_race_next[idx]) % m_track.size();
+            if(glm::distance(ent.template get<Model>().position, m_track[next]) > checkpoint_reach)
+                continue;
+            arrived.insert(idx);
+            if(m_at_checkpoint.contains(idx))
+                continue;
+            if(auto* slot = m_vm->global("event_player"))
+                *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
+            m_vm->wake("on_checkpoint");
+            m_vm->tick();
+        }
+        m_at_checkpoint = std::move(arrived);
+
+        auto navs = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag.starts_with(race_marker); });
+        for(auto const& player : state.players)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(race_marker) + std::to_string(player.player_idx),
+                .position = m_track[static_cast<size_t>(m_race_next[player.player_idx]) % m_track.size()],
+                .offset   = .6f,
+                .player   = static_cast<i32>(player.player_idx),
+            });
+        if(navs != state.nav_points)
+            state.nav_points = std::move(navs);
+    }
+
+    /* ---- King of the hill ---- */
+
+    void build_hills(BlamFiles<halo_version> const& files)
+    {
+        m_hills = hills::of(files);
+    }
+
+    /* Who is in the hill in play, for the rules and everyone's announcer */
+    void hold_hill(Proxy& p, GameState& state)
+    {
+        if(state.game_type != GameSetup::game_type_t::koth || state.hill < 0 ||
+           static_cast<size_t>(state.hill) >= m_hills.size())
+        {
+            state.hill_holder = -1;
+            return;
+        }
+        auto const&   hill = m_hills[static_cast<size_t>(state.hill)];
+        std::set<i32> sides;
+        i16           holder = -1;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+        {
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            if((status && status->dead) || !hill.holds(ent.template get<Model>().position))
+                continue;
+            u32 const   idx    = ent.template get<PlayerInfo>().player_idx;
+            auto const* player = state.player(idx);
+            sides.insert(state.teams && player ? player->team : static_cast<i32>(idx));
+            holder = static_cast<i16>(idx);
+        }
+        state.hill_holder = sides.size() > 1 ? GameState::contested : holder;
+    }
+
+    void place_hill(GameState& state, i32 index)
+    {
+        state.hill = index >= 0 && static_cast<size_t>(index) < m_hills.size() ? static_cast<i16>(index) : -1;
+        auto navs  = state.nav_points;
+        std::erase_if(navs, [](auto const& nav) { return nav.flag == hill_marker; });
+        if(state.hill >= 0)
+            navs.push_back({
+                .arrow    = "default",
+                .flag     = std::string(hill_marker),
+                .position = m_hills[static_cast<size_t>(state.hill)].centre,
+                .offset   = .6f,
+                .team     = static_cast<i16>(blam::scn::unit::team_t::player),
+            });
+        state.nav_points = std::move(navs);
     }
 
     /* --game-option name=value: any global of the program by that name */
     static void configure(vm_t& vm, GameSetup const& setup)
     {
         using blam::hsc::type_t;
-        for(auto const& [name, text] : setup.options)
+        auto options = setup.variant_options;
+        options.insert(options.end(), setup.options.begin(), setup.options.end());
+        for(auto const& [name, text] : options)
         {
             auto* slot = vm.global(name);
             if(!slot)
@@ -148,7 +317,7 @@ struct MultiplayerController
 
     /* Started once the game is known here, so a peer joining late hears the
      * game type; it sees its players' kills and deaths as they are told */
-    void announcer(Proxy& p, GameState const& state, f32 dt)
+    void announcer(Proxy& p, GameState const& state, f32 dt, u32 steps)
     {
         m_clock += dt;
         /* Started from what everyone is told: a peer waits for the scores */
@@ -197,11 +366,14 @@ struct MultiplayerController
             if(auto* slot = m_local_vm->global("event_player"))
                 *slot = script_vm::value_t::number(blam::hsc::type_t::short_, static_cast<f32>(idx));
             m_local_vm->wake("on_local_kill");
+            m_speaking_for = idx;
             m_local_vm->tick();
+            m_speaking_for.reset();
         }
         if(state.phase == GameState::phase_t::over && !std::exchange(m_over, true))
             m_local_vm->wake("on_game_over");
-        if(dt > 0.f)
+        /* Once a game tick, as the rules */
+        for(u32 i = 0; i < steps; i++)
             m_local_vm->tick();
     }
 
@@ -214,7 +386,7 @@ struct MultiplayerController
         {
         case mode_op::announce: {
             GameEvent     ev{.type = GameEvent::Announce};
-            AnnounceEvent say{.sound = static_cast<u16>(arg(0))};
+            AnnounceEvent say{.sound = static_cast<u16>(arg(0)), .player = m_speaking_for};
             m_game->inject(ev, &say);
             return {};
         }
@@ -224,6 +396,12 @@ struct MultiplayerController
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::boolean(t < state.flags.size() && state.flags[t].taken);
         }
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
+        case mode_op::capture_blocked:
+            return value_t::number(type_t::short_, state.capture_blocked);
         case mode_op::team_score: {
             auto const t = static_cast<size_t>(std::max(arg(0), 0.f));
             return value_t::number(type_t::short_, t < state.team_scores.size() ? state.team_scores[t] : 0);
@@ -287,14 +465,17 @@ struct MultiplayerController
             state.vehicle_respawn = arg(0);
             return {};
         case mode_op::flag_give:
-        case mode_op::flag_reset: {
+        case mode_op::flag_reset:
+        case mode_op::flag_remove: {
             GameEvent        ev{.type = GameEvent::FlagCommand};
             FlagCommandEvent command{
-                .kind   = op == mode_op::flag_give ? FlagCommandEvent::give : FlagCommandEvent::reset,
+                .kind   = op == mode_op::flag_give    ? FlagCommandEvent::give
+                          : op == mode_op::flag_remove ? FlagCommandEvent::remove
+                                                       : FlagCommandEvent::reset,
                 .team   = static_cast<u16>(arg(0)),
                 .player = static_cast<u32>(arg(1)),
             };
-            if(arg(0) >= 0.f && (op == mode_op::flag_reset || arg(1) >= 0.f))
+            if(arg(0) >= 0.f && (op != mode_op::flag_give || arg(1) >= 0.f))
                 m_game->inject(ev, &command);
             return {};
         }
@@ -315,6 +496,67 @@ struct MultiplayerController
         case mode_op::flag_reach_set:
             state.flag_reach = std::max(arg(0), 0.f);
             return {};
+        case mode_op::race_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_track.size()));
+        case mode_op::race_next:
+            return value_t::number(type_t::short_, arg(0) >= 0.f ? m_race_next[static_cast<u32>(arg(0))] : -1);
+        case mode_op::race_advance:
+            if(arg(0) >= 0.f && !m_track.empty())
+            {
+                auto&     next  = m_race_next[static_cast<u32>(arg(0))];
+                i16 const count = static_cast<i16>(m_track.size());
+                /* A rally's next flag point is any other, at random */
+                if(m_rally && count > 1)
+                    next = static_cast<i16>((next + 1 + std::uniform_int_distribution<i16>(0, count - 2)(m_random)) % count);
+                else
+                    next = static_cast<i16>((next + 1) % count);
+            }
+            return {};
+        case mode_op::capture_blocked_set:
+            state.capture_blocked     = arg(0) >= 0.f ? static_cast<i16>(arg(0)) : i16(-1);
+            state.capture_blocked_for = capture_blocked_hold;
+            return {};
+        case mode_op::hill_count:
+            return value_t::number(type_t::short_, static_cast<f32>(m_hills.size()));
+        case mode_op::hill_set:
+            place_hill(state, static_cast<i32>(arg(0)));
+            return {};
+        case mode_op::hill_holder:
+            return value_t::number(type_t::short_, state.hill_holder);
+        case mode_op::hill_index:
+            return value_t::number(type_t::short_, state.hill);
+        case mode_op::juggernaut_set: {
+            state.juggernaut = arg(0) >= 0.f ? static_cast<i32>(arg(0)) : -1;
+            /* Everyone sees who is it */
+            auto navs = state.nav_points;
+            std::erase_if(navs, [](auto const& nav) { return nav.flag == juggernaut_marker; });
+            if(state.juggernaut >= 0)
+                navs.push_back({
+                    .arrow  = "default",
+                    .flag   = std::string(juggernaut_marker),
+                    .unit   = state.juggernaut,
+                    .offset = .6f,
+                    .team   = static_cast<i16>(blam::scn::unit::team_t::player),
+                });
+            state.nav_points = std::move(navs);
+            return {};
+        }
+        case mode_op::team_set:
+            if(auto* player = arg(0) >= 0.f ? who(0) : nullptr)
+                player->team = static_cast<i16>(arg(1));
+            return {};
+        case mode_op::team_count: {
+            i16 n = 0;
+            for(auto const& player : state.players)
+                n += player.team == static_cast<i16>(arg(0));
+            return value_t::number(type_t::short_, n);
+        }
+        case mode_op::random_player: {
+            if(state.players.empty())
+                return value_t::number(type_t::short_, -1.f);
+            auto const pick = std::uniform_int_distribution<size_t>(0, state.players.size() - 1)(m_random);
+            return value_t::number(type_t::short_, static_cast<f32>(state.players[pick].player_idx));
+        }
         case mode_op::team_of: {
             auto const* player = arg(0) >= 0.f ? who(0) : nullptr;
             return value_t::number(type_t::short_, player ? player->team : -1);
@@ -358,15 +600,27 @@ struct MultiplayerController
             return;
         state.phase  = GameState::phase_t::over;
         state.winner = leader(state).first;
+        /* Infection: any human standing at the end holds out */
+        if(state.game_type == GameSetup::game_type_t::infection)
+            state.winner = std::any_of(state.players.begin(), state.players.end(), [](auto const& player) {
+                               return player.team == 0;
+                           })
+                               ? 0
+                               : GameState::infected_team;
     }
 
     /* ---- Deaths ---- */
 
-    void killed(GameState const& state, UnitKilledEvent const& kill)
+    void killed(GameState& state, UnitKilledEvent const& kill)
     {
         if(kill.player == ObjectHitEvent::no_player)
             return;
-        m_waiting[kill.unit] = m_respawn_delay;
+        /* Each death longer to come back from; out of lives, not at all */
+        i32 const deaths = ++m_deaths[kill.player];
+        if(m_lives <= 0 || deaths < m_lives)
+            m_waiting[kill.unit] = m_respawn_delay + m_growth * static_cast<f32>(deaths);
+        else
+            last_standing(state);
         if(m_game)
         {
             GameEvent     ev{.type = GameEvent::KillFeed};
@@ -385,6 +639,25 @@ struct MultiplayerController
         set("event_victim", kill.player);
         m_vm->wake("on_unit_killed");
         m_vm->tick();
+    }
+
+    /* With lives: the last player, or the last team, with any left wins */
+    void last_standing(GameState& state)
+    {
+        if(state.phase != GameState::phase_t::playing || state.players.size() < 2)
+            return;
+        std::set<i32> sides;
+        i32           last = -1;
+        for(auto const& player : state.players)
+            if(m_deaths[player.player_idx] < m_lives)
+            {
+                sides.insert(state.teams ? player.team : static_cast<i32>(player.player_idx));
+                last = state.teams ? player.team : static_cast<i32>(player.player_idx);
+            }
+        if(sides.size() > 1)
+            return;
+        over(state);
+        state.winner = last;
     }
 
     /* A player reached a flag on the ground: the rules say what that does */
@@ -452,19 +725,21 @@ struct MultiplayerController
 
     /* Players wear their team's colour as change colour C, which cyborg_mp
      * leaves to the game; their first-person arms too */
+    /* Teams wear theirs; without teams, each player their profile's */
     static void team_colors(Proxy& p, GameState const& state)
     {
-        if(!state.teams)
-            return;
         std::map<u64, u32> worn;
         for(auto ent : p.template select<PlayerInfo, Model>())
         {
             auto [info, model] = ent.components();
             auto const* player = state.player(info.player_idx);
-            if(!player || player->team < 0)
+            if(state.teams && player && player->team >= 0)
+                model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
+            else if(!state.teams && info.color < PlayerProfile::colors.size())
+                model.change_colors[2] = pack_color(PlayerProfile::colors[info.color].rgb);
+            else
                 continue;
-            model.change_colors[2] = pack_color(player->team == 0 ? Vecf3{1.f, 0.f, 0.f} : Vecf3{0.f, 0.f, 1.f});
-            worn[ent.id()]         = model.change_colors[2];
+            worn[ent.id()] = model.change_colors[2];
         }
         for(auto ent : p.template select<Attachment, Model>())
         {
@@ -474,30 +749,52 @@ struct MultiplayerController
         }
     }
 
-    /* A start point for this game type and team, far from enemies */
+    /* A start point for this game type and team, safe from enemies */
     spawn_points::spot_t spot_for(
         Proxy& p, GameState const& state, BlamFiles<halo_version> const& files, PlayerInfo const& info)
     {
-        auto const* me = state.player(info.player_idx);
-        std::vector<Vecf3> enemies, standing;
+        auto const*            me = state.player(info.player_idx);
+        spawn_points::around_t around;
         for(auto other : p.template select<PlayerInfo, PlayerCamera, BipedStatus>())
         {
             auto [oinfo, cam, status] = other.components();
             auto const* them = state.player(oinfo.player_idx);
-            if(status.dead || oinfo.player_idx == info.player_idx)
-                continue;
             Vecf3 const feet = cam.camera.position - Vecf3{0.f, 0.f, oinfo.eye_height()};
-            standing.push_back(feet);
+            /* Seats not in the game are nobody; where anyone fell, this
+             * player too, is no place to come back */
+            if(!them)
+                continue;
+            if(status.dead)
+            {
+                around.deaths.push_back(feet);
+                continue;
+            }
+            if(oinfo.player_idx == info.player_idx)
+                continue;
+            around.standing.push_back(feet);
             if(!(me && them && me->team >= 0 && me->team == them->team))
-                enemies.push_back(feet);
+            {
+                around.enemies.push_back(feet);
+                Vecf3 const look = glm::transpose(Matf3(cam.rotation)) * Vecf3{0.f, 0.f, -1.f};
+                around.views.push_back({cam.camera.position, look});
+            }
         }
-        return spawn_points::pick(
-            files,
-            m_random,
-            enemies,
-            spawn_points::game_mode_of(state.game_type),
-            me ? me->team : i16(-1),
-            &standing);
+        if(auto last = m_last_spot.find(info.player_idx); last != m_last_spot.end())
+            around.last = last->second;
+        /* The level and its scenery block sight; bodies do not */
+        around.clear = [&p](Vecf3 const& from, Vecf3 const& to) {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            return !ray.hit || ray.entity_id != 0;
+        };
+        /* Infection's sides share the free for all start points */
+        i16 const team = me && state.game_type != GameSetup::game_type_t::infection ? me->team : i16(-1);
+        auto picked = spawn_points::pick(files, m_random, around, spawn_points::game_mode_of(state.game_type), team);
+        if(!picked)
+            return std::nullopt;
+        m_last_spot[info.player_idx] = picked->second;
+        return picked->first;
     }
 
     static constexpr f32 default_delay = 3.f;  /* s, until the rules say */
@@ -534,8 +831,38 @@ struct MultiplayerController
     std::map<u32, seen_t>           m_seen;       /*!< By player: kills and deaths last seen */
     std::map<u32, std::vector<f32>> m_kill_times; /*!< By player: when they killed */
     std::map<u32, i16>              m_streaks;    /*!< By player: kills since dying */
+    std::optional<u32>              m_speaking_for; /*!< The local player a kill line is for */
+    std::vector<hills::hill_t>      m_hills;
+    std::vector<Vecf3>              m_track;         /*!< Race checkpoints in order */
+    std::map<u32, i16>              m_race_next;     /*!< By player: the checkpoint they go for */
+    bool                            m_rally{false};  /*!< Race flag points come at random, each one scoring */
+    std::set<u32>                   m_at_checkpoint; /*!< Players at theirs, heard of already */
     std::mt19937               m_random{std::random_device{}()};
+    std::map<u32, size_t>      m_last_spot; /*!< Each player's last start point */
+    std::map<u32, i32>         m_deaths;    /*!< Each player's deaths this game */
+    i32                        m_lives{0};  /*!< Each player's; 0 for no limit */
+    f32                        m_growth{0.f}; /*!< s more to respawn a death */
 };
+
+/* A line for one seat comes from its column when the screen is split in
+ * quarters; a top/bottom split has no side to give it */
+static Vecf3 announcer_side(compo::EntityContainer& e, std::optional<u32> player)
+{
+    if(!player)
+        return {};
+    std::vector<std::pair<u32, u32>> seats;
+    for(auto ent : e.select<PlayerCamera, PlayerInfo>())
+        if(auto const& [cam, info] = ent.components(); !info.is_remote() && cam.is_active())
+            seats.emplace_back(info.seat_idx, info.player_idx);
+    if(seats.size() < 3)
+        return {};
+    std::sort(seats.begin(), seats.end());
+    auto const at = std::find_if(seats.begin(), seats.end(), [&](auto const& s) { return s.second == *player; });
+    if(at == seats.end())
+        return {};
+    f32 const side = (at - seats.begin()) % 2 == 0 ? -1.f : 1.f;
+    return Vecf3{side * announcer_pan, 0.f, -announcer_ahead};
+}
 
 void alloc_multiplayer_controller(compo::EntityContainer& e)
 {
@@ -570,6 +897,7 @@ void alloc_multiplayer_controller(compo::EntityContainer& e)
         SoundEvent     ev{.type = SoundEvent::play_sound, .entity_id = announcer_sound_base | say->sound};
         PlaySoundEvent play{
             .sound    = &static_cast<blam::tagref_t const&>(lines.value()[say->sound]),
+            .position = announcer_side(e, say->player),
             .relative = true,
         };
         sounds->inject(ev, &play);

@@ -1,6 +1,7 @@
 #include "game/game_mode.h"
 #include "game/teleporters.h"
 #include "world/devices.h"
+#include "ui/ui_profile.h"
 #include "network/networking.h"
 #include "network/relevance.h"
 #include "network/network_events.h"
@@ -81,6 +82,8 @@ using NetworkingManifest = compo::SubsystemManifest<
         PhysicsBus,
         const DeviceGroups,
         const TickClock,
+        const PlayerProfile,
+        const LocalLobby,
         const BlamFiles<halo_version>>,
     type_list_t<comp_app::ScreenshotProvider>>;
 
@@ -402,6 +405,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                            static_cast<u32>(m_connections.size());
         meta["player_count"]     = player_count;
         meta["player_count_max"] = 16;
+        meta["password"]         = !m_server_password.empty();
 
         if(m_server_auth.type == AuthType::Ed25519 && m_server_key)
             meta = sign_metadata_ed25519(std::move(meta), m_server_key);
@@ -833,6 +837,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         };
         std::copy(spawn.change_colors.begin(), spawn.change_colors.end(), wire.change_colors);
         wire.camouflaged = spawn.camouflaged ? 1 : 0;
+        wire.velocity[0] = spawn.velocity.x;
+        wire.velocity[1] = spawn.velocity.y;
+        wire.velocity[2] = spawn.velocity.z;
         /* Late joiners see it as already there */
         m_dynamic_spawns.push_back(wire);
         wire.announce = spawn.announce;
@@ -876,6 +883,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .loading_progress = 100,
                 .connected        = 0xFFFF,
                 .spawned          = info.spawned ? 0xFFFFu : 0x0u,
+                .color            = info.color,
             });
         }
         for(auto const& [_, state] : m_connections)
@@ -891,6 +899,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     .connected =
                         player.biped.get<NetworkInfo>().connected ? 0xFFFFu : 0x0u,
                     .spawned = info.spawned ? 0xFFFFu : 0x0u,
+                    .color   = info.color,
                 });
             }
         MessageBase header{.type = MessageBase::PlayerSync};
@@ -971,8 +980,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         {
             sync.deck     = net->instance_id;
             sync.position = glm::inverse(model->transform) * Vecf4(cam.camera.position, 1.f);
-            sync.position.w = 0.f;
         }
+        sync.position.w = info.crouch;
         return sync;
     }
 
@@ -2948,11 +2957,17 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 continue;
             if(info.name.empty())
                 info.name = get_random_name();
+            /* The seat's profile colour, whether or not it was set on the
+             * seat yet */
+            info.color = p.subsystem<PlayerProfile>()
+                             .at(p.subsystem<LocalLobby>().profile_of(cam.controller.index.value_or(info.seat_idx)))
+                             .color;
             send_single(
                 m_connection,
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(info.name),
                     .seat        = info.seat_idx,
+                    .color       = info.color,
                 }));
         }
     }
@@ -3025,6 +3040,10 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
            physics->authority != ObjectPhysics::Simulated ||
            std::exchange(m_driven_ticks[info.riding.vehicle], tick) == tick)
             return;
+        /* What the server said of it is stale while it's driven here; once
+         * let go, it waits for the server's next word rather than going
+         * back to where it was when the driving began */
+        m_object_history.erase(net->instance_id);
         send_all(
             Message<ObjectSync>({
                 .tick             = tick,
@@ -3043,7 +3062,15 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     /* Shots and hits, where CombatSync says they go */
     void send_combat(Proxy& p)
     {
-        m_combat.collect(p, is_server(), m_connection && m_join_confirmed);
+        /* The tick an object is played back at here, as apply_simulation
+         * shows it */
+        auto const shown_at = [this, &p](u32 net_id) -> u64 {
+            auto const& clock = p.subsystem<TickClock>();
+            libc_types::f64 const at = static_cast<libc_types::f64>(clock.tick()) + clock.alpha() - m_sync_lag -
+                             stream_delay(m_object_spacing, net_id);
+            return at > 1. ? static_cast<u64>(std::lround(at)) : 1;
+        };
+        m_combat.collect(p, is_server(), m_connection && m_join_confirmed, shown_at);
         auto route = [this](net_combat::route_t const& route) {
             std::set<HSteamNetConnection> targets;
             if(route.to == net_combat::route_t::server)
@@ -3090,8 +3117,16 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
             .difficulty = game.difficulty,
             .saves      = game.saves,
             .reverts    = game.reverts,
-            .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier)},
-            .flag_taken   = {game.flags[0].taken, game.flags[1].taken},
+            .flag_carrier = {static_cast<i16>(game.flags[0].carrier), static_cast<i16>(game.flags[1].carrier),
+                             static_cast<i16>(game.flags[2].carrier)},
+            .flag_taken   = {game.flags[0].taken, game.flags[1].taken, game.flags[2].taken},
+            .timed        = game.timed,
+            .juggernaut   = game.juggernaut,
+            .hill         = game.hill,
+            .hill_holder  = game.hill_holder,
+            .capture_blocked = game.capture_blocked,
+            .no_tracker      = game.no_tracker,
+            .unseen          = static_cast<libc_types::u8>(game.unseen),
         };
         std::vector<NavPointSync> navs;
         for(auto const& nav : game.nav_points)
@@ -3502,7 +3537,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 .flags            = static_cast<ObjectSync::flags_t>(
                     (physics.sleeping ? ObjectSync::sleeping : ObjectSync::none) |
                     (anim && anim->stance == "crouch" ? ObjectSync::crouched : ObjectSync::none) |
-                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none)),
+                    (anim && anim->stance == "asleep" ? ObjectSync::asleep : ObjectSync::none) |
+                    (anim ? static_cast<u32>(anim->dodge) << ObjectSync::dodge_shift : 0u)),
             };
             /* Where a unit aims and looks; one doing either is kept current */
             bool const aims  = anim && glm::dot(anim->aiming, anim->aiming) > 1e-6f;
@@ -3575,6 +3611,19 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
         return rated ? std::pair{priority, period} : std::pair{1.f, u64(1)};
     }
 
+    /* A share of what the connection can send a tick, never under the
+     * floor; held back while what was queued has not gone */
+    size_t tick_budget_of(HSteamNetConnection connection) const
+    {
+        SteamNetConnectionRealTimeStatus_t status{};
+        if(m_impl->GetConnectionRealTimeStatus(connection, &status, 0, nullptr) != k_EResultOK ||
+           status.m_nSendRateBytesPerSecond <= 0)
+            return tick_budget;
+        size_t const rate = static_cast<size_t>(status.m_nSendRateBytesPerSecond * stream_share / TickClock::rate);
+        size_t const budget = std::max(tick_budget, rate);
+        return static_cast<size_t>(status.m_cbPendingUnreliable) > budget ? tick_budget / 2 : budget;
+    }
+
     /* Each connection gets the players and moving objects due to it by
      * their rating, the most overdue for their worth first, within a byte
      * budget a tick. A player switching mode or deck is told reliably */
@@ -3638,7 +3687,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 return a.score > b.score;
             });
 
-            size_t                  budget = tick_budget;
+            size_t                  budget = tick_budget_of(connection);
             std::vector<ObjectSync> objects;
             for(auto const& d : due)
             {
@@ -4478,6 +4527,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     void leave_server(Proxy& p)
     {
         m_object_history.clear();
+        m_spawned_at.clear();
         m_object_spacing.clear();
         m_player_history.clear();
         m_warp_ticks.clear();
@@ -4817,7 +4867,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 info.seat_idx   = 0xFFFF; /* Not one of our local seats */
             }
 
-            (*player.player_info).name = player_join.player_name.str();
+            (*player.player_info).name  = player_join.player_name.str();
+            (*player.player_info).color = static_cast<u16>(player_join.color);
 
             send_single(
                 connection,
@@ -5235,6 +5286,13 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 game.flags[t].carrier = sync.flag_carrier[t];
                 game.flags[t].taken   = sync.flag_taken[t] != 0;
             }
+            game.juggernaut  = sync.juggernaut;
+            game.timed       = sync.timed != 0;
+            game.hill        = sync.hill;
+            game.hill_holder = sync.hill_holder;
+            game.capture_blocked = sync.capture_blocked;
+            game.no_tracker      = sync.no_tracker != 0;
+            game.unseen          = static_cast<GameState::unseen_t>(std::min<libc_types::u8>(sync.unseen, 2));
             if(sync.nav_points == 0)
                 game.nav_points.clear();
             break;
@@ -5435,6 +5493,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 m_connection,
                 Message<PlayerJoin>({
                     .player_name = *blam::bl_string::from(player_name),
+                    .color       = p.subsystem<PlayerProfile>().at(p.subsystem<LocalLobby>().profile_of(0)).color,
                 }));
             m_pending_seats = {0};
             break;
@@ -5538,6 +5597,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                 local.announce         = spawn.announce != 0;
                 std::copy(std::begin(spawn.change_colors), std::end(spawn.change_colors), local.change_colors.begin());
                 local.camouflaged = spawn.camouflaged != 0;
+                local.velocity    = Vecf3(spawn.velocity[0], spawn.velocity[1], spawn.velocity[2]);
+                m_spawned_at[spawn.tag.instance_id] = tick_now(p);
                 if(spawn.held.value() != 0)
                 {
                     local.held.tag_class =
@@ -5635,6 +5696,8 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                         info->name             = std::string(player.name.str());
                         info->loading_progress = player.loading_progress;
                         if(info->is_remote())
+                            info->color = static_cast<u16>(player.color);
+                        if(info->is_remote())
                             info->spawned = player.spawned == 0xFFFF;
                     }
                     auto* net_info = p.get<NetworkInfo>(it->second);
@@ -5648,6 +5711,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
                     auto  ref  = p.create_entity(shared_recipes::player_recipe);
                     auto& info = ref.get<PlayerInfo>();
                     info.name  = std::string(player.name.str());
+                    info.color = static_cast<u16>(player.color);
                     info.player_idx       = player.player_idx;
                     info.loading_progress = player.loading_progress;
                     info.remote           = "remote";
@@ -5821,6 +5885,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr u64    interp_ticks        = 3;
     /* Bytes of players and moving objects a connection is sent a tick, ~60 KB/s */
     static constexpr size_t tick_budget = 2048;
+    static constexpr f32    stream_share = .6f; /* of the send rate, for streams */
     /* The longest a stream waits for its next state, in ticks */
     static constexpr u64    max_period  = 30;
     /* Ticks without a new state before a player counts as come to rest */
@@ -5922,6 +5987,7 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     std::shared_ptr<GameEventBus::queue_type<DespawnObjectEvent>> m_despawn_queue;
     std::shared_ptr<GameEventBus::queue_type<EquipWeaponEvent>>   m_pickup_queue;
     std::map<u32, std::deque<ObjectSync>>    m_object_history;
+    std::map<u32, u64>                       m_spawned_at; /*!< Tick each server object was made here */
     /* On the server, vehicles their client drivers simulate: what they sent,
      * and how many ticks it arrives behind */
     struct driven_t
@@ -5951,7 +6017,9 @@ struct Networking : compo::RestrictedSubsystem<Networking, NetworkingManifest>
     static constexpr f32         spacing_margin    = 1.5f;
     static constexpr u64         max_spacing       = 15;
     /* Past its newest state, a stream carries on along its velocity this long */
-    static constexpr libc_types::f64 max_extrapolation = 10.;
+    static constexpr libc_types::f64 max_extrapolation = 30.; /* ticks: the slowest stream's period */
+    static constexpr libc_types::f64 dry_ticks         = 2.;
+    static constexpr libc_types::f64 fresh_ticks       = 150.;
     /* A unit's gaze outlasts its last sync this long, s */
     static constexpr libc_types::f32 gaze_hold = .3f;
 
@@ -6191,11 +6259,30 @@ struct ObjectFollower
                 physics.authority = ObjectPhysics::Simulated;
                 continue;
             }
-            physics.authority = ObjectPhysics::Follower;
+            /* An item, not driven: the client's own physics can carry it
+             * where the server has not yet said */
+            bool const item = !physics.drive && !p.get<AnimationPlayback>(object.id());
             auto it = net.m_object_history.find(info.instance_id);
             if(info.instance_id == 0 || it == net.m_object_history.end())
+            {
+                /* Fresh from the server and not yet heard of: it flies as
+                 * thrown until its first state comes */
+                auto const born = net.m_spawned_at.find(info.instance_id);
+                bool const fresh = item && born != net.m_spawned_at.end() &&
+                                   static_cast<f64>(born->second) + Networking::fresh_ticks > now;
+                physics.authority = fresh ? ObjectPhysics::Simulated : ObjectPhysics::Follower;
                 continue;
+            }
             f64 const at = now - Networking::stream_delay(net.m_object_spacing, info.instance_id);
+            /* Run dry while moving: carried on by the client's physics from
+             * the last velocity it was given */
+            if(auto const& last = it->second.back();
+               item && at - static_cast<f64>(last.tick) > Networking::dry_ticks && !(last.flags & ObjectSync::sleeping))
+            {
+                physics.authority = ObjectPhysics::Simulated;
+                continue;
+            }
+            physics.authority = ObjectPhysics::Follower;
             if(auto pose = around(it->second, at))
             {
                 auto const& [from, to, alpha] = *pose;
@@ -6204,9 +6291,12 @@ struct ObjectFollower
                 if(auto* anim = p.get<AnimationPlayback>(object.id());
                    anim && !p.get<PlayerInfo>(object.id()) &&
                    (anim->stance == "stand" || anim->stance == "crouch" || anim->stance == "asleep"))
+                {
                     anim->stance = (to.flags & ObjectSync::asleep)     ? "asleep"
                                    : (to.flags & ObjectSync::crouched) ? "crouch"
                                                                        : "stand";
+                    anim->dodge = static_cast<u8>((to.flags & ObjectSync::dodge) >> ObjectSync::dodge_shift);
+                }
                 /* And its gaze, which lapses unless the server keeps it up */
                 if(auto* anim = p.get<AnimationPlayback>(object.id());
                    anim && !p.get<PlayerInfo>(object.id()) &&
@@ -6258,13 +6348,22 @@ struct ObjectFollower
                 {
                     auto const& prev = it->second[it->second.size() - 2];
                     f64 const   span = static_cast<f64>(to.tick - prev.tick);
+                    /* The feet's step: a crouch moves the eye, not the body */
+                    auto const eye = [&info](f32 crouch) {
+                        return glm::mix(info.biped.eye_height, info.biped.crouch_eye_height, crouch);
+                    };
+                    Vecf3 step = Vecf3(to.position) - Vecf3(prev.position);
+                    step.z -= eye(to.position.w) - eye(prev.position.w);
                     if(span > 0. && span <= static_cast<f64>(Networking::max_spacing) && !jumped(prev, to))
-                        cam.camera.position += (Vecf3(to.position) - Vecf3(prev.position)) *
-                                               static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
+                        cam.camera.position +=
+                            step * static_cast<f32>(std::min(past, Networking::max_extrapolation) / span);
                 }
                 cam.camera.rotation = glm::slerp(from.rotation, to.rotation, alpha);
                 info.mode.physics   = to.flags & CameraSync::physics;
                 info.crouched       = to.flags & CameraSync::crouched;
+                /* The eye's own depth, so its feet are where the sender's are */
+                info.crouch = jumped(from, to) ? (alpha < 1.f ? from : to).position.w
+                                               : glm::mix(from.position.w, to.position.w, alpha);
             }
         }
     }

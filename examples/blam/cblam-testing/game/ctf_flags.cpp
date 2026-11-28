@@ -12,6 +12,7 @@
 #include <coffee/components/restricted_subsystem.h>
 
 #include <map>
+#include <random>
 #include <set>
 
 using FlagManifest = compo::SubsystemManifest<
@@ -30,10 +31,11 @@ using FlagManifest = compo::SubsystemManifest<
         const BlamFiles<halo_version>>,
     empty_list_t>;
 
-/* Capture the flag on the authority: each team's flag lies at its base, is
- * carried as a weapon, and lies where its carrier fell. Who may take it,
- * when it goes back and what a capture is, the game type's rules decide:
- * they hear a player touching a flag on the ground and give or reset it */
+/* Capture the flag and Oddball on the authority: each team's flag lies at
+ * its base, Oddball's ball at one of its spawns; either is carried as a
+ * weapon and lies where its carrier fell. Who may take one, when it goes
+ * back and what it scores, the game type's rules decide: they hear a player
+ * touching one on the ground and give or reset it */
 struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
 {
     using type  = FlagSystem;
@@ -58,20 +60,28 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         auto&       state = p.template subsystem<GameState>();
         if(m_load_generation != files.load_generation)
             begin(state, files);
-        if(state.kind != GameState::kind_t::multiplayer || state.game_type != GameSetup::game_type_t::ctf ||
-           !m_flag)
+        arm_infected(p, state);
+        bool const ctf     = state.game_type == GameSetup::game_type_t::ctf;
+        bool const oddball = state.game_type == GameSetup::game_type_t::oddball;
+        for(size_t team = 0; team < state.flags.size(); team++)
+            m_active[team] = state.kind == GameState::kind_t::multiplayer && m_weapon[team] &&
+                             (team == GameState::ball ? oddball : ctf);
+        if(std::none_of(m_active.begin(), m_active.end(), [](bool a) { return a; }))
             return;
 
-        for(size_t team = 0; team < state.flags.size(); team++)
-            if(state.flags[team].placed && !m_spawned[team])
+        /* The ball waits for the rules to put it in play */
+        for(size_t team = 0; team < GameState::ball; team++)
+            if(m_active[team] && state.flags[team].placed && !m_spawned[team] && !state.flags[team].removed)
                 spawn(p, state, team);
         carriers(p, state);
         lying(p, state, dt);
         for(auto const& command : commands)
-            if(command.team < state.flags.size() && state.flags[command.team].placed)
+            if(command.team < state.flags.size() && m_active[command.team] && state.flags[command.team].placed)
             {
                 if(command.kind == FlagCommandEvent::give)
                     give(p, state, command.team, command.player);
+                else if(command.kind == FlagCommandEvent::remove)
+                    remove(p, state, command.team);
                 else
                     reset(p, state, command.team);
             }
@@ -79,13 +89,15 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         markers(state);
     }
 
-    /* Each team's base is its ctf_flag netgame flag */
+    /* Each team's base is its ctf_flag netgame flag; the ball's spawns are
+     * the oddball_spawn ones */
     void begin(GameState& state, BlamFiles<halo_version> const& files)
     {
         m_load_generation = files.load_generation;
-        m_flag            = flag_weapon(files);
+        m_weapon          = {flag_weapon(files), flag_weapon(files), flag_weapon(files, true)};
         m_spawned         = {};
-        m_released        = {-1, -1};
+        m_released        = {-1, -1, -1};
+        m_ball_spawns.clear();
         m_touching.clear();
         auto const* scenario = files.container.scenario().value_or(nullptr);
         if(!scenario)
@@ -100,28 +112,34 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                 auto& kept  = state.flags[flag.team_index];
                 kept.base   = flag.pos;
                 kept.placed = true;
-            }
+            } else if(flag.type == type_t::oddball_spawn)
+                m_ball_spawns.push_back(flag.pos);
+        if(!m_ball_spawns.empty())
+        {
+            state.flags[GameState::ball].base   = m_ball_spawns.front();
+            state.flags[GameState::ball].placed = true;
+        }
     }
 
     /* A flag in someone's hands stays theirs until they let go of it, by
      * dying or otherwise; it then lies near where they were */
     void carriers(Proxy& p, GameState& state)
     {
-        std::map<u32, Vecf3> holding;
+        std::map<std::pair<blam::tag_t const*, u32>, Vecf3> holding;
         for(auto ent : p.template select<PlayerInfo, BipedEquipment, Model>())
         {
             auto [info, equip, model] = ent.components();
             auto const* status        = p.template get<BipedStatus>(ent.id());
-            if((status && status->dead) || equip.objective.tag != m_flag)
+            if((status && status->dead) || !equip.objective.tag)
                 continue;
-            holding[info.player_idx] = model.position;
+            holding[{equip.objective.tag, info.player_idx}] = model.position;
         }
         for(size_t team = 0; team < state.flags.size(); team++)
         {
             auto& flag = state.flags[team];
-            if(flag.carrier < 0)
+            if(!m_active[team] || flag.carrier < 0)
                 continue;
-            if(auto it = holding.find(static_cast<u32>(flag.carrier)); it != holding.end())
+            if(auto it = holding.find({m_weapon[team], static_cast<u32>(flag.carrier)}); it != holding.end())
             {
                 m_last_seen[team] = it->second;
                 continue;
@@ -138,24 +156,31 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
      * seen; while away from its base its idle time runs */
     void lying(Proxy& p, GameState& state, f32 dt)
     {
-        std::map<u64, Vecf3> flags;
+        std::map<u64, std::pair<Vecf3, blam::tag_t const*>> flags;
         for(auto ent : p.template select<Model, NetworkInfo>())
         {
             auto [model, net] = ent.components();
-            if(model.origin_object == m_flag && net.instance_id != 0 &&
-               !SpawnObjectEvent::is_impostor(net.instance_id) && !p.template get<PlayerInfo>(ent.id()))
-                flags[ent.id()] = model.position;
+            if(model.origin_object &&
+               std::find(m_weapon.begin(), m_weapon.end(), model.origin_object) != m_weapon.end() &&
+               net.instance_id != 0 && !SpawnObjectEvent::is_impostor(net.instance_id) &&
+               !p.template get<PlayerInfo>(ent.id()))
+                flags[ent.id()] = {model.position, model.origin_object};
         }
         for(size_t team = 0; team < state.flags.size(); team++)
         {
             auto& flag = state.flags[team];
+            if(!m_active[team] || flag.removed)
+                continue;
             if(flag.object && !flags.contains(flag.object))
                 flag.object = 0;
             if(flag.carrier < 0 && !flag.object)
             {
                 f32 best = adopt_reach;
-                for(auto const& [id, at] : flags)
+                for(auto const& [id, found] : flags)
                 {
+                    auto const& [at, tag] = found;
+                    if(tag != m_weapon[team])
+                        continue;
                     bool const other = std::any_of(state.flags.begin(), state.flags.end(), [id](auto const& f) {
                         return f.object == id;
                     });
@@ -167,7 +192,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                 }
             }
             if(flag.object)
-                m_last_seen[team] = flags[flag.object];
+                m_last_seen[team] = flags[flag.object].first;
             flag.idle = flag.carrier < 0 && flag.taken ? flag.idle + dt : 0.f;
         }
     }
@@ -185,13 +210,15 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                 continue;
             for(size_t team = 0; team < state.flags.size(); team++)
             {
-                auto const* flag = p.template get<Model>(state.flags[team].object);
+                auto const* flag = m_active[team] ? p.template get<Model>(state.flags[team].object) : nullptr;
                 if(!flag)
                     continue;
                 bool const reach = within_pickup_reach(info, cam, flag->position, state.flag_reach);
+                /* Let go of: theirs again once they have walked off from it,
+                 * not while it is still tossed up out of reach */
                 if(m_released[team] == static_cast<i32>(info.player_idx))
                 {
-                    if(!reach)
+                    if(glm::distance(Vecf2(flag->position), Vecf2(cam.camera.position)) > state.flag_reach + release_margin)
                         m_released[team] = -1;
                     continue;
                 }
@@ -217,8 +244,26 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         for(size_t team = 0; team < state.flags.size(); team++)
         {
             auto const& flag = state.flags[team];
-            if(!flag.placed)
+            if(!flag.placed || !m_active[team] || flag.removed)
                 continue;
+            /* The ball, for everyone: in play once it is somewhere */
+            if(team == GameState::ball)
+            {
+                if(flag.carrier < 0 && !flag.object)
+                    continue;
+                GameState::nav_point_t ball{
+                    .arrow  = "default",
+                    .flag   = std::string(marker_prefix) + "ball",
+                    .offset = marker_lift,
+                    .team   = static_cast<i16>(blam::scn::unit::team_t::player),
+                };
+                if(flag.carrier >= 0)
+                    ball.unit = flag.carrier;
+                else
+                    ball.object = flag.object;
+                navs.push_back(ball);
+                continue;
+            }
             GameState::nav_point_t mark{
                 .arrow    = team == 0 ? "flag_red" : "flag_blue",
                 .flag     = std::string(marker_prefix) + std::to_string(team),
@@ -256,7 +301,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
             return;
         auto& game = p.template subsystem<GameEventBus>();
         despawn(p, flag.object);
-        EquipWeaponEvent equip{.entity_id = body, .weapon = m_flag->tag_id, .mode = EquipWeaponEvent::pick_up};
+        EquipWeaponEvent equip{.entity_id = body, .weapon = m_weapon[team]->tag_id, .mode = EquipWeaponEvent::pick_up};
         GameEvent        ev{.type = GameEvent::EquipWeapon};
         game.inject(ev, &equip);
         flag.carrier     = static_cast<i32>(player);
@@ -266,7 +311,40 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         flag.idle    = 0.f;
     }
 
-    void reset(Proxy& p, GameState& state, size_t team)
+    /* Infection's infected each hold a ball they cannot let go of, so it
+     * shows they only strike; a cured or human body gives it up */
+    void arm_infected(Proxy& p, GameState const& state)
+    {
+        auto const* ball = m_weapon[GameState::ball];
+        if(state.game_type != GameSetup::game_type_t::infection || state.kind != GameState::kind_t::multiplayer ||
+           !ball)
+            return;
+        auto& game = p.template subsystem<GameEventBus>();
+        for(auto ent : p.template select<PlayerInfo, BipedEquipment>())
+        {
+            auto [info, equip] = ent.components();
+            auto const* status = p.template get<BipedStatus>(ent.id());
+            bool const  dead   = status && status->dead;
+            bool const  holds  = equip.objective.tag == ball;
+            bool const  wants  = state.infected(info.player_idx) && !dead;
+            if(holds == wants || dead)
+            {
+                m_arming.erase(ent.id());
+                continue;
+            }
+            if(wants && !m_arming.insert(ent.id()).second)
+                continue;
+            EquipWeaponEvent equip_ev{
+                .entity_id = ent.id(),
+                .weapon    = ball->tag_id,
+                .mode      = wants ? EquipWeaponEvent::pick_up : EquipWeaponEvent::remove};
+            GameEvent ev{.type = GameEvent::EquipWeapon};
+            game.inject(ev, &equip_ev);
+        }
+    }
+
+    /* Out of play: out of hands and off the map until reset */
+    void remove(Proxy& p, GameState& state, size_t team)
     {
         auto& flag = state.flags[team];
         if(flag.carrier >= 0)
@@ -274,7 +352,30 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
                 if(ent.template get<PlayerInfo>().player_idx == static_cast<u32>(flag.carrier))
                 {
                     EquipWeaponEvent equip{
-                        .entity_id = ent.id(), .weapon = m_flag->tag_id, .mode = EquipWeaponEvent::remove};
+                        .entity_id = ent.id(), .weapon = m_weapon[team]->tag_id, .mode = EquipWeaponEvent::remove};
+                    GameEvent ev{.type = GameEvent::EquipWeapon};
+                    p.template subsystem<GameEventBus>().inject(ev, &equip);
+                }
+        despawn(p, flag.object);
+        flag.carrier     = -1;
+        flag.object      = 0;
+        flag.taken       = false;
+        flag.idle        = 0.f;
+        flag.removed     = true;
+        m_spawned[team]  = true;
+        m_released[team] = -1;
+    }
+
+    void reset(Proxy& p, GameState& state, size_t team)
+    {
+        auto& flag   = state.flags[team];
+        flag.removed = false;
+        if(flag.carrier >= 0)
+            for(auto ent : p.template select<PlayerInfo>())
+                if(ent.template get<PlayerInfo>().player_idx == static_cast<u32>(flag.carrier))
+                {
+                    EquipWeaponEvent equip{
+                        .entity_id = ent.id(), .weapon = m_weapon[team]->tag_id, .mode = EquipWeaponEvent::remove};
                     GameEvent ev{.type = GameEvent::EquipWeapon};
                     p.template subsystem<GameEventBus>().inject(ev, &equip);
                 }
@@ -284,6 +385,9 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         flag.taken       = false;
         m_released[team] = -1;
         flag.idle    = 0.f;
+        /* The ball comes back at any of its spawns */
+        if(team == GameState::ball && !m_ball_spawns.empty())
+            flag.base = m_ball_spawns[std::uniform_int_distribution<size_t>(0, m_ball_spawns.size() - 1)(m_random)];
         spawn(p, state, team);
     }
 
@@ -292,7 +396,7 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
         m_spawned[team]   = true;
         m_last_seen[team] = state.flags[team].base;
         SpawnObjectEvent spawn{
-            .object       = m_flag->as_ref(),
+            .object       = m_weapon[team]->as_ref(),
             .position     = state.flags[team].base + Vecf3{0.f, 0.f, spawn_lift},
             .server_owned = true,
         };
@@ -314,16 +418,21 @@ struct FlagSystem : compo::RestrictedSubsystem<FlagSystem, FlagManifest>
     static constexpr f32  marker_lift   = .6f;  /* wu above what a marker is over */
     static constexpr auto marker_prefix = std::string_view("ctf:");
     static constexpr f32 spawn_lift  = .2f;  /* wu above its base */
+    static constexpr f32 release_margin = 1.f; /* wu past reach a carrier who let go must step */
 
     std::unique_ptr<TickQueue>                                  m_ticks;
     std::shared_ptr<GameEventBus::queue_type<FlagCommandEvent>> m_command_queue;
     std::vector<FlagCommandEvent>                               m_commands;
     u32                                                         m_load_generation{0};
-    blam::tag_t const*                                          m_flag{nullptr};
-    std::array<bool, 2>                                         m_spawned{};
-    std::array<Vecf3, 2>                                        m_last_seen{};
+    std::array<blam::tag_t const*, 3>                           m_weapon{}; /*!< Each slot's: flag, flag, ball */
+    std::array<bool, 3>                                         m_active{}; /*!< In play for this game type */
+    std::array<bool, 3>                                         m_spawned{};
+    std::array<Vecf3, 3>                                        m_last_seen{};
     std::set<std::pair<size_t, u32>>                            m_touching;
-    std::array<i32, 2>                                          m_released{-1, -1}; /*!< Let go of it, still in reach */
+    std::array<i32, 3>                                          m_released{-1, -1, -1}; /*!< Let go of it, still in reach */
+    std::vector<Vecf3>                                          m_ball_spawns;
+    std::set<u64>                                               m_arming; /*!< Infected handed their ball */
+    std::mt19937                                                m_random{std::random_device{}()};
 };
 
 void alloc_ctf_flags(compo::EntityContainer& e)

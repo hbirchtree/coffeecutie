@@ -9,6 +9,7 @@
 #include "animation/model_markers.h"
 #include "audio/sounds.h"
 #include "ticks.h"
+#include "network/networking.h"
 
 #include <blam/volta/blam_effects.h>
 #include <blam/volta/blam_shaders.h>
@@ -40,6 +41,7 @@ using AnimationControllerManifest = compo::SubsystemManifest<
         ModelCache<halo_version>,
         const BlamFiles<halo_version>,
         const LoadingStatus,
+        const NetworkState,
         const TickClock>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
@@ -114,6 +116,8 @@ struct AnimationController
             auto const* info    = p.template get<PlayerInfo>(ent.id());
             auto const* physics = p.template get<ObjectPhysics>(ent.id());
             auto const* model   = p.template get<Model>(ent.id());
+            if(model)
+                anim.object_inverse = glm::inverse(model->transform);
             /* First-person models too, for markers such as the muzzle, and
              * riders, whose view is at their camera marker */
             bool const posed = (info && (info->biped.collision || info->riding.vehicle)) ||
@@ -426,10 +430,21 @@ struct AnimationController
     {
         auto& walker = m_walkers[id];
         if(dead)
-            return die(id, anim, stance(p, anim.graph, unit, weapon), grounded);
+            return die(p, id, anim, stance(p, anim.graph, unit, weapon), grounded);
         /* Revived: back on its feet, the death clip fading as idle takes over */
         if(walker.state == walker_t::dead)
-            walker.state = walker_t::ground;
+        {
+            walker.state  = walker_t::ground;
+            walker.killed = false;
+        }
+        /* A new blow it flinches from */
+        if(auto const* status = p.template get<BipedStatus>(id); status && status->pings != walker.pings)
+        {
+            walker.pings = status->pings;
+            ping(p, id, anim);
+        }
+        settle_ping(p, id, anim);
+        dodge(p, id, anim, unit, weapon);
         Vecf3 velocity{};
         if(walker.seen && dt > 0.f)
             velocity = (feet - walker.feet) / dt;
@@ -522,8 +537,12 @@ struct AnimationController
                     layer.fade   = 1.f / blend_time;
                 }
             }
+            /* Without strides to blend to, it idles on the move */
+            bool const strides = std::ranges::any_of(moves, [&st](auto m) {
+                return st[m] >= 0 && st[m] != st[Slot::idle];
+            });
             if(st[Slot::idle] >= 0)
-                anim.blend(graph, st[Slot::idle], 1.f - moving, blend_time);
+                anim.blend(graph, st[Slot::idle], strides ? 1.f - moving : 1.f, blend_time);
             for(u32 i = 0; i < 4; i++)
             {
                 i32 const move = st[moves[i]];
@@ -567,23 +586,183 @@ struct AnimationController
 
     /* Falls while airborne, lands dead, then lies there. One found dead,
      * such as a body placed by the map, starts out lying down */
-    void die(u64 id, AnimationPlayback& anim, stance_t const& st, bool grounded)
+    void die(Proxy& p, u64 id, AnimationPlayback& anim, stance_t const& st, bool grounded)
     {
-        auto&     walker = m_walkers[id];
-        i32 const clip = grounded || st[UnitSlot::airborne_dead] < 0
-                             ? st[UnitSlot::landing_dead]
-                             : st[UnitSlot::airborne_dead];
-        bool const found = !walker.seen;
+        auto&      walker = m_walkers[id];
+        bool const found  = !walker.seen;
+        i32        clip   = grounded || st[UnitSlot::airborne_dead] < 0
+                                ? st[UnitSlot::landing_dead]
+                                : st[UnitSlot::airborne_dead];
+        /* Killed on its feet: how the blow struck picks the fall, which then
+         * plays out */
+        if(walker.state == walker_t::dead && walker.killed)
+            return;
+        if(!found && walker.state != walker_t::dead && clip == st[UnitSlot::landing_dead])
+            if(auto const killed = kill_clip(p, id, anim); killed >= 0)
+                clip = killed;
         walker.seen      = true;
         if(clip < 0 || (walker.state == walker_t::dead && walker.land_animation == clip))
             return;
         walker.state          = walker_t::dead;
         walker.land_animation = clip;
+        walker.killed         = clip != st[UnitSlot::landing_dead] && clip != st[UnitSlot::airborne_dead];
         anim.stop(AnimationPlayback::aim_slot);
         anim.stop(AnimationPlayback::aim_move_slot);
+        anim.stop(AnimationPlayback::ping_slot);
         if(auto* layer = anim.crossfade(anim.graph, clip, found ? 0.f : blend_time, false);
            layer && found)
             layer->time = std::numeric_limits<f32>::max();
+    }
+
+    i32 kill_clip(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        auto const* status = p.template get<BipedStatus>(id);
+        return status ? damage_clip(p, id, anim, status->blow_flags & BipedStatus::blow_hard ? 3u : 2u) : -1;
+    }
+
+    /* Its flinch from the last blow, over whatever it is doing: one of the
+     * ping's variants, chained after the first */
+    void ping(Proxy& p, u64 id, AnimationPlayback& anim)
+    {
+        auto& walker = m_walkers[id];
+        auto const* status = p.template get<BipedStatus>(id);
+        if(!status)
+            return;
+        bool const hard = status->blow_flags & BipedStatus::blow_hard;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips = anim.graph->animations.data(magic);
+        /* A flinch under way plays out unless a harder blow lands; restarted
+         * by every round of a burst it would never get past its first frames */
+        if(auto const& now = anim.layers[AnimationPlayback::ping_slot];
+           now.active() && clips.has_value() && now.animation < clips.value().size() && (walker.ping_hard || !hard))
+        {
+            auto const& playing = clips.value()[now.animation];
+            if(now.time < playing.frame_count / playing.frame_rate() * (2.f / 3.f))
+                return;
+        }
+        i32 clip = damage_clip(p, id, anim, hard ? 1u : 0u);
+        if(clip < 0)
+            return;
+        if(clips.has_value())
+        {
+            std::vector<i32> variants;
+            for(i32 at = clip; at >= 0 && static_cast<size_t>(at) < clips.value().size() && variants.size() < 8;
+                at = clips.value()[at].next_animation)
+                variants.push_back(at);
+            clip = variants[m_ping_pick++ % variants.size()];
+        }
+        /* A hard ping is a base clip: it takes over the nodes it animates */
+        anim.layers[AnimationPlayback::ping_slot] = AnimationLayer{
+            .graph         = anim.graph,
+            .animation     = static_cast<u32>(clip),
+            .animated_only = true,
+            .loop          = false,
+        };
+        walker.ping_clip = clip;
+        walker.ping_hard = hard;
+    }
+
+    /* An actor's dodge: it evades a shot to one side and dives from a
+     * grenade, by where it is getting away to. Peers play what it is sent */
+    void dodge(Proxy& p, u64 id, AnimationPlayback& anim, std::string const& unit, std::string const& weapon)
+    {
+        auto& walker = m_walkers[id];
+        auto& layer  = anim.layers[AnimationPlayback::action_slot];
+        if(auto const* actor = p.template get<Actor>(id); actor && !p.template subsystem<NetworkState>().replica)
+        {
+            if(actor->dodges != walker.dodges)
+            {
+                walker.dodges     = actor->dodges;
+                auto const* model = p.template get<Model>(id);
+                anim.dodge        = model ? dodge_slot(p, anim, *model, *actor, unit, weapon) : 0;
+                walker.dodge      = 0;
+            } else if(anim.dodge && walker.dodge == anim.dodge &&
+                      (!layer.graph || layer.finished || layer.target == 0.f))
+                anim.dodge = 0;
+        }
+        if(anim.dodge == walker.dodge)
+            return;
+        walker.dodge = anim.dodge;
+        if(!anim.dodge)
+            return;
+        i32 const clip = stance(p, anim.graph, unit, weapon)[static_cast<Slot>(anim.dodge - 1)];
+        if(clip < 0)
+            return;
+        /* Over the walk it moves by, in full */
+        layer = AnimationLayer{
+            .graph         = anim.graph,
+            .animation     = static_cast<u32>(clip),
+            .weight        = 0.f,
+            .target        = 1.f,
+            .fade          = 1.f / .1f,
+            .animated_only = true,
+            .loop          = false,
+        };
+    }
+
+    u8 dodge_slot(
+        Proxy& p, AnimationPlayback const& anim, Model const& model, Actor const& actor, std::string const& unit,
+        std::string const& weapon)
+    {
+        auto const& st  = stance(p, anim.graph, unit, weapon);
+        Vecf3 const away = model.position - actor.dodge_from;
+        f32 const   ahead = glm::dot(away, model.rotation * Vecf3{1.f, 0.f, 0.f});
+        f32 const   left  = glm::dot(away, model.rotation * Vecf3{0.f, 1.f, 0.f});
+        Slot const  evade = left >= 0.f ? Slot::evade_left : Slot::evade_right;
+        Slot const  side  = left >= 0.f ? Slot::dive_left : Slot::dive_right;
+        Slot const  dive  = std::abs(ahead) <= std::abs(left) ? side : ahead >= 0.f ? Slot::dive_front : Slot::dive_back;
+        for(Slot slot : actor.diving ? std::array{dive, side, evade} : std::array{evade, side, side})
+            if(st[slot] >= 0)
+                return static_cast<u8>(slot + 1);
+        return 0;
+    }
+
+    /* The flinch fades out as it ends, rather than chaining into its other
+     * variants or holding its last frame */
+    void settle_ping(Proxy& p, u64 id, AnimationPlayback& anim)
+    {
+        auto const& walker = m_walkers[id];
+        auto& layer = anim.layers[AnimationPlayback::ping_slot];
+        if(!layer.graph || layer.target == 0.f)
+            return;
+        auto const& magic = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips = layer.graph->animations.data(magic);
+        if(!clips.has_value() || static_cast<i32>(layer.animation) != walker.ping_clip ||
+           layer.animation >= clips.value().size())
+        {
+            anim.stop(AnimationPlayback::ping_slot);
+            return;
+        }
+        auto const& clip     = clips.value()[layer.animation];
+        f32 const   length   = clip.frame_count / clip.frame_rate();
+        f32 const   fade_out = std::min(.15f, length * .25f);
+        if(layer.finished || layer.time >= length - fade_out)
+        {
+            layer.target = 0.f;
+            layer.fade   = 1.f / fade_out;
+        }
+    }
+
+    /* The graph's unit damage clip for a blow: soft or hard ping (0, 1) or
+     * kill (2, 3), from the front, left, right or back, to the gut, chest
+     * or head */
+    i32 damage_clip(Proxy& p, u64 id, AnimationPlayback const& anim, u32 type)
+    {
+        auto const* status = p.template get<BipedStatus>(id);
+        auto const* model  = p.template get<Model>(id);
+        if(!status || !model || !anim.graph || glm::dot(status->blow, status->blow) < 1e-8f)
+            return -1;
+        auto const& magic  = p.template subsystem<BlamFiles<halo_version>>().container.magic;
+        auto        clips  = anim.graph->unit_damages.data(magic);
+        if(!clips.has_value())
+            return -1;
+        /* Where it came from, in the unit's own frame: x ahead, y to its left */
+        Vecf3 const from  = glm::inverse(model->rotation) * -status->blow;
+        f32 const   angle = glm::degrees(std::atan2(from.y, from.x));
+        u32 const   side  = std::abs(angle) <= 45.f ? 0u : angle > 45.f && angle <= 135.f ? 1u : angle < -45.f && angle >= -135.f ? 2u : 3u;
+        u32 const   part  = status->blow_flags & BipedStatus::blow_head ? 2u : status->blow_flags & BipedStatus::blow_high ? 1u : 0u;
+        size_t const at   = type * unit_damage_types + side * unit_damage_parts + part;
+        return at < clips.value().size() ? clips.value()[at] : -1;
     }
 
     /* A rider plays its seat's animations: the seat's label names a unit in
@@ -728,12 +907,11 @@ struct AnimationController
             };
             using V = blam::antr::vehicle;
 
-            /* Canopy shut with a driver. Banshee clip names are inverted:
-             * "closing" ends open, "opening" ends shut */
+            /* Canopy shut with a driver, open without one */
             auto const& st = stance(p, graph, "stand", "");
             i32 const   canopy = driven.contains(ent.id())
-                                     ? st[UnitSlot::opening]
-                                     : st[UnitSlot::closing];
+                                     ? st[UnitSlot::closing]
+                                     : st[UnitSlot::opening];
             auto& base = anim.layers[0];
             if(canopy < 0)
                 base = AnimationLayer{};
@@ -1675,6 +1853,11 @@ struct AnimationController
     static constexpr f32 run_threshold  = 2.5f;
     static constexpr f32 stride_speed   = 1.5f;
     static constexpr f32 blend_time     = .15f; /* s */
+    /* A graph's unit damages: soft and hard ping then kill, each by front, left,
+     * right and back, each by 11 body parts (gut, chest, head first) */
+    static constexpr size_t unit_damage_parts = 11;
+    static constexpr size_t unit_damage_types = 4 * unit_damage_parts;
+    u32                     m_ping_pick{0}; /*!< Steps through a ping's variants */
     static constexpr f32 lag_response   = 10.f; /* 1/s, how fast the hands follow a turn */
     static constexpr f32 lag_turn_rate  = 3.f;  /* rad/s at which the hands trail fully */
     static constexpr f32 lag_fall_speed = 4.f;  /* wu/s */
@@ -1700,6 +1883,12 @@ struct AnimationController
         f32   air_time{0.f};
         f32   fall_speed{0.f}; /* fastest descent this fall, wu/s */
         i32   land_animation{-1};
+        bool  killed{false}; /*!< Dead by a unit damage clip, kept to its end */
+        u8    pings{0};      /*!< BipedStatus::pings last flinched at */
+        u8    dodges{0};     /*!< Actor::dodges last animated */
+        u8    dodge{0};      /*!< AnimationPlayback::dodge last played */
+        i32   ping_clip{-1}; /*!< the flinch it plays */
+        bool  ping_hard{false};
         /* The seat it sits in, {0, -1} standing */
         std::pair<u64, i16> seat{0, -1};
         bool                entering{false};

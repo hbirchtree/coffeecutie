@@ -1,5 +1,6 @@
 #include "ui/ui.h"
 
+#include <glm/gtc/packing.hpp>
 #include <bit>
 #include <cctype>
 #include <set>
@@ -163,6 +164,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         premultiplied = 0x8, /* the texel's color is its coverage, and the
                               * color's alpha how much it covers */
         darken = 0x10, /* the texel's brightness is how dark what is behind turns */
+        plasma = 0x20, /* Xbox: noise veins over the texel; y the noise's layer, z/w its atlas rect as halves,
+                        * bits 16+ of x the time */
     };
 
     struct atlas_intermediate_t
@@ -271,6 +274,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     bool                            m_click_pending{false};
     CIMouseButtonEvent::MouseButton mouse_buttons{CIMouseButtonEvent::NoneBtn};
     generation_idx_t                m_cursor_bitmap;
+    /* Xbox: the noise its selected items and their descriptions carry */
+    generation_idx_t                m_plasma_noise;
     generation_idx_t                m_default_font; /*!< for text with none */
     generation_idx_t                m_hud_font;     /*!< hudg's, for messages */
     VirtualKeyboardData             m_keyboard;
@@ -288,6 +293,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::vector<button_icon_t> m_button_icons;
     /* The shader's instance array, UI_INSTANCES */
     size_t m_instance_slots{512};
+    /* Scroll position of each PC column list */
+    std::map<blam::ui_element const*, u16> m_column_first;
 
     /* Tokens become private-use characters until they are drawn */
     static constexpr char16_t first_icon_char = 0xE000;
@@ -343,6 +350,15 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         UIDataSource::list_t const* list{nullptr};
         std::optional<u16>          item{};
         bool                        item_root{false};
+        /* Rows the engine fills below a widget whose game data input names
+         * them, e.g. the pregame's players: repeated children by order */
+        UIDataSource::list_t const* rows{nullptr};
+        bool                        row{false}; /*!< item is a row's; its text only replaces when given */
+        /* A column list's row: 1 the focused one, 0 another, -1 not a row */
+        libc_types::i8 column_row{-1};
+        /* The root of a list's description of its focused item, or of a
+         * panel placed for one controller (a split screen seat's) */
+        bool describes{false};
     };
 
     Vecf2 window_to_ui(Vecf2 const& point)
@@ -389,7 +405,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         generation_idx_t const& item, layout_data_t const& layout, Fn&& visit)
     {
         UIElementItem& el = ui_cache.find(item)->second;
-        if(!el.visible)
+        if(!el.visible || (m_data && !m_data->shown(el.tag_name)))
             return;
 
         auto& bounds = el.ui_element->bounds;
@@ -407,14 +423,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         /* Its bounds are screen-absolute, and its images follow the list's
          * focused item */
         if(el.extended_description.valid())
+        {
+            /* A column list's rows also name the focused item for it */
+            auto const* described = column_rows(el).empty() ? nullptr : rows_of(el);
             traverse_widget(
                 el.extended_description,
                 layout_data_t{
                     .origin = layout.origin,
                     .frame  = layout.origin,
                     .index  = focused.value_or(0),
+                    .list   = described,
+                    .item   = described ? std::optional<u16>(described->get()) : std::nullopt,
+                    .row    = described != nullptr,
+                    .describes = true,
                 },
                 visit);
+        }
 
         if(el.children.empty())
             return;
@@ -424,18 +448,57 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         auto const children = children_opt.value();
         /* Generated items are centred on the selected one */
         auto const* list     = list_of(el);
+        auto const* rows     = list ? nullptr : rows_of(el);
+        if(!rows)
+            rows = layout.rows;
+        /* Children sharing a tag are a widget's rows, in order; so are a
+         * column list's list_item children, scrolled to the selection */
+        std::map<std::string_view, u16> row_counts, row_at;
+        auto const shown  = column_rows(el);
+        u16 const  scroll = shown.empty() ? 0 : column_first(el, static_cast<u16>(shown.size()));
+        if(rows && !list)
+            for(auto const& child : el.children)
+                if(auto const* item = find_item(child))
+                    row_counts[item->tag_name]++;
         i32 const   first    = list ? static_cast<i32>(list->get()) -
                                     static_cast<i32>(el.children.size() / 2)
                                     : 0;
         for(auto const& [i, child] : stl_types::const_enumerate(el.children))
         {
             std::optional<u16> item = layout.item;
+            bool               row  = layout.row;
+            auto const*        from = list ? list : layout.list;
+            /* A column row's selection arrows show only while it has focus;
+             * its scroll buttons never, the rows are never scrolled */
+            if(layout.column_row >= 0)
+            {
+                std::string_view const name = children[i].name.str();
+                if(name.starts_with("scroll_") || (name == "list_item_arrows" && layout.column_row == 0))
+                    continue;
+            }
             if(list)
             {
                 i32 const at = first + static_cast<i32>(i);
                 if(at < 0 || at >= static_cast<i32>(list->count()))
                     continue;
                 item = static_cast<u16>(at);
+            } else if(auto const at = std::find(shown.begin(), shown.end(), i); at != shown.end())
+            {
+                u16 const shows = scroll + static_cast<u16>(at - shown.begin());
+                if(shows >= rows->count())
+                    continue;
+                item = shows;
+                row  = true;
+                from = rows;
+            } else if(auto const* child_item = rows ? find_item(child) : nullptr;
+                      child_item && row_counts[child_item->tag_name] > 1)
+            {
+                u16 const at = row_at[child_item->tag_name]++;
+                if(at >= rows->count())
+                    continue;
+                item = at;
+                row  = true;
+                from = rows;
             }
             auto const& meta = children[i];
             auto        slot = layout.slot;
@@ -453,9 +516,16 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     .index       = layout.index,
                     .stack_frame = layout.stack_frame,
                     .slot        = std::move(slot),
-                    .list        = list ? list : layout.list,
+                    .list        = from,
                     .item        = item,
                     .item_root   = list != nullptr,
+                    .rows        = rows,
+                    .row         = row,
+                    .column_row  = std::find(shown.begin(), shown.end(), i) == shown.end() ? libc_types::i8(-1)
+                                   : item == rows->get()                              ? libc_types::i8(1)
+                                                                                      : libc_types::i8(0),
+                    .describes = (static_cast<u32>(meta.flags) &
+                                  static_cast<u32>(blam::ui_element::child_widget_t::flags_t::use_custom_controller_index)) != 0,
                 },
                 visit);
         }
@@ -483,6 +553,22 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return static_cast<u32>(el.ui_element->flags) & static_cast<u32>(f);
     }
 
+    /* The provider's rows, for a widget whose game data input fills the
+     * repeated children below it */
+    UIDataSource::list_t const* rows_of(UIElementItem const& el) const
+    {
+        using items_t = blam::ui_element::list_items_t;
+        if(!m_data || (el.ui_element->list_items.flags & items_t::list_items_generated_in_code))
+            return nullptr;
+        auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic);
+        if(!inputs.has_value())
+            return nullptr;
+        for(auto const& input : inputs.value())
+            if(auto const* rows = m_data->list(input.function))
+                return rows;
+        return nullptr;
+    }
+
     /* The provider's list, for a widget whose items are generated in code */
     UIDataSource::list_t const* list_of(UIElementItem const& el) const
     {
@@ -499,11 +585,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return nullptr;
     }
 
-    /* A column list's items take focus with no handlers of their own */
+    /* A column list's items take focus with no handlers of their own, but
+     * not its headings: bare text with no background */
     bool focusable_child(UIElementItem const& parent, UIElementItem const& child)
     {
         using flags_t = blam::ui_element::flags_t;
-        if(child.visible &&
+        bool const heading = child.ui_element->widget_type == blam::ui_element::widget_type_t::text_box &&
+                             child.background.empty() && !focusable(child);
+        if(child.visible && !heading &&
            parent.ui_element->widget_type ==
                blam::ui_element::widget_type_t::column_list &&
            (has_flag(parent, flags_t::dpad_ud_tabs_through_items) ||
@@ -512,12 +601,55 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return focusable(child);
     }
 
+    /* A PC column list's rows: its list_item children, past any chooser
+     * above them. They show a window of the list's items. */
+    std::vector<u16> column_rows(UIElementItem const& el)
+    {
+        std::vector<u16> out;
+        if(el.ui_element->widget_type != blam::ui_element::widget_type_t::column_list || list_of(el) ||
+           !rows_of(el))
+            return out;
+        for(auto const& [i, child] : stl_types::const_enumerate(el.children))
+            if(auto const* item = find_item(child);
+               item && (item->tag_name.find("list_item") != std::string::npos ||
+                        item->tag_name.starts_with("server_item_")) &&
+               item->tag_name.find("chooser") == std::string::npos)
+                out.push_back(static_cast<u16>(i));
+        return out;
+    }
+
+    /* The first item a column list's rows show, scrolled just enough to
+     * keep the selection in view */
+    u16 column_first(UIElementItem const& el, u16 shown)
+    {
+        auto const* rows  = rows_of(el);
+        u16 const   count = rows->count();
+        u16 const   sel   = rows->get();
+        auto&       first = m_column_first[el.ui_element];
+        if(sel < first)
+            first = sel;
+        else if(shown > 0 && sel >= first + shown)
+            first = sel - shown + 1;
+        first = std::min<u16>(first, count > shown ? count - shown : 0);
+        return first;
+    }
+
+    /* The row showing the selection */
+    std::optional<u16> column_focus(UIElementItem const& el)
+    {
+        auto const shown = column_rows(el);
+        if(shown.empty())
+            return std::nullopt;
+        u16 const at = rows_of(el)->get() - column_first(el, static_cast<u16>(shown.size()));
+        return shown[std::min<size_t>(at, shown.size() - 1)];
+    }
+
     /* Can the widget, or anything below it, take input? */
     bool focusable(UIElementItem const& el)
     {
         using widget_type = blam::ui_element::widget_type_t;
 
-        if(!el.visible)
+        if(!el.visible || (m_data && !m_data->shown(el.tag_name)))
             return false;
         /* Takes left/right itself, with no handlers or children */
         if(el.ui_element->widget_type == widget_type::spinner_list)
@@ -568,6 +700,8 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     break;
                 idx = *first;
             }
+            if(auto const shown = column_rows(*el); std::find(shown.begin(), shown.end(), idx) != shown.end())
+                idx = column_focus(*el).value_or(idx);
             std::vector<u16> const slot(
                 frame.focus.begin(), frame.focus.begin() + depth + 1);
             el = find_item(frame.at(slot, el->children[idx]));
@@ -604,6 +738,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         return t::a_btn;
     }
 
+    /* PC's back and cancel buttons, and screens that take B themselves */
+    static bool backs_out(blam::ui_element::function_t function)
+    {
+        using f = blam::ui_element::function_t;
+        return function == f::mouse_emit_back_event || function == f::gamespy_back_handler ||
+               function == f::controls_back_handler;
+    }
+
     /* Returns true if the widget has a handler for the event */
     bool run_handlers(
         UIScreen&               screen,
@@ -615,7 +757,7 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         if(!handlers.has_value())
             return false;
 
-        bool handled = false;
+        bool handled = false, goes_back = false;
         for(auto const& eh : handlers.value())
         {
             /* PC tags put confirm on the left mouse button, or on a
@@ -637,9 +779,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 m_pending.back().slot = slot;
             else
                 finish_handler(screen, el, eh, result == ui_result_t::ok, slot);
+            goes_back |= backs_out(eh.function);
             if(screen.stack.empty())
                 break;
         }
+        /* Once, though a button's mouse handler matches its A too */
+        if(goes_back)
+            go_back(screen);
         return handled;
     }
 
@@ -792,7 +938,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
             screen.stack.clear();
         else if(has(eh_t::flags_t::close_current_widget) &&
                 !screen.stack.empty())
+        {
+            /* Closing itself runs its deleted handlers, e.g. the update
+             * check's OK opening the server list */
+            auto const closed = screen.stack.back().widget;
             screen.stack.pop_back();
+            if(auto* gone = find_item(closed))
+                run_handlers(screen, *gone, eh_t::type_t::deleted);
+        }
         else if(has(eh_t::flags_t::go_back_to_previous_widget))
             go_back(screen);
 
@@ -1003,7 +1156,9 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         for(size_t depth = path.size() - 1; depth-- > 0;)
             if(tabs_through_children(*path[depth]))
             {
-                m_selected = frame.focus[depth];
+                auto const shown = column_rows(*path[depth]);
+                m_selected =
+                    shown.empty() ? frame.focus[depth] : rows_of(*path[depth])->get();
                 break;
             }
 
@@ -1060,6 +1215,31 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 (horizontal &&
                  (has_flag(el, flags_t::dpad_lr_tabs_through_children) ||
                   has_flag(el, flags_t::dpad_lr_tabs_through_items)));
+            if(auto const shown = column_rows(el); tabs && vertical && depth + 1 < path.size() && !shown.empty())
+            {
+                /* Within the rows the selection moves and they scroll; past
+                 * either end focus leaves them, and comes back to it */
+                auto&      idx    = frame.focus[depth];
+                auto const* rows  = rows_of(el);
+                bool const on_row = std::find(shown.begin(), shown.end(), idx) != shown.end();
+                i32 const  sel    = static_cast<i32>(rows->get()) + step;
+                if(on_row && sel >= 0 && sel < static_cast<i32>(rows->count()))
+                {
+                    rows->set(static_cast<u16>(sel));
+                    idx = column_focus(el).value_or(idx);
+                    frame.focus.resize(depth + 1);
+                    return;
+                }
+                if(on_row)
+                    idx = step > 0 ? shown.back() : shown.front();
+                if(auto next = next_focusable(el, idx + step, step))
+                {
+                    bool const into = std::find(shown.begin(), shown.end(), *next) != shown.end();
+                    idx             = into ? column_focus(el).value_or(*next) : *next;
+                    frame.focus.resize(depth + 1);
+                }
+                return;
+            }
             if(tabs && depth + 1 < path.size())
             {
                 auto& idx  = frame.focus[depth];
@@ -1406,6 +1586,23 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
         push_quad(data, min, max, im, Vecf4(0, 0, imscale.x, imscale.y));
     }
 
+    /* Engine-drawn plasma over an Xbox panel: the noise's place in the
+     * atlas and a time that wraps every 65536 / 100 s */
+    void add_plasma(instance_vertex_t& inst)
+    {
+        if(!m_plasma_noise.valid())
+            return;
+        atlas_intermediate_t noise{};
+        bitm_cache.assign_atlas_data(noise, m_plasma_noise);
+        auto const ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now().time_since_epoch())
+                            .count();
+        inst.extra[0] |= plasma | (static_cast<u32>(ms / 10) << 16);
+        inst.extra[1] = noise.layer;
+        inst.extra[2] = glm::packHalf2x16(noise.atlas_scale);
+        inst.extra[3] = glm::packHalf2x16(noise.atlas_offset);
+    }
+
     /* A quad sampling `uv` (left, top, right, bottom) of an image, tinted */
     void push_quad(
         widget_data_t&          data,
@@ -1447,6 +1644,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
     std::vector<hud_batch_t> push_hud(HudScene const& scene, widget_data_t data)
     {
         std::vector<hud_batch_t> out;
+        if(!scene.backdrops.empty())
+        {
+            u32 const first = static_cast<u32>(data.vertex_data.size());
+            for(auto const& panel : scene.backdrops)
+                push_solid(data, panel.min, panel.max, panel.color);
+            out.push_back({Matf3(1), static_cast<u32>(data.vertex_data.size()) - first, {}});
+        }
         size_t const views = scene.views.size();
         for(size_t k = 0; k < views; k++)
         {
@@ -1724,12 +1928,23 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     /* Description images hold one image per list item, as
                      * do a generated item's pictures; elsewhere image 1 is
                      * the focused look */
-                    auto const item_image =
+                    auto item_image =
                         layout.item && !layout.item_root && layout.list &&
                                 layout.list->image
                             ? std::optional<u16>(
                                   layout.list->image(*layout.item))
                             : std::nullopt;
+                    /* A game data input may pick the picture, as it does text */
+                    if(!item_image && m_data)
+                        if(auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic); inputs.has_value())
+                            for(auto const& input : inputs.value())
+                                if(auto const* pick = m_data->index(input.function))
+                                    if(auto const picked = (*pick)(); picked && *picked >= 0)
+                                        item_image = static_cast<u16>(*picked);
+                    /* A generated list's chosen item looks focused: the list
+                     * itself holds the focus */
+                    bool const chosen = layout.item_root && layout.list && layout.item && layout.list->get &&
+                                        !layout.row && *layout.item == layout.list->get();
                     auto const& im =
                         item_image
                             ? el.background[std::min<size_t>(
@@ -1738,10 +1953,18 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                             ? (*layout.index < el.background.size()
                                    ? el.background[*layout.index]
                                    : el.background[0])
-                        : el.focused && el.background.size() >= 2
+                        : (el.focused || chosen) && el.background.size() >= 2
                             ? el.background[1]
                             : el.background[0];
                     push_image(data, min, max, im);
+                    if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
+                    {
+                        /* The selected item, and the panel describing it */
+                        bool const selected = !item_image && !layout.index && (el.focused || chosen) &&
+                                              el.background.size() >= 2;
+                        if(selected || layout.describes)
+                            add_plasma(data.instance_data.back());
+                    }
                 }
 
                 bool const is_spinner = el.ui_element->widget_type ==
@@ -1770,12 +1993,14 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                     return true;
 
                 auto const& tb = el.ui_element->text_box;
-                /* Some generated item templates name no font */
+                /* Some generated item templates name no font, or one with no glyphs */
                 auto const font_id =
                     el.font_id.valid() ? el.font_id : m_default_font;
                 if(!font_id.valid())
                     return false;
                 auto font_it = font_cache.find(font_id);
+                if((font_it == font_cache.end() || font_it->second.glyph_map.empty()) && m_default_font.valid())
+                    font_it = font_cache.find(m_default_font);
                 if(font_it == font_cache.end())
                     return false;
                 FontItem const& font_item = font_it->second;
@@ -1785,6 +2010,13 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                 /* A spinner shows its selected value from the same list */
                 i32 str_idx = is_spinner ? spinner_get(screen, el)
                                          : tb.string_list_index;
+                /* A game data input may pick which of its strings shows */
+                if(!is_spinner && m_data)
+                    if(auto inputs = el.ui_element->data_inputs.data(bitm_cache.magic); inputs.has_value())
+                        for(auto const& input : inputs.value())
+                            if(auto const* pick = m_data->index(input.function))
+                                if(auto const picked = (*pick)())
+                                    str_idx = *picked;
                 std::u16string_view text;
                 if(str_idx >= 0 &&
                    static_cast<size_t>(str_idx) < el.text_strings.size())
@@ -1798,10 +2030,20 @@ struct UIRenderer : compo::RestrictedSubsystem<UIRenderer, UIRendererManifest>
                         provided = (*bound)(text);
                         text     = provided;
                     }
+                if(m_data)
+                    if(auto const* bound = m_data->seat_text(el.tag_name))
+                    {
+                        provided = (*bound)(text, screen ? screen->seat : UIScreen::any_seat);
+                        text     = provided;
+                    }
                 if(layout.list && layout.item && layout.list->text)
                 {
-                    provided = layout.list->text(el.tag_name, *layout.item);
-                    text     = provided;
+                    auto given = layout.list->text(el.tag_name, *layout.item);
+                    if(!layout.row || !given.empty())
+                    {
+                        provided = std::move(given);
+                        text     = provided;
+                    }
                 }
                 if(text.empty())
                     return false;
@@ -2610,21 +2852,12 @@ void load_ui_items(
         if(name.find("pause_game_options") == std::string_view::npos)
             continue;
 
-        auto us_opt =
-            tag.template data<blam::ui::unicode_string_list>(data.container.magic);
-        if(!us_opt.has_value())
-            continue;
-        auto subs_opt = us_opt.value()->data.data(data.container.magic);
-        if(!subs_opt.has_value() || subs_opt.value().empty())
-            continue;
-
         std::vector<std::u16string> strings;
-        for(auto const& ref : subs_opt.value())
-        {
-            auto s = ref.str(data.container.magic);
-            if(!s.has_error() && !s.value().empty())
-                strings.emplace_back(s.value());
-        }
+        for(auto& text : ui_elements.strings_of(tag))
+            if(!text.empty())
+                strings.push_back(std::move(text));
+        if(strings.empty())
+            continue;
 
         bool is_mp = name.find("multiplayer") != std::string_view::npos;
         if(is_mp || pause_strings.empty())
@@ -2947,6 +3180,21 @@ std::vector<std::u16string> texts;
     }
 
     fonts.allocate_font_texture();
+    if constexpr(std::is_same_v<halo_version, blam::xbox_version_t>)
+        for(blam::tag_t const& tag : tag_view)
+        {
+            if(!tag.matches(blam::tag_class_t::bitm))
+                continue;
+            if(tag.to_name().to_string(data.container.magic) != "characters\\jackal\\bitmaps\\shield noise")
+                continue;
+            try
+            {
+                e.subsystem_cast<UIRenderer>().m_plasma_noise = bitmaps.predict(tag.as_ref(), 0);
+            } catch(...)
+            {
+            }
+            break;
+        }
     for(blam::tag_t const& tag : tag_view)
     {
         if(!tag.matches(blam::tag_class_t::bitm))

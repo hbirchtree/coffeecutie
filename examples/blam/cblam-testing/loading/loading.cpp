@@ -19,9 +19,13 @@
 #include "caching/shader_cache.h"
 #include "types.h"
 #include "combat/weapons.h"
+#include "player/spawn_points.h"
+#include "game/game_mode.h"
+#include "ui/ui_game_setup.h"
 #include <algorithm>
 #include <map>
 #include <optional>
+#include <random>
 #include <set>
 
 template<typename Ver>
@@ -57,6 +61,8 @@ using ResourceLoaderManifest = compo::SubsystemManifest<
         DebugMarkers,
         ModelCache<Ver>,
         ShaderCache<Ver>,
+        const GameSetup,
+        const GameState,
         const LoadingStatus,
         const NetworkState>,
     type_list_t<
@@ -73,6 +79,7 @@ struct ResourceLoader
 
     blam::tag_index_view<Ver> index;
     GameEventBus*             game_bus{nullptr};
+    std::mt19937              m_item_random{std::random_device{}()}; /*!< Item collections' picks */
 
     std::vector<SpawnBSPEvent>         pending_bsps;
     std::vector<SpawnBipedEvent>       pending_bipeds;
@@ -1219,9 +1226,17 @@ struct ResourceLoader
             palette.size());
 
         bool const dynamic = group_id >= ScenarioGroup::Vehicle;
+        bool const multiplayer =
+            files.container.map && files.container.map->map_type == blam::maptype_t::multiplayer;
         i16 const  section =
             p.template subsystem<BSPCache<Ver>>().active_section;
 
+        /* A variant's extra Scorpions: the allowed tank placement nearest
+         * each team's flag base */
+        std::set<u32> extra_tanks;
+        if constexpr(std::is_same_v<T, blam::scn::vehicle_spawn>)
+            if(multiplayer && scorpions_wanted(p.template subsystem<GameSetup>()))
+                extra_tanks = tanks_by_base(files, palette, instances, p.template subsystem<GameSetup>().game_type);
         for(u32 i = 0; i < instances.size(); ++i)
         {
             auto const net_id = SpawnObjectEvent::scenario_net_id(group_id, i);
@@ -1238,6 +1253,12 @@ struct ResourceLoader
             auto const* entry = instance.ref.resolve(palette);
             if(!entry || (instance.flags & spawn_flags::automatic) != spawn_flags::none)
                 continue;
+            /* A multiplayer map's vehicles are each in some game types' sets */
+            if constexpr(std::is_same_v<T, blam::scn::vehicle_spawn>)
+                if(multiplayer &&
+                   !spawn_points::vehicle_in(instance.spawn_flags, p.template subsystem<GameSetup>().game_type) &&
+                   !extra_tanks.contains(i))
+                    continue;
             raise_spawn((*entry)[0], instance.pos, net_id);
         }
     }
@@ -1668,25 +1689,60 @@ struct ResourceLoader
         if(equipment.has_error())
             return;
 
+        using gm         = blam::scn::gamemode_t;
+        auto const& setup = p.template subsystem<GameSetup>();
+        auto const mode   = spawn_points::game_mode_of(setup.game_type);
+        blam::tagref_t const* set_weapon = weapon_set_ref(setup, equipment.value(), magic);
         for(u32 e = 0; e < equipment.value().size(); ++e)
         {
             auto const& entry = equipment.value()[e];
-            auto        items = netgame_items(entry, magic);
-            if(!items)
+            /* Its game types; none named is every one */
+            bool const any_named = std::any_of(std::begin(entry.types), std::end(entry.types), [](gm t) {
+                return t != gm::none;
+            });
+            if(any_named && std::none_of(std::begin(entry.types), std::end(entry.types), [mode](gm t) {
+                   return spawn_points::fits(t, mode);
+               }))
                 continue;
-            for(u32 k = 0; k < items->second.size(); ++k)
-            {
-                auto const& item = items->second[k].item;
-                if(item.tag_class != blam::tag_class_t::weap &&
-                   item.tag_class != blam::tag_class_t::eqip)
-                    continue;
-                raise_spawn(
-                    item,
-                    entry.pos,
-                    SpawnObjectEvent::scenario_net_id(
-                        ScenarioGroup::NetgameEquipment, e, k));
-            }
+            auto items = netgame_items(entry, magic);
+            if(!items || items->second.empty())
+                continue;
+            /* A collection puts down one of its items, by weight */
+            f32 total = 0.f;
+            for(auto const& perm : items->second)
+                total += std::max(perm.weight, 0.f);
+            f32 roll = std::uniform_real_distribution<f32>(0.f, total)(m_item_random);
+            u32 k    = 0;
+            for(; k + 1 < items->second.size(); ++k)
+                if((roll -= std::max(items->second[k].weight, 0.f)) < 0.f)
+                    break;
+            auto const* item = &items->second[k].item;
+            if(item->tag_class != blam::tag_class_t::weap && item->tag_class != blam::tag_class_t::eqip)
+                continue;
+            /* A weapon set puts its weapon wherever a weapon was placed */
+            if(set_weapon && item->tag_class == blam::tag_class_t::weap)
+                item = set_weapon;
+            raise_spawn(*item, entry.pos, SpawnObjectEvent::scenario_net_id(ScenarioGroup::NetgameEquipment, e, k));
         }
+    }
+
+    /* The weapon set's weapon, by a reference the map's items already hold;
+     * none without a set, or with one the map doesn't place */
+    template<typename Entries, typename Magic>
+    blam::tagref_t const* weapon_set_ref(GameSetup const& setup, Entries const& equipment, Magic const& magic)
+    {
+        if(setup.weapon_set.empty())
+            return nullptr;
+        auto set = index.tag_of(setup.weapon_set);
+        if(!set.has_value())
+            return nullptr;
+        for(auto const& entry : equipment)
+            if(auto items = netgame_items(entry, magic))
+                for(auto const& perm : items->second)
+                    if(auto found = perm.item.valid() ? index.find(perm.item) : index.end();
+                       found != index.end() && &(*found) == *set)
+                        return &perm.item;
+        return nullptr;
     }
 
     void build_netgame_item(Proxy& p, u32 entry_idx, u32 perm_idx, u32 net_id)
@@ -1715,9 +1771,14 @@ struct ResourceLoader
         if(item_perm.item.tag_class != blam::tag_class_t::weap &&
            item_perm.item.tag_class != blam::tag_class_t::eqip)
             return;
+        /* A weapon set's weapon wherever a weapon was placed */
+        blam::tagref_t const* item_ref = &item_perm.item;
+        if(item_ref->tag_class == blam::tag_class_t::weap)
+            if(auto const* set = weapon_set_ref(p.template subsystem<GameSetup>(), equipment.value(), magic))
+                item_ref = set;
 
-        auto item_data    = index.template data<blam::scn::item>(item_perm.item);
-        auto item_tag_opt = index.tag_of(item_perm.item);
+        auto item_data    = index.template data<blam::scn::item>(*item_ref);
+        auto item_tag_opt = index.tag_of(*item_ref);
         if(!item_data.has_value() || !item_tag_opt.has_value())
             return;
 
@@ -1752,7 +1813,7 @@ struct ResourceLoader
         model_.origin_object = item_tag;
 
         NetworkInfo& netinfo = set.template get<NetworkInfo>();
-        netinfo.object       = item_perm.item;
+        netinfo.object       = *item_ref;
         netinfo.instance_id  = net_id;
 
         ModelAssembly models = model_cache.predict_regions(item.model, model_lod);
@@ -2035,6 +2096,7 @@ struct ResourceLoader
         Model& model = ent.template get<Model>();
         model.item_age      = spawn.age;
         model.item_rounds   = spawn.rounds;
+        model.litter        = spawn.litter;
         model.change_colors = spawn.change_colors;
         model.camouflaged   = spawn.camouflaged;
         if(model_it != index.end())
@@ -2563,6 +2625,57 @@ struct ResourceLoader
         return out;
     }
 
+    /* A variant asking for the map's Scorpions on top of its vehicle set */
+    static bool scorpions_wanted(GameSetup const& setup)
+    {
+        return std::any_of(setup.variant_options.begin(), setup.variant_options.end(), [](auto const& option) {
+            return option.first == "scorpions" && option.second != "0";
+        });
+    }
+
+    /* Of the tank placements the game type allows, the nearest to each
+     * team's flag; without flags, all of them */
+    template<typename Palette, typename Instances>
+    std::set<u32> tanks_by_base(
+        BlamFiles<Ver> const& files, Palette const& palette, Instances const& instances, GameSetup::game_type_t type)
+    {
+        auto const& magic = files.container.magic;
+        std::vector<u32> tanks;
+        for(u32 i = 0; i < instances.size(); ++i)
+            if(auto const* entry = instances[i].ref.resolve(palette);
+               entry && spawn_points::vehicle_allowed(instances[i].spawn_flags, type) && is_tank((*entry)[0], magic))
+                tanks.push_back(i);
+        std::vector<Vecf3> bases;
+        if(auto const* scenario = files.container.scenario().value_or(nullptr))
+            if(auto flags = scenario->netgame.flags.data(magic); flags.has_value())
+                for(auto const& flag : flags.value())
+                    if(flag.type == blam::scn::multiplayer_flag::flag_type_t::ctf_flag)
+                        bases.push_back(flag.pos);
+        if(bases.empty())
+            return {tanks.begin(), tanks.end()};
+        std::set<u32> out;
+        for(Vecf3 const& base : bases)
+        {
+            auto nearest = std::min_element(tanks.begin(), tanks.end(), [&](u32 a, u32 b) {
+                return glm::distance(instances[a].pos, base) < glm::distance(instances[b].pos, base);
+            });
+            if(nearest != tanks.end())
+                out.insert(*nearest);
+        }
+        return out;
+    }
+
+    /* A tank by its vehicle type, as protected maps keep no names */
+    bool is_tank(blam::tagref_t const& ref, blam::map_ptr const& magic)
+    {
+        auto tag = index.find(ref.tag_id);
+        if(!ref.valid() || tag == index.end())
+            return false;
+        auto vehicle = (*tag).template data<blam::scn::vehicle>(magic);
+        return vehicle.has_value() &&
+               static_cast<VehicleDrive::type_t>(vehicle.value()[0].vehicle_type) == VehicleDrive::human_tank;
+    }
+
     /*! A vehi tag's speeds and turning, from Halo's 30 Hz ticks */
     std::optional<VehicleDrive> vehicle_drive(
         blam::tag_t const& tag, blam::map_ptr const& magic)
@@ -2761,6 +2874,9 @@ struct ResourceLoader
                 .collision = std::move(collision),
                 .mass      = 1.f,
                 .upright   = true,
+                .flying    = biped.has_value() &&
+                          (biped.value()->biped_flags & blam::scn::biped::biped_flags_t::flying) !=
+                              blam::scn::biped::biped_flags_t::none,
                 .max_slope = biped.has_value() ? biped.value()->maximum_slope_angle : 0.f,
             };
         }
@@ -2840,6 +2956,15 @@ struct ResourceLoader
                     biped_model.shape.crouch_time = biped->crouch_transition_time;
                 if(biped->crouch_velocity_modifier > 0.f)
                     biped_model.shape.crouch_speed = biped->crouch_velocity_modifier;
+                biped_model.shape.hard_death = biped->hard_death_threshold;
+                if((biped->unit_flags & blam::scn::unit::unit_flags_t::resists_pings) ==
+                   blam::scn::unit::unit_flags_t::none)
+                {
+                    if(biped->soft_ping_threshold > 0.f || biped->soft_ping_interrupt_time > 0.f)
+                        biped_model.shape.soft_ping = biped->soft_ping_threshold;
+                    if(biped->hard_ping_threshold > 0.f || biped->hard_ping_interrupt_time > 0.f)
+                        biped_model.shape.hard_ping = biped->hard_ping_threshold;
+                }
                 if(auto mod2 = index.find(biped->model); mod2 != index.end())
                 {
                     /* The cyborg names none; its head stands in */
@@ -2918,7 +3043,7 @@ struct ResourceLoader
                     .biped           = biped_model.biped,
                     .load_generation = files.load_generation,
                 };
-                starting_loadout(equip, files);
+                starting_loadout(equip, files, p.template subsystem<GameSetup>());
                 if(auto* status = p.template get<BipedStatus>(player.id()))
                     *status = biped_model.biped
                                   ? unit_status(files, biped_model.biped->collider)
@@ -2940,7 +3065,7 @@ struct ResourceLoader
             bool const dead = p.template get<BipedStatus>(player.id()) &&
                               p.template get<BipedStatus>(player.id())->dead;
             if(dead && !biped.dropped)
-                let_go(equip, cam, info);
+                let_go(equip, cam, info, p.template subsystem<GameState>().infected(info.player_idx));
             biped.dropped = dead;
             auto& weapon = equip.objective.weapon ? equip.objective : equip.weapons[0];
             if(weapon.tag != biped.held_tag)
@@ -3200,6 +3325,15 @@ struct ResourceLoader
             for(auto* carried : {&held, &slung})
                 if(carried->tag == tag)
                 {
+                    /* A fresher battery of its kind replaces it, dropped */
+                    if(fresher_battery(*carried, change.age, files.container.magic))
+                    {
+                        if(!info.is_remote() || info.mode.simulated)
+                            drop(*carried, cam, info.biped.eye_height);
+                        *carried     = armed(tag, files);
+                        carried->age = change.age;
+                        return;
+                    }
                     /* Into the reserve, as much as fits */
                     carried->rounds_total = static_cast<u16>(
                         carried->rounds_total +
@@ -3259,7 +3393,8 @@ struct ResourceLoader
 
     /* The dead drop what they carried; only their own peer spawns it, as
      * everyone else is told */
-    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info)
+    /* An infected body's ball goes with it */
+    void let_go(BipedEquipment& equip, PlayerCamera const& cam, PlayerInfo const& info, bool infected)
     {
         f32 turn = 0.f;
         if(!info.is_remote())
@@ -3267,7 +3402,7 @@ struct ResourceLoader
             for(auto const& weapon : equip.weapons)
                 if(weapon.tag)
                     drop(weapon, cam, info.biped.eye_height, turn++);
-            if(equip.objective.tag)
+            if(equip.objective.tag && !infected)
                 drop(equip.objective, cam, info.biped.eye_height, turn++);
             for(auto const& carried : equip.equipment)
                 for(u16 i = 0; carried.tag && i < carried.left; i++)
@@ -3344,6 +3479,7 @@ struct ResourceLoader
                     .velocity     = model->rotation * Vecf3{1.f, 0.f, 1.f},
                     .age          = gun.age,
                     .rounds       = std::array<u16, 2>{gun.rounds_loaded, gun.rounds_total},
+                    .litter       = true,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
                 game_bus->inject(ev, &spawn);
@@ -3412,13 +3548,14 @@ struct ResourceLoader
             .velocity     = flat + Vecf3{0.f, 0.f, 1.f},
             .age          = age,
             .rounds       = rounds,
+            .litter       = true,
         };
         GameEvent ev{.type = GameEvent::SpawnObject};
         game_bus->inject(ev, &spawn);
     }
 
     /* The scenario's first starting profile, else the map's first weapon */
-    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files)
+    void starting_loadout(BipedEquipment& equip, BlamFiles<Ver> const& files, GameSetup const& setup)
     {
         auto const& magic    = files.container.magic;
         auto const* scenario = files.container.scenario().value_or(nullptr);
@@ -3439,7 +3576,17 @@ struct ResourceLoader
             }
             return out;
         };
-        if(profile)
+        bool const multiplayer = files.container.map->map_type == blam::maptype_t::multiplayer;
+        if(multiplayer && !setup.start_weapons.empty())
+        {
+            /* The variant's loadout instead of the map's */
+            for(size_t i = 0; i < equip.weapons.size(); i++)
+            {
+                auto tag = i < setup.start_weapons.size() ? index.tag_of(setup.start_weapons[i])
+                                                          : std::optional<blam::tag_t const*>{};
+                equip.weapons[i] = tag.has_value() ? armed(*tag, files) : BipedEquipment::weapon_t{};
+            }
+        } else if(profile)
         {
             equip.weapons[0] = slot(
                 profile->primary_weapon, profile->rounds1_loaded, profile->rounds1_total);
@@ -3468,8 +3615,6 @@ struct ResourceLoader
                                               profile->c_nades,
                                               profile->d_nades}
                                                   : std::array<u16, 4>{};
-        bool const multiplayer =
-            files.container.map->map_type == blam::maptype_t::multiplayer;
         for(size_t i = 0; i < grenades.value().size() && i < counts.size(); i++)
         {
             auto tag = index.find(grenades.value()[i].equipment.tag_id);
@@ -3479,9 +3624,10 @@ struct ResourceLoader
             if(!eqip.has_value())
                 continue;
             u16 const most = static_cast<u16>(std::max<i16>(grenades.value()[i].maximum_count, 0));
-            u16 const left = multiplayer ? static_cast<u16>(std::max<i16>(
-                                               grenades.value()[i].multiplayer_spawn_default, 0))
-                                         : counts[i];
+            u16 const left = !multiplayer               ? counts[i]
+                             : setup.start_grenades >= 0 ? static_cast<u16>(setup.start_grenades)
+                                                         : static_cast<u16>(std::max<i16>(
+                                                               grenades.value()[i].multiplayer_spawn_default, 0));
             equip.equipment.push_back({
                 .equip = eqip.value(),
                 .tag   = &(*tag),

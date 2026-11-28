@@ -221,7 +221,7 @@ struct BitmapCache
     }
 
     template<typename BucketType>
-    inline void upload_mipmap(
+    inline bool upload_mipmap(
         TextureBucket&       bucket,
         BitmapItem const&    img,
         blam::map_ptr const& magic,
@@ -231,14 +231,14 @@ struct BitmapCache
 
         if(mipmap + img.image.array_level >= mips ||
            mipmap > img.image.mip->mipmaps)
-            return;
+            return false;
 
         auto size = img.image.mip->isize;
         size.x >>= img.mipmaps.base + mipmap;
         size.y >>= img.mipmaps.base + mipmap;
 
         if(size.x % 4 != 0 || size.y % 4 != 0)
-            return;
+            return false;
 
         Veci2 const pool_offset = img.image.pixel_offset;
         u32 const   dst_level   = mipmap;
@@ -430,6 +430,7 @@ struct BitmapCache
                     dst_size,
                     static_cast<i32>(dst_level));
         }
+        return true;
     }
 
     template<typename BucketType>
@@ -447,13 +448,15 @@ struct BitmapCache
 
         auto bmagic = img.image.mip->shared() ? bitm_magic : magic.ptr_only();
 
-        for(auto i : range<u16>(img.mipmaps.last - img.mipmaps.base))
+        /* `last` is the image's deepest level, not one past it */
+        img.image.levels = 0;
+        for(auto i : range<u16>(img.mipmaps.last - img.mipmaps.base + 1))
         {
             auto offset = img.image.pixel_offset;
-            if(offset.x % 4 != 0 || offset.y % 4 != 0)
+            if(offset.x % 4 != 0 || offset.y % 4 != 0 ||
+               !upload_mipmap<BucketType>(bucket, img, bmagic, i))
                 break;
-
-            upload_mipmap<BucketType>(bucket, img, bmagic, i);
+            img.image.levels++;
         }
 
         img.image.bias = -std::max<f32>(
@@ -461,9 +464,6 @@ struct BitmapCache
                 static_cast<f32>(img.image.mip->mipmaps),
             0.f);
 
-        /* Lightmaps do not use mipmapping */
-        if(img.image.mip->mipmaps == 0)
-            upload_mipmap<BucketType>(bucket, img, bmagic, 0);
     }
 
     u32 bias_of(blam::bitm::image_t const& img) const;

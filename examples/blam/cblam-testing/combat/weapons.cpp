@@ -9,6 +9,8 @@
 #include "network/networking.h"
 #include "physics.h"
 #include "combat/projectiles.h"
+#include "ai/allegiance.h"
+#include "game/game_mode.h"
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "ticks.h"
@@ -35,12 +37,15 @@ using WeaponManifest = compo::SubsystemManifest<
         const BipedStatus,
         BipedEquipment,
         Model,
-        const ObjectPhysics>,
+        const ObjectPhysics,
+        const Actor>,
     type_list_t<
         GameEventBus,
         PhysicsBus,
         const NetworkState,
-        const BlamFiles<halo_version>>,
+        const BlamFiles<halo_version>,
+        const GameState,
+        const AllegianceState>,
     type_list_t<comp_app::EventBus<SoundEvent>>>;
 
 struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
@@ -64,6 +69,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         f32  striking{0.f};     /* melee, seconds left */
         f32  charge{-1.f};      /* held while charging, s; <0 when not */
         f32  spin{0.f};         /* rate of fire wound up, 0 to 1 */
+        f32  error{0.f};        /* held fire's spread, 0 to 1 of its error angles */
         bool spins{false};      /* the trigger winds up at all */
         blam::tag_t const* weapon{nullptr}; /* what it is for */
     };
@@ -90,6 +96,14 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         }
         auto const& magic = files.container.magic;
         zoom_sounds(p, files);
+        mark_reticles(p, files);
+        if(!p.template subsystem<NetworkState>().replica)
+        {
+            f32 dt = 0.f;
+            for(auto const& tick : ticks)
+                dt += tick.seconds;
+            tidy_litter(p, dt);
+        }
 
         std::set<u64> live;
         for(auto ent : p.template select<
@@ -101,10 +115,13 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             auto [input, info, cam, net] = ent.components();
             /* Presses are taken whether or not they can be acted on; a
              * client's swap is the server's to make */
-            bool const swap   = std::exchange(input.intent.swap, false) &&
-                              !p.template subsystem<NetworkState>().replica;
-            bool       reload = std::exchange(input.intent.reload, false);
-            bool const toss   = std::exchange(input.intent.grenade, false);
+            /* Infection's infected only strike */
+            bool const infected = p.template subsystem<GameState>().infected(info.player_idx);
+            bool const swap     = std::exchange(input.intent.swap, false) &&
+                              !p.template subsystem<NetworkState>().replica && !infected;
+            /* Reload is acted on a tick: a press between ticks waits for one */
+            bool       reload = !ticks.empty() && std::exchange(input.intent.reload, false) && !infected;
+            bool const toss   = std::exchange(input.intent.grenade, false) && !infected;
             bool const cycle  = std::exchange(input.intent.grenade_switch, false);
             bool const strike = std::exchange(input.intent.melee, false);
             /* A gunner fires the vehicle's weapon, a body its own, and so
@@ -158,10 +175,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 state.reloading = 0.f;
                 pull(p, ent.id(), info, cam, *weapon_tag, true);
             }
-            /* Nothing to fire (a flag): melee alone, and a pull lets go of it */
+            /* Nothing to fire (a flag): melee alone; a pull, or switching
+             * back to a weapon, lets go of it */
             if(!triggers.has_value() || triggers.value().empty())
             {
-                if(input.intent.fire && !throwing && state.striking <= 0.f && equip->objective.tag == weapon_tag)
+                if((swap || (input.intent.fire && !throwing && state.striking <= 0.f)) &&
+                   equip->objective.tag == weapon_tag)
                 {
                     m_hold_fire.insert(ent.id());
                     EquipWeaponEvent drop{
@@ -175,8 +194,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             /* The pull that let go of a flag fires nothing until released */
             if(!input.intent.fire)
                 m_hold_fire.erase(ent.id());
-            bool const pulled =
-                input.intent.fire && !throwing && state.striking <= 0.f && !m_hold_fire.contains(ent.id());
+            bool const pulled = input.intent.fire && !throwing && state.striking <= 0.f &&
+                                !m_hold_fire.contains(ent.id()) && !infected;
 
             /* Bodies switch, reload and run dry; vehicle guns don't */
             auto* ammo = vehicle ? nullptr : &equip->weapons[0];
@@ -224,7 +243,12 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                    ammo->rounds_loaded < magazine->rounds_loaded_maximum &&
                    (reload || !loaded))
                 {
-                    state.reloading = std::max(magazine->reload_time, dt);
+                    /* Held through the first-person reload, as Halo does
+                     * for a magazine with no reload time of its own */
+                    state.reloading = std::max(
+                        {magazine->reload_time,
+                         fp_reload_seconds(p, gun_tag, ammo->rounds_loaded == 0),
+                         dt});
                     reload          = false;
                 }
                 if(ammo)
@@ -299,10 +323,20 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                         if(ammo)
                             heat_up(p, ent.id(), *ammo, gun_tag, pulled);
                         pull(p, ent.id(), info, cam, *weapon_tag, false,
-                             static_cast<u16>(fires));
+                             static_cast<u16>(fires), state.error);
                     }
                 }
                 state.firing = held;
+                /* Held, the spread widens over the error acceleration time;
+                 * let go, it narrows over the deceleration time */
+                if(held && ready)
+                    state.error = trigger.error_acceleration_time > 0.f
+                                      ? std::min(state.error + dt / trigger.error_acceleration_time, 1.f)
+                                      : 1.f;
+                else
+                    state.error = trigger.error_deceleration_time > 0.f
+                                      ? std::max(state.error - dt / trigger.error_deceleration_time, 0.f)
+                                      : 0.f;
                 state.cooldown2 = std::max(state.cooldown2 - dt, 0.f);
                 if(held2)
                 {
@@ -388,6 +422,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 grace--;
             if(grace > 0)
                 continue;
+            /* Infection's infected take nothing up */
+            if(p.template subsystem<GameState>().infected(info.player_idx))
+                continue;
             if(info.riding.vehicle || !info.mode.physics || !biped_in_play(info, cam, net) ||
                equip.load_generation != files.load_generation)
                 continue;
@@ -395,15 +432,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             if(m_flag_generation != files.load_generation)
             {
                 m_flag            = flag_weapon(files);
+                m_ball            = flag_weapon(files, true);
                 m_flag_generation = files.load_generation;
             }
             for(auto item : p.template select<Model, NetworkInfo>())
             {
                 auto [model, item_net] = item.components();
                 auto const* tag        = model.origin_object;
-                /* The flag goes by the game type's rules, not by walking over it */
+                /* The flag and the ball go by the game type's rules, not by
+                 * walking over them */
                 if(item_net.instance_id == 0 ||
-                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag || tag == m_flag ||
+                   SpawnObjectEvent::is_impostor(item_net.instance_id) || !tag || tag == m_flag || tag == m_ball ||
                    taken.contains(item.id()) || p.template get<PlayerInfo>(item.id()))
                     continue;
                 /* A grenade of a kind carried, while there is room for it */
@@ -425,13 +464,17 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 auto const* same = equip.weapons[0].tag == tag   ? &equip.weapons[0]
                                    : equip.weapons[1].tag == tag ? &equip.weapons[1]
                                                                  : nullptr;
+                /* The same battery weapon with more charge is a swap */
+                bool const fresher = same && fresher_battery(*same, model.item_age, files.container.magic);
+                if(fresher)
+                    same = nullptr;
                 bool const carried = grenade || powerup || ammo || same;
                 /* A swap takes a press, and only for the weapon on offer:
                  * a seat nearer the centre of the view wins the press */
-                if(!carried && equip.weapons[1].weapon &&
-                   (!(pressed || held) || info.offered.weapon != item.id()))
+                bool const swap = !carried && (equip.weapons[1].weapon || fresher);
+                if(swap && (!(pressed || held) || info.offered.weapon != item.id()))
                     continue;
-                if(!carried && equip.weapons[1].weapon)
+                if(swap)
                     spent_press = true;
                 auto rounds = model.item_rounds.value_or(std::array<u16, 2>{});
                 if(tag->matches(blam::tag_class_t::weap) && !model.item_rounds)
@@ -548,7 +591,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerCamera const& cam,
         blam::tag_t const&  weapon,
         bool                melee   = false,
-        u16                 trigger = 0)
+        u16                 trigger = 0,
+        f32                 error   = 0.f)
     {
         Matf3 const     to_world = glm::transpose(Matf3(cam.rotation));
         Vecf3 const     forward  = to_world * Vecf3{0.f, 0.f, -1.f};
@@ -561,6 +605,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .trigger    = trigger,
             .melee      = melee,
             .zoomed     = equip && equip->zoom > 0,
+            .error      = error,
             .position   = melee ? cam.camera.position
                                 : cam.camera.position + forward * muzzle_distance,
             .direction  = forward,
@@ -583,7 +628,16 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                     shot.target = ray.entity_id;
             }
             if(!shot.target)
-                shot.target = autoaimed(p, player, info, cam.camera.position, forward, weapon);
+            {
+                shot.target = autoaimed(
+                    p, player, info, cam.camera.position, forward, weapon, magnification(p, equip, weapon));
+                /* Bullet magnetism: a shot just off an enemy bends onto it */
+                if(auto const onto = magnetized(p, info, shot.target, cam.camera.position, forward))
+                {
+                    target         = *onto;
+                    shot.direction = glm::normalize(*onto - shot.position);
+                }
+            }
         }
         if(info.riding.vehicle != 0 && &weapon == mounted_weapon(p, info, files_of(p)))
         {
@@ -689,7 +743,10 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             bool const steady =
                 shot.zoomed &&
                 (trigger.flags & trigger_t::flags_t::use_error_when_unzoomed) != trigger_t::flags_t::none;
-            f32 const error = steady ? 0.f : std::max(trigger.error_angle.x, trigger.minimum_error);
+            f32 const error = steady ? 0.f
+                                     : glm::mix(std::max(trigger.error_angle.x, trigger.minimum_error),
+                                                std::max(trigger.error_angle.y, trigger.minimum_error),
+                                                glm::clamp(shot.error, 0.f, 1.f));
             for(i32 i = 0; i < count; i++)
             {
                 f32 const spread =
@@ -757,7 +814,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 continue;
             auto const& anim = ent.template get<AnimationPlayback>();
             i32 const   clip = fire_clip(anim, magic);
-            if(clip < 0)
+            if(clip < 0 || (fp_clip(anim, magic, fp_slot::fire_1) < 0 && playing(anim, clip)))
                 continue;
             PlayModelAnimationEvent play{
                 .entity    = ent.id(),
@@ -826,6 +883,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
                 .to     = shot.position + dir * reach,
                 .ignore = shot.shooter,
                 .rewind = replica ? std::nullopt : shot.view_tick,
+                .rewind_unit = shot.target,
+                .unit_rewind = replica ? std::nullopt : shot.target_tick,
             };
             p.template subsystem<PhysicsBus>().process(ev, &ray);
             if(ray.hit && (!struck_at || (ray.entity_id != 0 && struck_at->first.entity_id == 0)))
@@ -857,6 +916,94 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     }
 
     /* Each step in or out of a scope is heard from its body, local or not */
+    /* What units dropped goes once it has lain a while, unless a player is
+     * right by it */
+    void tidy_litter(Proxy& p, f32 dt)
+    {
+        std::set<u64> held;
+        std::vector<Vecf3> players;
+        for(auto ent : p.template select<BipedEquipment>())
+            for(auto const& w : ent.template get<BipedEquipment>().weapons)
+                if(w.held)
+                    held.insert(w.held);
+        for(auto ent : p.template select<PlayerInfo, Model>())
+            if(ent.template get<PlayerInfo>().spawned)
+                players.push_back(ent.template get<Model>().position);
+        std::set<u64> lying;
+        for(auto ent : p.template select<Model, NetworkInfo>())
+        {
+            auto const& [model, net] = ent.components();
+            if(!model.litter || net.instance_id == 0 || held.contains(ent.id()))
+                continue;
+            lying.insert(ent.id());
+            if((m_litter[ent.id()] += dt) < litter_time)
+                continue;
+            if(std::any_of(players.begin(), players.end(), [&](Vecf3 const& at) {
+                   return glm::distance(at, model.position) < litter_clear_distance;
+               }))
+                continue;
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = net.instance_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+            lying.erase(ent.id());
+        }
+        std::erase_if(m_litter, [&](auto const& kv) { return !lying.contains(kv.first); });
+    }
+
+    /* What each reticle rests on, by the shot's own reach and autoaim,
+     * for the HUD to tint it */
+    void mark_reticles(Proxy& p, BlamFiles<halo_version> const& files)
+    {
+        for(auto ent : p.template select<PlayerInfo, PlayerCamera, BipedEquipment>())
+        {
+            auto [info, cam, equip] = ent.components();
+            equip.aimed             = 0;
+            /* A gunner's is the vehicle's gun; a passenger aims its own */
+            auto const*        held    = equip.held(files.load_generation);
+            blam::tag_t const* mounted = info.riding.vehicle ? mounted_weapon(p, info, files) : nullptr;
+            blam::tag_t const* weapon  = mounted ? mounted : held ? held->tag : nullptr;
+            if(!weapon || !info.mode.physics || cam.cinematic)
+                continue;
+            Matf3 const      to_world = glm::transpose(Matf3(cam.rotation));
+            Vecf3 const      forward  = to_world * Vecf3{0.f, 0.f, -1.f};
+            Physics::Event   ray_ev{Physics::Event::Raycast};
+            Physics::Raycast ray{
+                .from   = cam.camera.position,
+                .to     = cam.camera.position + forward * aim_reach,
+                .ignore = info.riding.vehicle ? info.riding.vehicle : ent.id()};
+            p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
+            u64 target = ray.hit && ray.entity_id && ray.entity_id != ent.id() && is_unit(p, ray.entity_id)
+                             ? ray.entity_id
+                             : 0;
+            if(!target)
+                target = autoaimed(p, ent.id(), info, cam.camera.position, forward, *weapon, magnification(p, &equip, *weapon));
+            equip.aimed = side_of(p, info, target);
+        }
+    }
+
+    /* 1 for a unit that fights the player, -1 for one on its side */
+    static libc_types::i8 side_of(Proxy& p, PlayerInfo const& me, u64 unit)
+    {
+        using team_t = AllegianceState::team_t;
+        if(!unit)
+            return 0;
+        if(auto const* status = p.template get<BipedStatus>(unit); status && status->dead)
+            return 0;
+        if(auto const* other = p.template get<PlayerInfo>(unit))
+        {
+            auto const& state = p.template subsystem<GameState>();
+            if(state.kind != GameState::kind_t::multiplayer)
+                return -1;
+            auto const *a = state.player(me.player_idx), *b = state.player(other->player_idx);
+            return state.teams && a && b && a->team >= 0 && a->team == b->team ? -1 : 1;
+        }
+        if(auto const* actor = p.template get<Actor>(unit); actor && actor->active())
+            return p.template subsystem<AllegianceState>().hostile(static_cast<team_t>(actor->team), team_t::player)
+                       ? 1
+                       : -1;
+        return 0;
+    }
+
     void zoom_sounds(Proxy& p, BlamFiles<halo_version> const& files)
     {
         auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
@@ -947,6 +1094,8 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
             .to     = shot.position + direction * Projectile::reach(proj),
             .ignore = shot.vehicle ? shot.vehicle : shot.shooter,
             .rewind = shot.view_tick,
+            .rewind_unit = shot.target,
+            .unit_rewind = shot.target_tick,
         };
         p.template subsystem<PhysicsBus>().process(ev, &ray);
         if(!ray.hit || ray.entity_id == 0)
@@ -972,6 +1121,33 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     using fp_slot = blam::antr::first_person_weapon;
 
+    /* How long a weapon's first-person reload clip plays, at 30 frames a
+     * second; 0 without one */
+    f32 fp_reload_seconds(Proxy& p, blam::scn::weapon const& gun, bool empty)
+    {
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const& magic = files.container.magic;
+        blam::tag_index_view<halo_version> index(files.container);
+        auto tag = index.find(gun.first_person_animations.tag_id);
+        if(!gun.first_person_animations.valid() || tag == index.end())
+            return 0.f;
+        auto graph = (*tag).template data<blam::antr::header>(magic);
+        if(!graph.has_value())
+            return 0.f;
+        auto fp = graph.value()[0].first_person_weapons.data(magic);
+        auto anims = graph.value()[0].animations.data(magic);
+        if(!fp.has_value() || fp.value().empty() || !anims.has_value())
+            return 0.f;
+        auto slots = fp.value()[0].animations.data(magic);
+        size_t const slot = empty ? fp_slot::reload_empty : fp_slot::reload_full;
+        if(!slots.has_value() || slots.value().size() <= slot)
+            return 0.f;
+        i32 const clip = slots.value()[slot].animation;
+        if(clip < 0 || static_cast<size_t>(clip) >= anims.value().size())
+            return 0.f;
+        return std::max<f32>(anims.value()[static_cast<size_t>(clip)].frame_count, 0.f) / 30.f;
+    }
+
     static i32 fp_clip(AnimationPlayback const& anim, blam::map_ptr const& magic, size_t slot)
     {
         if(!anim.graph)
@@ -985,9 +1161,28 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         return slots.value()[slot].animation;
     }
 
+    /* Its fire-1 slot, or the clip the assault rifle leaves out of its slots */
     static i32 fire_clip(AnimationPlayback const& anim, blam::map_ptr const& magic)
     {
-        return fp_clip(anim, magic, fp_slot::fire_1);
+        if(i32 const clip = fp_clip(anim, magic, fp_slot::fire_1); clip >= 0 || !anim.graph)
+            return clip;
+        auto anims = anim.graph->animations.data(magic);
+        if(!anims.has_value())
+            return -1;
+        for(i32 i = 0; i < static_cast<i32>(anims.value().size()); i++)
+            if(anims.value()[i].name.str() == "first-person firing")
+                return i;
+        return -1;
+    }
+
+    /* A base clip still playing, left to run on through a burst */
+    static bool playing(AnimationPlayback const& anim, i32 clip)
+    {
+        for(u32 i = AnimationPlayback::base_slot; i < AnimationPlayback::base_slot + AnimationPlayback::base_slots; i++)
+            if(auto const& layer = anim.layers[i]; layer.graph == anim.graph &&
+               layer.animation == static_cast<u32>(clip) && !layer.finished && layer.target > 0.f)
+                return true;
+        return false;
     }
 
     /* The player's first-person weapon model, or its hands */
@@ -1334,39 +1529,100 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
         PlayerInfo const&  info,
         Vecf3 const&       eye,
         Vecf3 const&       forward,
-        blam::tag_t const& weapon)
+        blam::tag_t const& weapon,
+        f32                zoom = 1.f)
     {
-        auto data = weapon.template data<weapon_t>(files_of(p).container.magic);
+        using flags_t = weapon_t::weapon_flags_t;
+        auto data     = weapon.template data<weapon_t>(files_of(p).container.magic);
         if(!data.has_value())
             return 0;
-        f32 const angle = data.value()[0].autoaim_angle;
+        /* The cone is on screen, so a scope narrows it as it magnifies */
+        f32 const angle = data.value()[0].autoaim_angle / std::max(zoom, 1.f);
         f32 const range = data.value()[0].autoaim_range;
-        if(angle <= 0.f || range <= 0.f)
+        if(angle <= 0.f || range <= 0.f ||
+           ((data.value()[0].weapon_flags & flags_t::aim_assists_only_when_zoomed) != flags_t::none && zoom <= 1.f))
             return 0;
         u64 best      = 0;
-        f32 best_cos  = std::cos(angle);
+        f32 best_miss = 0.f;
         for(auto unit : p.template select<Model, BipedStatus>())
         {
             u64 const id = unit.id();
             if(id == player || id == info.riding.vehicle ||
-               unit.template get<BipedStatus>().dead)
+               unit.template get<BipedStatus>().dead || side_of(p, info, id) < 0)
                 continue;
-            Vecf3 const to = unit.template get<Model>().position + Vecf3{0.f, 0.f, autoaim_height} - eye;
+            /* Off its body's axis, widened by its autoaim width */
+            f32         width = 0.f;
+            auto const  onto  = body_point(p, unit.template get<Model>(), eye, forward, &width);
+            if(!onto)
+                continue;
+            Vecf3 const to = *onto - eye;
             f32 const   d  = glm::length(to);
             if(d < 1e-3f || d > range)
                 continue;
-            f32 const c = glm::dot(to / d, forward);
-            if(c <= best_cos)
+            f32 const off  = std::acos(std::clamp(glm::dot(to / d, forward), -1.f, 1.f));
+            f32 const miss = off - (angle + std::atan(width / d));
+            if(miss > 0.f || (best && miss >= best_miss))
                 continue;
             Physics::Event   ray_ev{Physics::Event::Raycast};
-            Physics::Raycast ray{.from = eye, .to = eye + to, .ignore = player};
+            Physics::Raycast ray{.from = eye, .to = *onto, .ignore = player};
             p.template subsystem<PhysicsBus>().process(ray_ev, &ray);
             if(ray.hit && ray.entity_id != id)
                 continue;
-            best     = id;
-            best_cos = c;
+            best      = id;
+            best_miss = miss;
         }
         return best;
+    }
+
+    /* The scope's magnification, 1 unzoomed; as the camera's */
+    static f32 magnification(Proxy& p, BipedEquipment const* equip, blam::tag_t const& weapon)
+    {
+        auto data = weapon.template data<weapon_t>(files_of(p).container.magic);
+        if(!equip || equip->zoom == 0 || !data.has_value() || data.value()[0].zoom_levels <= 0)
+            return 1.f;
+        i32 const   levels = data.value()[0].zoom_levels;
+        Vecf2 const range  = data.value()[0].zoom_magnification_range;
+        return std::max(
+            levels > 1 ? glm::mix(range.x, range.y, (equip->zoom - 1.f) / (levels - 1.f)) : range.x, 1.f);
+    }
+
+    /* Where a shot bends to on a unit not on the shooter's side */
+    std::optional<Vecf3> magnetized(Proxy& p, PlayerInfo const& info, u64 target, Vecf3 const& eye, Vecf3 const& forward)
+    {
+        auto const* model = p.template get<Model>(target);
+        if(!model || side_of(p, info, target) < 0)
+            return std::nullopt;
+        return body_point(p, *model, eye, forward);
+    }
+
+    /* The point of a unit's body axis nearest the reticle's line; `width`
+     * gets its biped's autoaim width */
+    std::optional<Vecf3> body_point(
+        Proxy& p, Model const& unit, Vecf3 const& eye, Vecf3 const& forward, f32* width = nullptr)
+    {
+        Model const* model  = &unit;
+        f32          height = 2.f * autoaim_height;
+        if(model->origin_object && model->origin_object->matches(blam::tag_class_t::bipd))
+            if(auto biped = model->origin_object->template data<blam::scn::biped>(files_of(p).container.magic);
+               biped.has_value() && biped.value()[0].standing_collision_height > 0.f)
+            {
+                height = biped.value()[0].standing_collision_height;
+                if(width)
+                    *width = biped.value()[0].autoaim_width;
+            }
+        /* Feet to the top of the head, the axis crouched or not */
+        Vecf3 const low  = model->position + Vecf3{0.f, 0.f, height * .1f};
+        Vecf3 const axis = Vecf3{0.f, 0.f, height * .8f};
+        /* Nearest points of the line and the axis */
+        Vecf3 const w = eye - low;
+        f32 const   b = glm::dot(forward, axis), c = glm::dot(axis, axis);
+        f32 const   d = glm::dot(forward, w), e = glm::dot(axis, w);
+        f32 const   den = c - b * b;
+        f32 const   t = std::clamp(den > 1e-6f ? (e - b * d) / den : 0.f, 0.f, 1.f);
+        Vecf3 const onto = low + axis * t;
+        if(glm::dot(onto - eye, forward) <= 0.f)
+            return std::nullopt;
+        return onto;
     }
 
     static bool is_unit(Proxy& p, u64 id)
@@ -1668,6 +1924,9 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
     static constexpr f32 melee_spread    = .15f; /* rad, the side rays */
     static constexpr f32 melee_dip       = .35f; /* rad, the low rays */
     static constexpr f32 aim_reach       = 100.f; /* wu, a reticle on nothing */
+    static constexpr f32 litter_time     = 45.f;  /* s a dropped item lies before it goes */
+    static constexpr f32 litter_clear_distance = 3.f; /* wu: never taken from under a player's feet */
+    std::map<u64, f32>   m_litter; /*!< s each dropped item has lain */
     static constexpr f32 autoaim_height  = .6f;   /* wu above a unit's origin */
     static constexpr f32 behind_cos      = .5f;  /* within 60 deg of its facing */
     /* Vehicle guns: where they fire from, and how far the crosshair looks */
@@ -1675,6 +1934,7 @@ struct WeaponSystem : compo::RestrictedSubsystem<WeaponSystem, WeaponManifest>
 
     u32                       m_generation{0};
     blam::tag_t const*        m_flag{nullptr}; /*!< Taken by the game type's rules, not walked over */
+    blam::tag_t const*        m_ball{nullptr}; /*!< Oddball's, likewise */
     std::set<u64>             m_hold_fire;     /*!< Let go of a flag with the trigger still held */
     u32                       m_flag_generation{0};
     std::map<u64, state_t>    m_states;

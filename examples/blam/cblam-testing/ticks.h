@@ -65,6 +65,13 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
         return (static_cast<libc_types::f64>(m_tick) + m_alpha) / rate;
     }
 
+    /*! Where tick 0 began, on the frame clock's microseconds: ticks
+     *  begin at multiples of tick_us past it */
+    libc_types::i64 origin_us() const
+    {
+        return m_origin_us;
+    }
+
     /*! Times this peer fell too far behind and skipped ahead */
     libc_types::u32 resyncs() const
     {
@@ -113,6 +120,7 @@ struct TickClock : compo::RestrictedSubsystem<TickClock, TickManifest>
     libc_types::u32 m_resyncs{0};
     bool            m_started{false};
     libc_types::i64 m_tick_began_us{0};
+    libc_types::i64 m_origin_us{0};
     libc_types::i64 m_frame_us{0}; /*!< Wall time a frame takes, smoothed */
     libc_types::f32 m_speed{1.f};
     libc_types::i64 m_window_held_us{0};

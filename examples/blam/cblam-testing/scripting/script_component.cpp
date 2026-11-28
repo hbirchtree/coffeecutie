@@ -152,10 +152,13 @@ struct BlamScript
         m_spawning.clear();
         m_actor_slots.clear();
         m_crewed.clear();
+        m_placed_initial = false;
+        m_respawn_in.clear();
         m_despawning.clear();
         m_recreate.clear();
         m_deferred.clear();
         m_queued_recordings.clear();
+        m_queued_custom.clear();
         m_log.clear();
 
         auto strings = scenario->string_segment(map.magic);
@@ -242,9 +245,14 @@ struct BlamScript
             std::erase_if(m_spawning, [this, &p](u32 net_id) {
                 u64 const id = live_entity(p, net_id);
                 if(id)
+                {
                     enlist(p, id, net_id);
+                    m_queued_custom.erase(net_id);
+                }
                 return id != 0;
             });
+            place_initial(p);
+            respawn_encounters(p);
             m_vm.tick();
             if(auto& timer = p.template subsystem<CinematicState>().timer; !timer.paused && timer.ticks > 0)
                 timer.ticks--;
@@ -287,6 +295,7 @@ struct BlamScript
             .deferred   = m_deferred,
             .spawning   = m_spawning,
             .queued     = m_queued_recordings,
+            .queued_custom = m_queued_custom,
             .slots      = m_actor_slots,
             .objective  = p.template subsystem<CinematicState>().objective,
             .allegiances = p.template subsystem<AllegianceState>().pairs,
@@ -417,7 +426,8 @@ struct BlamScript
         for(auto& [conv, c] : m_conversations)
             finish_conversation(p, c);
         m_scaling.clear();
-        m_suspended.clear();
+        for(u64 id : std::exchange(m_suspended, {}))
+            carry(p, id, false);
         m_speakers   = std::move(speakers);
         m_tests      = saved.tests;
         m_impulses   = std::move(saved.impulses);
@@ -435,6 +445,7 @@ struct BlamScript
         m_deferred          = std::move(saved.deferred);
         m_spawning          = std::move(saved.spawning);
         m_queued_recordings = std::move(saved.queued);
+        m_queued_custom     = std::move(saved.queued_custom);
         m_actor_slots       = std::move(saved.slots);
         m_despawning.clear();
         m_recreate.clear();
@@ -790,6 +801,21 @@ struct BlamScript
             for(u64 id : objects_of(p, arg(0)))
                 despawn(p, id);
             return {};
+        /* Every object but the players and what they hold: x30 clears the
+         * level, its Covenant too, so nothing can kill the held player */
+        case op::object_destroy_all: {
+            std::vector<u64> gone;
+            for(auto ent : p.template select<NetworkInfo, Model>())
+            {
+                auto const* held = p.template get<Attachment>(ent.id());
+                if(p.template get<PlayerInfo>(ent.id()) || (held && p.template get<PlayerInfo>(held->parent)))
+                    continue;
+                gone.push_back(ent.id());
+            }
+            for(u64 id : gone)
+                despawn(p, id);
+            return {};
+        }
         case op::object_create_containing:
         case op::object_create_anew_containing:
         case op::object_destroy_containing:
@@ -1478,6 +1504,7 @@ struct BlamScript
         /* Animations of the unit's own, or the cutscene's */
         case op::custom_animation:
         case op::custom_animation_list:
+            queue_custom(arg(0), graph_of(arg(1)), text_of(arg(2)), 0);
             with_objects(
                 p,
                 arg(0),
@@ -1502,6 +1529,7 @@ struct BlamScript
                              : 0](Proxy& p, u64 id) { custom_animation(p, id, graph, name, false, frame); });
             return {};
         case op::unit_custom_animation_at_frame:
+            queue_custom(arg(0), graph_of(arg(1)), text_of(arg(2)), static_cast<i32>(arg(4).as_real()));
             with_objects(
                 p,
                 arg(0),
@@ -1580,6 +1608,10 @@ struct BlamScript
                     Vecf3{cp * std::cos(flag->facing.x), cp * std::sin(flag->facing.x), std::sin(flag->facing.y)});
             }
             return {};
+        /* A damage effect at a flag, from nobody: a10's shield test zap */
+        case op::damage_new:
+            damage_at(p, static_cast<u32>(arg(0).integer), text_of(arg(1)));
+            return {};
         case op::effect_new_on_object_marker:
             for(u64 id : objects_of(p, arg(1)))
                 if(auto const* model = p.template get<Model>(id))
@@ -1612,6 +1644,9 @@ struct BlamScript
             for(u64 id : objects_of(p, arg(0)))
                 if(auto it = m_custom.find(id); it != m_custom.end())
                     left = std::max(left, static_cast<f32>(it->second.clip->frame_count - it->second.frame));
+            for(u32 net_id : spawning_of(arg(0)))
+                if(auto it = m_queued_custom.find(net_id); it != m_queued_custom.end())
+                    left = std::max(left, static_cast<f32>(it->second));
             if(opcode == op::unit_is_playing_custom_animation)
                 return value_t::boolean(left > 0.f);
             return value_t::number(type_t::short_, left);
@@ -1949,6 +1984,40 @@ struct BlamScript
                         actor->follow_players = true;
                 }
             return {};
+        case op::ai_follow_target_ai: {
+            auto const leaders = ai_actors(p, text_of(arg(1)));
+            u64 leader         = 0;
+            for(u64 id : leaders)
+                if(auto const* status = p.template get<BipedStatus>(id); status && !status->dead)
+                {
+                    leader = id;
+                    break;
+                }
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id); actor && id != leader)
+                    actor->follow_leader = leader;
+            return {};
+        }
+        case op::ai_follow_distance:
+            for(u64 id : ai_actors(p, text_of(arg(0))))
+                if(auto* actor = p.template get<Actor>(id))
+                    actor->follow_distance = arg(1).real;
+            return {};
+        /* On a vehicle, its riders: a dropship's gunners */
+        case op::object_set_melee_attack_inhibited:
+        case op::object_set_ranged_attack_inhibited:
+            for(u64 id : objects_of(p, arg(0)))
+            {
+                std::vector<u64> units{id};
+                for(auto const& rider : m_riders)
+                    if(rider.vehicle == id)
+                        units.push_back(rider.unit);
+                for(u64 unit : units)
+                    if(auto* actor = p.template get<Actor>(unit))
+                        (opcode == op::object_set_melee_attack_inhibited ? actor->no_melee : actor->no_ranged) =
+                            arg(1).truthy();
+            }
+            return {};
         case op::ai_disregard:
             /* The named objects are left alone; today only the target drops */
             for(u64 id : objects_of(p, arg(0)))
@@ -2066,6 +2135,10 @@ struct BlamScript
             auto const units = opcode == op::ai_command_list ? ai_actors(p, text_of(arg(0))) : objects_of(p, arg(0));
             for(u64 id : units)
                 start_commands(p, id, *list);
+            /* Placed this tick: it gets the list once it is there */
+            if(opcode == op::ai_command_list)
+                for(u32 net_id : ai_spawning(text_of(arg(0))))
+                    m_deferred.emplace_back(net_id, [this, list](Proxy& p, u64 id) { start_commands(p, id, *list); });
             return {};
         }
         case op::ai_command_list_advance:
@@ -2074,7 +2147,8 @@ struct BlamScript
                 {
                     it->second.waiting = false;
                     it->second.at++;
-                }
+                } else if(it != m_commands.end() && !it->second.done)
+                    it->second.advanced = true;
             return {};
         case op::ai_command_list_status: {
             /* 0 none, 1 finished, 2 at its loop or waiting, 3 running */
@@ -2385,6 +2459,15 @@ struct BlamScript
                 return;
             despawn(p, existing);
         }
+        /* Anew while still spawning: the coming object is the new one, so
+         * what was queued for the old one is dropped */
+        else if(anew && m_spawning.contains(net_id) && !m_despawning.contains(net_id))
+        {
+            std::erase_if(m_deferred, [net_id](auto const& d) { return d.first == net_id; });
+            m_queued_custom.erase(net_id);
+            m_queued_recordings.erase(net_id);
+            return log(fmt::format("object_create: {} (anew, still spawning)", name));
+        }
         log(fmt::format("object_create: {}", name));
         m_spawning.insert(net_id);
         /* Same net id: only once the old one is gone */
@@ -2465,6 +2548,17 @@ struct BlamScript
     }
 
     /* Onto a cutscene flag, facing its way */
+    void damage_at(Proxy& p, u32 tag_id, std::string_view flag_name)
+    {
+        auto const* flag = named(m_scenario->cutscene.flags, flag_name);
+        auto const  tag  = m_tags.find(tag_id);
+        if(!flag || tag == m_tags.end() || !(*tag).matches(blam::tag_class_t::jpt))
+            return;
+        GameEvent       ev{.type = GameEvent::AreaDamage};
+        AreaDamageEvent area{.damage = (*tag).as_ref(), .position = flag->position};
+        p.template subsystem<GameEventBus>().inject(ev, &area);
+    }
+
     void teleport(Proxy& p, u64 id, std::string_view flag_name)
     {
         auto const* flag = named(m_scenario->cutscene.flags, flag_name);
@@ -3023,6 +3117,21 @@ struct BlamScript
         return header.has_value() ? &header.value()[0] : nullptr;
     }
 
+    /* Waiting on its object, a clip still has all of its frames */
+    void queue_custom(value_t const& v, blam::antr::header const* graph, std::string_view name, i32 frame)
+    {
+        auto const spawning = spawning_of(v);
+        if(spawning.empty() || !graph)
+            return;
+        auto anims = graph->animations.data(m_magic);
+        if(!anims.has_value())
+            return;
+        for(auto const& clip : anims.value())
+            if(lowered(clip.name.str()) == lowered(name))
+                for(u32 net_id : spawning)
+                    m_queued_custom[net_id] = std::max(0, clip.frame_count - frame);
+    }
+
     void custom_animation(
         Proxy&                    p,
         u64                       id,
@@ -3059,8 +3168,10 @@ struct BlamScript
             p.template subsystem<GameEventBus>().inject(ev, &play);
             bool const moves = clip.frame_info_type_ != blam::antr::frame_info_type::none;
             m_custom[id]     = {.clip = &clip, .frame = frame, .moves = moves};
-            if(moves && !walks(p, id))
-                carry(p, id, true);
+            if(auto const* net = p.template get<NetworkInfo>(id))
+                m_queued_custom.erase(net->instance_id);
+            /* Held still by the clip, or moved by its root */
+            carry(p, id, carried(p, id));
             return;
         }
         log(fmt::format("custom_animation: no animation {}", name));
@@ -3107,8 +3218,12 @@ struct BlamScript
         GameEvent               ev{.type = GameEvent::PlayModelAnimation};
         PlayModelAnimationEvent stop{.entity = id};
         p.template subsystem<GameEventBus>().inject(ev, &stop);
-        if(moves && !playing_recording(id) && !m_hovering.contains(id))
+        if(playing_recording(id) || m_hovering.contains(id))
+            return;
+        if(moves)
             stand(p, id);
+        else if(!carried(p, id))
+            carry(p, id, false);
     }
 
     bool playing_recording(u64 id) const
@@ -3124,7 +3239,8 @@ struct BlamScript
         auto const custom = m_custom.find(id);
         bool const moved  = (playing_recording(id) && !rolls(p, id)) ||
                            (custom != m_custom.end() && custom->second.moves);
-        return m_hovering.contains(id) || riding(id) || listed(id) ||
+        bool const still  = custom != m_custom.end() && !custom->second.moves;
+        return m_hovering.contains(id) || riding(id) || listed(id) || still ||
                std::any_of(m_attached.begin(), m_attached.end(), [id](attached_t const& a) { return a.child == id; }) ||
                (moved && !walks(p, id));
     }
@@ -3207,8 +3323,8 @@ struct BlamScript
     {
         if(walks(p, id))
             walk(p, id, {});
-        else
-            carry(p, id, false);
+        /* Let go unless something else still holds it */
+        carry(p, id, carried(p, id));
     }
 
     /* ---- Attachments ---- */
@@ -3321,6 +3437,7 @@ struct BlamScript
         f32  radius{.5f}; /* near enough a point */
         bool looped{false};
         bool waiting{false};
+        bool advanced{false}; /* advanced before reaching its wait: it passes the next one */
         bool done{false};
     };
 
@@ -3341,6 +3458,7 @@ struct BlamScript
         {
             using flags_t   = blam::scn::ai::command_list::flags_t;
             actor->scripted = true;
+            actor->shoot_at.reset();
             actor->release  = false;
             actor->may_fight =
                 (list.flags & (flags_t::allow_initiative | flags_t::allow_targeting)) != 0;
@@ -3358,7 +3476,7 @@ struct BlamScript
     void stop_commands(Proxy& p, u64 id)
     {
         if(auto* actor = p.template get<Actor>(id))
-            actor->scripted = false;
+            actor->scripted = false, actor->shoot_at.reset();
         if(m_commands.erase(id) && !playing_recording(id) && !m_hovering.contains(id))
             stand(p, id);
     }
@@ -4026,7 +4144,27 @@ struct BlamScript
                         waits = true;
                     break;
                 }
+                case atom::shoot: {
+                    /* Its gun fires at the point for param1 seconds */
+                    auto* actor = p.template get<Actor>(it->first);
+                    auto const at = point(c.point_1);
+                    if(!actor || !at || run.ticks++ >= static_cast<i32>(c.param1 * tick_rate))
+                    {
+                        if(actor)
+                            actor->shoot_at.reset();
+                        next();
+                        break;
+                    }
+                    actor->shoot_at = *at;
+                    waits           = true;
+                    break;
+                }
                 case atom::wait:
+                    if(std::exchange(run.advanced, false))
+                    {
+                        next();
+                        break;
+                    }
                     run.waiting = true;
                     waits       = true;
                     break;
@@ -4164,7 +4302,14 @@ struct BlamScript
 
     void carry(Proxy& p, u64 id, bool scripted)
     {
-        scripted      = scripted || m_suspended.contains(id);
+        scripted = scripted || m_suspended.contains(id);
+        /* A player's body is held by its PlayerInfo instead */
+        if(auto const* info = p.template get<PlayerInfo>(id); info && info->suspended != scripted)
+        {
+            GameEvent          ev{.type = GameEvent::PlayerSuspend};
+            PlayerSuspendEvent suspend{.entity_id = id, .suspended = scripted};
+            p.template subsystem<GameEventBus>().inject(ev, &suspend);
+        }
         auto* physics = p.template get<ObjectPhysics>(id);
         if(!physics || physics->scripted == scripted)
             return;
@@ -4686,6 +4831,60 @@ struct BlamScript
         return {nullptr, -1};
     }
 
+    /* Encounters not flagged otherwise are there from the start */
+    void place_initial(Proxy& p)
+    {
+        if(std::exchange(m_placed_initial, true))
+            return;
+        using flags_t = blam::scn::ai::encounter::flags_t;
+        if(auto list = m_scenario->ai.encounters.data(m_magic); list.has_value())
+            for(auto const& encounter : list.value())
+                if(!(encounter.flags & flags_t::not_initially_created))
+                    ai_place(p, std::string(encounter.name.str()));
+    }
+
+    /* A respawning encounter's squads are kept at strength: each one short
+     * gets an actor back at one of its starts after the respawn delay */
+    void respawn_encounters(Proxy& p)
+    {
+        using flags_t = blam::scn::ai::encounter::flags_t;
+        auto list     = m_scenario->ai.encounters.data(m_magic);
+        if(!list.has_value())
+            return;
+        for(size_t ei = 0; ei < list.value().size(); ei++)
+        {
+            auto const& encounter = list.value()[ei];
+            auto        squads    = encounter.squads.data(m_magic);
+            if(!(encounter.flags & flags_t::respawn_enabled) || !squads.has_value())
+                continue;
+            auto const name = lowered(encounter.name.str());
+            for(size_t si = 0; si < squads.value().size(); si++)
+            {
+                auto const& squad  = squads.value()[si];
+                auto        starts = squad.start_locations.data(m_magic);
+                if(!starts.has_value() || starts.value().empty())
+                    continue;
+                size_t const want = std::min<size_t>(std::max<u32>(squad.normal_diff_count, 1), starts.value().size());
+                auto const   path = fmt::format("{}/{}", name, lowered(squad.name.str()));
+                auto const   key  = std::pair{ei, si};
+                if(ai_living(p, path) >= want)
+                {
+                    m_respawn_in.erase(key);
+                    continue;
+                }
+                auto [it, fresh] = m_respawn_in.try_emplace(key, 0.f);
+                if(fresh)
+                    it->second = std::uniform_real_distribution<f32>(
+                        encounter.respawn_delay.x, std::max(encounter.respawn_delay.x, encounter.respawn_delay.y))(m_spawn_random);
+                if((it->second -= 1.f / tick_rate) > 0.f)
+                    continue;
+                m_respawn_in.erase(it);
+                place_actor(p, name, encounter, static_cast<i16>(ei), si,
+                            starts.value()[m_spawn_random() % starts.value().size()]);
+            }
+        }
+    }
+
     void ai_place(Proxy& p, std::string const& path)
     {
         auto const slash = path.find('/');
@@ -5199,6 +5398,7 @@ struct BlamScript
     std::set<u32>                           m_despawning;
     std::set<u32>                           m_recreate;
     std::map<u32, i32>                      m_queued_recordings; /* spawning net id: its recording's length */
+    std::map<u32, i32>                      m_queued_custom;     /* spawning net id: its custom clip's frames left */
     std::map<std::tuple<blam::antr::header const*, std::string, std::string>, Vecf2> m_walk_speeds;
     /* Squads of the units ai_place is spawning, by net id */
     struct actor_slot_t
@@ -5215,6 +5415,8 @@ struct BlamScript
     };
     std::map<u32, actor_slot_t> m_actor_slots;
     std::set<u64>               m_crewed; /*!< Vehicles whose built-in gunners were made */
+    bool                        m_placed_initial{false};
+    std::map<std::pair<size_t, size_t>, f32> m_respawn_in; /*!< s until a squad gets an actor back */
     action_tests_t                          m_tests;
     std::map<u32, libc_types::i64>          m_impulses; /* tag, tick started */
     std::set<u32>                           m_loops;
@@ -5239,6 +5441,7 @@ struct BlamScript
         std::vector<std::pair<u32, std::function<void(Proxy&, u64)>>> deferred;
         std::set<u32>                           spawning;
         std::map<u32, i32>                      queued;
+        std::map<u32, i32>                      queued_custom;
         std::map<u32, actor_slot_t>             slots;
         std::map<u64, u32>                      nets; /*!< Entities it names, by net id */
         std::string                             objective;

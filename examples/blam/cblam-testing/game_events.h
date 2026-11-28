@@ -110,6 +110,8 @@ struct GameEvent
         ScriptCall,
         ChatSay,
         ChatLine,
+        PostgameChoice,
+        PlayerSuspend,
     };
 
     EventType type{None};
@@ -380,6 +382,8 @@ struct SpawnObjectEvent
     libc_types::f32 age{0.f};           /*!< A weapon's battery spent, 0 to 1 */
     /*! A weapon's rounds, loaded then reserve; none for what its magazine starts with */
     std::optional<std::array<libc_types::u16, 2>> rounds;
+    /*! Dropped by a unit: tidied away once it has lain a while */
+    bool litter{false};
     /*! Plays its creation effect, or the players' respawn effect if it has none */
     bool announce{false};
     /*! A unit's own change colours, see Model::change_colors */
@@ -411,6 +415,9 @@ struct SpawnEffectEvent
     /*! Another view of an effect played elsewhere: only what is seen */
     bool visuals_only{false};
     libc_types::u64 shooter{0}; /*!< Whose shot it is: blamed for the damage it does */
+    /*! How what struck was travelling, for an impact's incident and
+     *  reflection locations; zero for none */
+    Vecf3 incident{};
 };
 
 /*! A simulation tick passed (TickClock). Raised in order, a few per frame
@@ -506,12 +513,15 @@ struct WeaponFireEvent
     bool                 melee{false};  /*!< A strike with `weapon`, nothing fired */
     bool                 windup{false}; /*!< A strike begun: its swing plays, nothing lands yet */
     bool                 zoomed{false}; /*!< Through a scope: a trigger with error only unzoomed has none */
+    libc_types::f32      error{0.f};    /*!< How far held fire has spread it, 0 to 1 of the error angles */
     Vecf3                position{};           /*!< Where projectiles leave */
     Vecf3                direction{1.f, 0.f, 0.f}; /*!< Aim, before spread */
     libc_types::u64      target{0}; /*!< The unit the reticle rested on, which guided shots seek */
     /*! The tick the shooter saw others at; the authority traces bipeds
      *  back there */
     std::optional<libc_types::u64> view_tick{};
+    /*! And `target`, played back on its own delay, at this one */
+    std::optional<libc_types::u64> target_tick{};
 };
 
 /*! A shot struck an object or a biped, as the authority (the server, or a
@@ -590,6 +600,10 @@ struct UnitVitalityEvent
     bool                 fresh{false};   /*!< A respawn, not a checkpoint: starts over equipped */
     libc_types::f32      overcharge_decay{0.f}; /*!< BipedStatus' */
     bool destroyed{false}; /*!< Dead and gone: its coll's destroyed effect plays */
+    /*! The killing blow, or one it flinched from, as BipedStatus has it */
+    Vecf3          blow{};
+    libc_types::u8 blow_flags{0};
+    bool           ping{false}; /*!< Alive: `blow` is one to flinch from */
 };
 
 /*! A player's seat came back into the game after leaving it; it waits to
@@ -668,6 +682,8 @@ struct AnnounceEvent
     static constexpr auto event_type = GameEvent::Announce;
 
     libc_types::u16 sound{0}; /*!< Into matg's multiplayer sounds */
+    /*! The local player it is for, heard from their side of a split screen */
+    std::optional<libc_types::u32> player{};
 };
 
 /*! The game type's rules move a capture-the-flag flag (authority only) */
@@ -677,8 +693,9 @@ struct FlagCommandEvent
 
     enum kind_t : libc_types::u8
     {
-        reset, /*!< Back to its base, out of anyone's hands */
-        give,  /*!< Into a player's hands */
+        reset,  /*!< Back to its base, out of anyone's hands */
+        give,   /*!< Into a player's hands */
+        remove, /*!< Out of play until reset */
     } kind{reset};
 
     libc_types::u16 team{0};
@@ -830,6 +847,15 @@ struct PlayerTeleportEvent
     std::optional<Quatf> rotation{};
 };
 
+/*! unit_suspended on a player: gravity stops acting on its body */
+struct PlayerSuspendEvent
+{
+    static constexpr auto event_type = GameEvent::PlayerSuspend;
+
+    libc_types::u64 entity_id{0};
+    bool            suspended{false};
+};
+
 struct PlayerCameraLerpEvent
 {
     static constexpr auto event_type = GameEvent::PlayerCameraLerp;
@@ -923,6 +949,14 @@ struct ServerCameraControl
 struct ServerDisconnectEvent
 {
     static constexpr auto event_type = GameEvent::ServerDisconnect;
+};
+
+/*! A button pressed on the postgame carnage report */
+struct PostgameChoiceEvent
+{
+    static constexpr auto event_type = GameEvent::PostgameChoice;
+
+    bool pick_game{false}; /*!< A: on to another game; else B: quit */
 };
 
 /* The server went away, or ours couldn't start; only host_left is a clean

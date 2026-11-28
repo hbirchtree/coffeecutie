@@ -64,6 +64,7 @@ import (
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/subtle"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
@@ -656,9 +657,15 @@ func main() {
 	}
 }
 
+// ServerListing is what anyone may know of a server: what it published as
+// its metadata, and the key a client pins when it joins.
 type ServerListing struct {
 	Name string `json:"name"`
+	// Private servers want a password to join.
 	Private bool `json:"private"`
+	// Key is the server's Ed25519 public key, base64, for auth=ed25519:<key>.
+	Key      string          `json:"key"`
+	Metadata json.RawMessage `json:"metadata,omitempty"`
 }
 
 type ServerList struct {
@@ -670,18 +677,31 @@ func handleServerList(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	servers := ServerList {
+	servers := ServerList{
 		Servers: make([]ServerListing, 0),
-	};
+	}
 	workingSet.servers.RLock()
 	for id, srv := range workingSet.servers.registry {
-		if !srv.active {
+		srv.mu.Lock()
+		active, meta := srv.active, srv.metadata
+		srv.mu.Unlock()
+		if !active {
 			continue
 		}
-		servers.Servers = append(servers.Servers, ServerListing{
+		listing := ServerListing{
 			Name: id,
-			Private: false,
-		})
+			Key:  base64.StdEncoding.EncodeToString(srv.publicKey),
+		}
+		if meta != nil && json.Valid(meta.raw) {
+			listing.Metadata = meta.raw
+			var flags struct {
+				Password bool `json:"password"`
+			}
+			if json.Unmarshal(meta.raw, &flags) == nil {
+				listing.Private = flags.Password
+			}
+		}
+		servers.Servers = append(servers.Servers, listing)
 	}
 	workingSet.servers.RUnlock()
 	serialized, err := json.Marshal(servers)

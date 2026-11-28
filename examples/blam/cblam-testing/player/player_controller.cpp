@@ -43,6 +43,8 @@ struct PlayerController
     /* Re-arms a jump the ground probe never saw leave the ground */
     static constexpr duration jump_cooldown   = 300ms;
     static constexpr i16      trigger_pressed = 8192;
+    /* The sensitivity spinner's default, as shown: the stick's base speed */
+    static constexpr f32 default_sensitivity = 3.f;
 
     /* What a seat's movement goes to */
     enum class seat_t
@@ -97,11 +99,24 @@ struct PlayerController
 
         /* A cutscene's single view covers the whole window */
         auto const cutscene = cutscene_seat(p, p.template subsystem<CinematicState>().playing);
+        auto const& profiles = p.template subsystem<PlayerProfile>();
+        auto const& lobby    = p.template subsystem<LocalLobby>();
         for(auto player : p.select<PlayerCamera, PlayerInfo>())
         {
             auto [cam, info] = player.components();
             if(f32 const aspect = cutscene ? cam.screen_aspect : cam.split_aspect; aspect > 0.f)
                 cam.camera.aspect = aspect;
+            /* The seat's profile decides how its stick looks */
+            if(!info.is_remote())
+            {
+                auto const&          profile  = profiles.at(lobby.profile_of(cam.controller.index.value_or(info.seat_idx)));
+                auto const&          controls = profile.controls;
+                info.color                    = profile.color;
+                ControllerOpts const base{};
+                f32 const            scale = static_cast<f32>(controls.sensitivity + 1) / default_sensitivity;
+                cam.controller.opts.sens.look.x = base.sens.look.x * scale;
+                cam.controller.opts.sens.look.y = base.sens.look.y * scale * (controls.invert_look == 0 ? 1.f : -1.f);
+            }
         }
         for(auto player : p.select<
                           PlayerCamera,
@@ -164,6 +179,16 @@ struct PlayerController
                 /* The dead wait to come back, and nobody plays on once the
                  * game is over */
                 bool const over = p.template subsystem<GameState>().shows_results();
+                /* The carnage report's A and B, once, from any seat here */
+                if(!over)
+                    m_postgame_sent = false;
+                else if(!info.is_remote() && !m_postgame_sent && (input.accept || input.back || input.melee))
+                {
+                    m_postgame_sent = true;
+                    GameEvent           ev{.type = GameEvent::PostgameChoice};
+                    PostgameChoiceEvent choice{.pick_game = static_cast<bool>(input.accept)};
+                    p.subsystem<GameEventBus>().inject(ev, &choice);
+                }
                 if(auto const* status = p.template get<BipedStatus>(player.id());
                    ((status && status->dead) || over) && info.mode.physics)
                 {
@@ -195,7 +220,9 @@ struct PlayerController
             cam.view_offset    = dead ? death_view(p, player.id(), cam, dt) : Vecf3{};
             if(!dead)
                 m_dead_for.erase(player.id());
-            ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
+            /* A remote player's crouch comes with its camera */
+            if(!info.is_remote())
+                ease_crouch(cam, info, info.crouched && seat_of(info) == seat_t::body, dt);
             update_camera(cam);
             if(info.riding.vehicle == 0 && !dead)
                 place_biped(cam, info, model);
@@ -597,14 +624,19 @@ struct PlayerController
         input.accel    = 1.f;
     }
 
-    /* A local game stands still while any seat has its menu open; a
-     * networked one runs on, as its peers do */
+    /* A local game stands still while any seat has its menu open, as does
+     * a hosted one with nobody joined or a hosted campaign, whose clients
+     * follow its clock; a multiplayer game with peers runs on */
     void pause_for_menus(Proxy& p)
     {
         auto const& net = p.subsystem<NetworkState>();
-        if(net.client_state != NetworkState::ClientState::None ||
-           net.server_state != NetworkState::ServerState::None)
+        if(net.client_state != NetworkState::ClientState::None)
             return;
+        if(net.server_state != NetworkState::ServerState::None &&
+           p.subsystem<GameState>().kind != GameState::kind_t::campaign)
+            for(auto ent : p.select<PlayerInfo>())
+                if(ent.template get<PlayerInfo>().is_remote())
+                    return;
         bool in_menu = false;
         for(auto ent : p.select<PlayerInput>())
             in_menu |= ent.template get<PlayerInput>().input_mode == PlayerInput::input_mode_t::menu;
@@ -724,12 +756,25 @@ struct PlayerController
         };
         /* Each way at its own clip's speed; |move| <= 1 keeps diagonals
          * within the faster of the two */
-        auto const&  basis = cam.camera_.cached;
+        /* Walked by the view the tick stepped to, not what is drawn past
+         * it, so the heading is the same at any frame rate */
+        StandardCamera ticked_basis = cam.camera_;
+        if(auto const past = m_past_tick_applied.find(id); past != m_past_tick_applied.end())
+        {
+            auto ticked = cam.camera;
+            ticked_basis.rotate(ticked, -past->second.x, -past->second.y);
+            ticked_basis.refresh_basis(ticked, cam.camera_opts);
+        }
+        auto const&  basis = ticked_basis.cached;
         auto const&  biped = info.biped;
         Vecf2 const& move  = input.intent.move;
         info.crouched      = input.intent.crouch;
         /* No boost on a body: the triggers fire, LCtrl crouches */
-        f32 const    pace  = info.crouched ? biped.crouch_speed : 1.f;
+        /* Reverse Tag's "it" runs slowly: a timed game with someone it */
+        auto const&  game  = p.template subsystem<GameState>();
+        bool const   it    = game.timed && game.juggernaut >= 0 && game.juggernaut == static_cast<i32>(info.player_idx);
+        f32 const    pace  = (info.crouched ? biped.crouch_speed : 1.f) * (it ? reverse_tag_pace : 1.f) *
+                         (game.infected(info.player_idx) ? infected_pace : 1.f);
         f32 const    along = move.x >= 0.f ? biped.run_speed : biped.back_speed;
         Vecf3 const  dir   = (planar(basis.forward) * move.x * along +
                            planar(basis.right) * move.y * biped.strafe_speed) *
@@ -980,6 +1025,9 @@ struct PlayerController
                                         m_remote_queue;
     std::map<u64, PlayerTickInputEvent> m_remote_inputs; /*!< Newest per body */
     std::map<u64, InputIntent> m_remote_presses; /*!< Not yet acted on */
+    bool                       m_postgame_sent{false};
+    static constexpr libc_types::f32 reverse_tag_pace = .6f; /* of a run, my pick */
+    static constexpr libc_types::f32 infected_pace    = 1.2f; /* Infection's infected outrun the humans */
     std::map<u64, InputIntent> m_presses;        /*!< Local, not yet sent */
     std::map<u64, f32>         m_dead_for; /*!< Seconds dead, for the camera */
     std::map<u64, Vecf2>       m_look; /*!< Device look since the last tick */

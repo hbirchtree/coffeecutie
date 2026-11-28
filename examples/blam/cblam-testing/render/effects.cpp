@@ -9,9 +9,11 @@
 #include "selected_version.h"
 #include "audio/sounds.h"
 #include "game/game_mode.h"
+#include "game/hills.h"
 #include "game/save_state.h"
 #include "ticks.h"
 
+#include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_particles.h>
 #include <blam/volta/blam_unit.h>
 
@@ -104,8 +106,11 @@ struct motion_t
     {
         if(friction <= 0.f)
             return 0.f;
-        return radius > 0.f ? std::min(friction * dt / radius, 1.f) : 1.f;
+        /* A sprite still too small to see (a jet's first, invisible state)
+         * would otherwise stop dead where it was made */
+        return std::min(friction * dt / std::max(radius, least_drag_radius), 1.f);
     }
+    static constexpr f32 least_drag_radius = .1f; /* wu */
 
     static motion_t from(point_physics const* pphy)
     {
@@ -221,6 +226,7 @@ struct EffectSystem
         u64           parent{0};
         u64           marker_parent{0}; /* markers the parent lacks */
         u64           shooter{0}; /* blamed for its damage */
+        Vecf3         incident{};  /* what struck's travel, for impact locations */
         bool          attached{false}; /* loops while its object lives */
         scale_t       scale{};
 
@@ -336,6 +342,7 @@ struct EffectSystem
             m_effect_decals.clear();
             m_antennas.clear();
             m_flags.clear();
+            m_hills.reset();
             m_sprite_pixels.clear();
             m_animations.clear();
         }
@@ -367,6 +374,7 @@ struct EffectSystem
         step_weather(p, scene, dt);
         step_decals(p, scene, dt);
         step_antennas(p, scene, dt);
+        draw_hill(p, scene, files, dt);
         step_flags(p, scene, dt);
     }
 
@@ -385,9 +393,12 @@ struct EffectSystem
 
     using triangle_t = std::array<Vecf3, 3>;
 
-    static u64 decal_cell_key(Vecf3 const& at)
+    static glm::ivec3 decal_cell_of(Vecf3 const& at)
     {
-        auto const c = glm::ivec3(glm::floor(at / decal_cell));
+        return glm::ivec3(glm::floor(at / decal_cell));
+    }
+    static u64 decal_cell_key(glm::ivec3 const& c)
+    {
         return (u64(u32(c.x) & 0x1FFFFF) << 42) |
                (u64(u32(c.y) & 0x1FFFFF) << 21) | u64(u32(c.z) & 0x1FFFFF);
     }
@@ -397,38 +408,49 @@ struct EffectSystem
     {
         m_decal_triangles.clear();
         m_decal_grid.clear();
+        m_decal_large.clear();
         for(auto const& probe : bsp.light_probes)
             for(auto const& tri : probe.triangles)
             {
                 auto const index = static_cast<u32>(m_decal_triangles.size());
                 m_decal_triangles.push_back(tri.position);
-                Vecf3 const lo = glm::min(
-                    glm::min(tri.position[0], tri.position[1]),
-                    tri.position[2]);
-                Vecf3 const hi = glm::max(
-                    glm::max(tri.position[0], tri.position[1]),
-                    tri.position[2]);
-                for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
-                    for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
-                        for(f32 z = lo.z; z < hi.z + decal_cell;
-                            z += decal_cell)
-                            m_decal_grid[decal_cell_key(
-                                             glm::min(Vecf3(x, y, z), hi))]
-                                .push_back(index);
+                auto const [lo, hi] = decal_bounds(tri.position);
+                glm::ivec3 const a = decal_cell_of(lo), b = decal_cell_of(hi);
+                glm::i64vec3 const span = glm::i64vec3(b - a) + glm::i64vec3(1);
+                /* Outdoor terrain spans thousands of cells: kept aside and
+                 * tested by its box instead */
+                if(span.x * span.y * span.z > decal_max_cells)
+                {
+                    m_decal_large.push_back(index);
+                    continue;
+                }
+                for(i32 x = a.x; x <= b.x; x++)
+                    for(i32 y = a.y; y <= b.y; y++)
+                        for(i32 z = a.z; z <= b.z; z++)
+                            m_decal_grid[decal_cell_key({x, y, z})].push_back(index);
             }
+    }
+
+    static std::pair<Vecf3, Vecf3> decal_bounds(triangle_t const& t)
+    {
+        return {glm::min(glm::min(t[0], t[1]), t[2]), glm::max(glm::max(t[0], t[1]), t[2])};
     }
 
     std::vector<u32> decal_candidates(Vecf3 const& lo, Vecf3 const& hi) const
     {
         std::vector<u32> out;
-        for(f32 x = lo.x; x < hi.x + decal_cell; x += decal_cell)
-            for(f32 y = lo.y; y < hi.y + decal_cell; y += decal_cell)
-                for(f32 z = lo.z; z < hi.z + decal_cell; z += decal_cell)
-                    if(auto it = m_decal_grid.find(
-                           decal_cell_key(glm::min(Vecf3(x, y, z), hi)));
-                       it != m_decal_grid.end())
-                        out.insert(
-                            out.end(), it->second.begin(), it->second.end());
+        glm::ivec3 const a = decal_cell_of(lo), b = decal_cell_of(hi);
+        for(i32 x = a.x; x <= b.x; x++)
+            for(i32 y = a.y; y <= b.y; y++)
+                for(i32 z = a.z; z <= b.z; z++)
+                    if(auto it = m_decal_grid.find(decal_cell_key({x, y, z})); it != m_decal_grid.end())
+                        out.insert(out.end(), it->second.begin(), it->second.end());
+        for(u32 index : m_decal_large)
+        {
+            auto const [tlo, thi] = decal_bounds(m_decal_triangles[index]);
+            if(glm::all(glm::lessThanEqual(tlo, hi)) && glm::all(glm::lessThanEqual(lo, thi)))
+                out.push_back(index);
+        }
         std::sort(out.begin(), out.end());
         out.erase(std::unique(out.begin(), out.end()), out.end());
         return out;
@@ -938,6 +960,67 @@ struct EffectSystem
         return 0;
     }
 
+    /* ---- King of the hill ---- */
+
+    /* The hill in play: a fence of the globals' hill shader standing along
+     * its outline, the pattern sliding round it */
+    void draw_hill(Proxy& p, EffectScene& scene, BlamFiles<halo_version> const& files, f32 dt)
+    {
+        auto const& state = p.template subsystem<GameState>();
+        if(state.game_type != GameSetup::game_type_t::koth || state.hill < 0)
+            return;
+        if(!m_hills)
+            m_hills = hills::of(files);
+        if(static_cast<size_t>(state.hill) >= m_hills->size())
+            return;
+        auto const& hull = (*m_hills)[static_cast<size_t>(state.hill)].hull;
+        auto const* bmp  = hill_bitmap();
+        if(hull.size() < 2 || !bmp)
+            return;
+        m_hill_slide = std::fmod(m_hill_slide + dt / hill_slide_period, 1.f);
+        /* The panels are in its colour; its alpha is only their circuit lines */
+        EffectScene::mesh_t mesh{.bitmap = bmp, .blend = blend_t::add, .ignore_alpha = true};
+        /* A mesh's uv covers its image once: cut where the pattern repeats */
+        Vecf3 const up{0.f, 0.f, hill_fence_height};
+        auto const  corner = [&mesh](Vecf3 const& at, f32 u, f32 v) {
+            mesh.positions.push_back(at);
+            mesh.uv.push_back({u, v});
+        };
+        f32 along = m_hill_slide;
+        for(size_t i = 0; i < hull.size(); i++)
+        {
+            Vecf3 const a = hull[i], b = hull[(i + 1) % hull.size()];
+            f32 const   span = glm::distance(Vecf2(a), Vecf2(b)) / hill_tile;
+            for(f32 done = 0.f; done < span;)
+            {
+                f32 const   u0   = along - std::floor(along);
+                f32 const   step = std::min(1.f - u0, span - done);
+                Vecf3 const p0   = glm::mix(a, b, done / span);
+                Vecf3 const p1   = glm::mix(a, b, (done + step) / span);
+                f32 const   u1   = u0 + step;
+                corner(p0, u0, 0.f), corner(p1, u1, 0.f), corner(p1 + up, u1, 1.f);
+                corner(p0, u0, 0.f), corner(p1 + up, u1, 1.f), corner(p0 + up, u0, 1.f);
+                done += step;
+                along += step;
+            }
+        }
+        scene.meshes.push_back(std::move(mesh));
+    }
+
+    blam::tagref_t const* hill_bitmap()
+    {
+        auto globals_tag = m_index.tag_of("globals\\globals");
+        if(!globals_tag.has_value())
+            return nullptr;
+        auto globals = (*globals_tag)->template data<blam::globals::globals>(*m_magic);
+        if(!globals.has_value())
+            return nullptr;
+        auto mp = globals.value()->multiplayer.data(*m_magic);
+        if(!mp.has_value() || mp.value().empty())
+            return nullptr;
+        return flag_bitmap(mp.value()[0].hill_shader);
+    }
+
     /* The cloth's texture: its shader's first map, chicago on PC and
      * transparent generic on Xbox */
     blam::tagref_t const* flag_bitmap(blam::tagref_t const& shader)
@@ -1117,11 +1200,28 @@ struct EffectSystem
         return {};
     }
 
+    static std::optional<Vecf3> impact_way(effect_instance_t const& fx, std::string_view name)
+    {
+        if(glm::dot(fx.incident, fx.incident) < 1e-8f)
+            return std::nullopt;
+        Vecf3 const in = glm::normalize(fx.incident);
+        if(name == "incident")
+            return -in;
+        if(name == "negative incident")
+            return in;
+        if(name == "reflection")
+            return glm::reflect(in, fx.place.forward);
+        return std::nullopt;
+    }
+
     place_t location(Proxy& p, effect_instance_t const& fx, i16 index)
     {
         std::string const name = location_name(fx, index);
         if(name == "gravity")
             return {fx.place.position, {0.f, 0.f, -1.f}};
+        /* An impact's: back the way the shot came, on through, or off the surface */
+        if(auto way = impact_way(fx, name))
+            return {fx.place.position, *way};
         if(fx.marker_parent != 0 && !name.empty() && name != "normal" &&
            !has_marker(p, fx.parent, name) && has_marker(p, fx.marker_parent, name))
             if(auto at = marker_place(p, fx.marker_parent, name))
@@ -1158,6 +1258,7 @@ struct EffectSystem
                     .parent        = request.parent,
                     .marker_parent = request.marker_parent,
                     .shooter       = request.shooter,
+                    .incident      = request.incident,
                 });
                 m_effects.back().audience     = audience_of(p, request.parent);
                 m_effects.back().visuals_only = request.visuals_only;
@@ -1413,8 +1514,11 @@ struct EffectSystem
                 case tag_class_t::deca:
                     if(auto const* tag = tag_data<decal_definition>(
                            part.type, tag_class_t::deca))
-                        /* Impacts face out of the surface, "gravity" into it */
-                        for(Vecf3 const way : {-at.forward, at.forward})
+                        /* Impacts face out of the surface, "gravity" into it; an
+                         * incident or reflection one goes only the way it points */
+                        for(Vecf3 const way : impact_way(fx, location_name(fx, part.location))
+                                                  ? std::initializer_list<Vecf3>{at.forward}
+                                                  : std::initializer_list<Vecf3>{-at.forward, at.forward})
                             if(auto hit = decal_surface(at.position, way))
                             {
                                 if(auto d = make_decal(
@@ -1805,8 +1909,15 @@ struct EffectSystem
             s.velocity = offset * explosion_speed;
             break;
         case particle_system::creation_physics_t::jet:
-            s.velocity = sys.place.forward * type.radius * explosion_speed;
+        {
+            /* The first constant is the jet's speed, in feet per second */
+            auto k = type.physics_constants.data(*m_magic);
+            f32 const speed = k.has_value() && !k.value().empty() && k.value()[0].k > 0.f
+                                  ? k.value()[0].k * feet_to_wu
+                                  : type.radius * explosion_speed;
+            s.velocity = sys.place.forward * speed;
             break;
+        }
         default:
             break;
         }
@@ -1919,8 +2030,8 @@ struct EffectSystem
             enter_state(s, s.state + 1);
         auto look_of = [&s](u32 i) {
             auto const& ps     = s.states[i];
-            f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) *
-                               s.pixels * .5f * ps.radius_multiplier;
+            /* The radius multiplier is its collision's, not its sprite's */
+            f32 const   radius = glm::mix(ps.scale.x, ps.scale.y, s.size_pick) * s.pixels * .5f;
             Vecf4 const color  = glm::mix(rgba(ps.color_1), rgba(ps.color_2), s.color_pick);
             return std::pair{radius, color};
         };
@@ -2698,6 +2809,9 @@ struct EffectSystem
     static constexpr f32    flare_fade_rate      = 8.f;    /* per second */
     static constexpr f32    sun_distance         = 2000.f; /* wu */
     static constexpr size_t max_contrail_points  = 256;
+    static constexpr f32    hill_fence_height    = 1.f; /* wu, as tall as a repeat is wide (square bitmap) */
+    static constexpr f32    hill_tile            = 1.f; /* wu of fence a repeat of its pattern spans */
+    static constexpr f32    hill_slide_period    = 3.f; /* s; the shader's u slide */
     static constexpr f32    default_light_life   = .25f;
     static constexpr f32    ticks_per_second     = 30.f;
     static constexpr f32    debris_lifetime      = 30.f; /* seconds */
@@ -2717,6 +2831,7 @@ struct EffectSystem
     static constexpr f32    decal_reach          = 2.f;  /* wu to a face */
     static constexpr size_t max_effect_decals    = 256;
     static constexpr f32    explosion_speed      = 2.f;  /* per wu from the centre */
+    static constexpr f32    feet_to_wu           = .1f;
     static constexpr f32    default_sprite_pixels = 128.f; /* when its bitmap can't say */
 
     u32        m_generation{0};
@@ -2730,6 +2845,8 @@ struct EffectSystem
     std::vector<light_instance_t>    m_lights;
     std::vector<system_instance_t>   m_systems;
     std::vector<contrail_instance_t> m_contrails;
+    std::optional<std::vector<hills::hill_t>> m_hills; /* built once a map is loaded */
+    f32                                       m_hill_slide{0.f};
     std::vector<volume_instance_t>   m_volumes;
     std::vector<sprite_particle_t>   m_particles;
     std::set<u64>                    m_attached;
@@ -2746,6 +2863,8 @@ struct EffectSystem
     BSPItem const*                            m_decal_bsp{nullptr};
     std::vector<triangle_t>                   m_decal_triangles;
     std::unordered_map<u64, std::vector<u32>> m_decal_grid;
+    std::vector<u32> m_decal_large; /*!< Triangles too big to bin */
+    static constexpr libc_types::i64 decal_max_cells = 64;
     std::vector<decal_instance_t>             m_placed_decals;
     std::vector<decal_instance_t>             m_effect_decals;
     std::vector<antenna_instance_t>           m_antennas;

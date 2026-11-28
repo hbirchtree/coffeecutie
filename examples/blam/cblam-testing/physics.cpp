@@ -101,15 +101,12 @@ class MassPointAction : public btActionInterface
 
     void updateAction(btCollisionWorld* world, btScalar dt) override
     {
-        if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
-            return;
         /* A driver stays aboard through slow or late frames; their stick
          * only counts while fresh. Lift and handbrake need the driver, not
-         * the input, or a banshee drops between frames. */
-        /* A turret's gunner only turns it: nothing drives or lifts it, and
-         * it holds its ground like a parked jeep */
-        bool const driven = m_drive && m_driver_left > 0 &&
-                            m_drive->type != VehicleDrive::turret;
+         * the input, or a banshee drops between frames. It lapses on a body
+         * that is moved for us too, e.g. one a client drives, which the
+         * engine's sound still reads */
+        bool const was_driven = m_driver_left > 0;
         if(m_driver_left > 0)
             m_driver_left--;
         if(m_input_left > 0)
@@ -119,6 +116,16 @@ class MassPointAction : public btActionInterface
             m_throttle = m_strafe = 0.f;
             m_handbrake = false;
         }
+        /* Flown, or its engine still running down, it never sleeps: asleep
+         * mid-air nothing would lift it or let it fall */
+        if(!m_body.isStaticOrKinematicObject() && m_drive && (was_driven || (m_lifting > 0 && m_power > 0.f)))
+            m_body.activate();
+        if(m_body.isStaticOrKinematicObject() || !m_body.isActive())
+            return;
+        /* A turret's gunner only turns it: nothing drives or lifts it, and
+         * it holds its ground like a parked jeep */
+        bool const driven = m_drive && was_driven &&
+                            m_drive->type != VehicleDrive::turret;
         /* The driver's seat powers the engine up and down over the tag's
          * times: a hovercraft lifts off as it is boarded, settles when left */
         if(m_drive && m_lifting > 0)
@@ -511,8 +518,13 @@ class MassPointAction : public btActionInterface
                               : accel;
         m_body.applyCentralImpulse(forward * (mass * coast * dt));
         btVector3 const slip = velocity - forward * speed;
-        m_body.applyCentralImpulse(
-            slip * (-mass * std::min(1.f, flight_grip * dt)));
+        f32 const       grip = std::min(1.f, flight_grip * dt);
+        m_body.applyCentralImpulse(slip * (-mass * grip));
+        /* Let go of the stick, it also sinks slowly: pulled down against the
+         * bleeds above, it settles at about coast_sink */
+        if(std::abs(m_throttle) <= stick_deadzone)
+            m_body.applyCentralImpulse(
+                btVector3(0, 0, mass * grip * (-coast_sink_pull - f32(velocity.z()))));
     }
 
     /* Damped spring turning the body to `nose` and `up` */
@@ -597,6 +609,7 @@ class MassPointAction : public btActionInterface
     static constexpr f32 flight_grip            = 2.f;  /* 1/s */
     static constexpr f32 halo_tick_rate         = 30.f; /* Hz */
     static constexpr f32 hover_grip             = 3.f;  /* 1/s */
+    static constexpr f32 coast_sink_pull        = 1.4f; /* wu/s; a banshee let go sinks at ~.3, my pick */
     /* Of forward speed, for a scout's tag-less strafe and reverse */
     static constexpr f32 scout_slide            = .9f;
     static constexpr f32 scout_reverse          = .9f;
@@ -987,6 +1000,8 @@ struct PhysicsSystem
                 report_impacts();
                 bleed_carried();
                 hold_walkers_off_steep();
+                unstick();
+                lift_sunk_walkers();
             }
             record_bipeds(tick.tick);
         }
@@ -1126,6 +1141,8 @@ struct PhysicsSystem
             data->position = {origin.x(), origin.y(), origin.z()};
             data->grounded = on_ground(*it->second.world_body, true);
             data->walking  = walking_of(it->second);
+            auto const& v  = it->second.world_body->getLinearVelocity();
+            data->moving   = {v.x(), v.y(), v.z()};
             data->deck     = it->second.deck;
         }
         for(auto const& [entity, _] : m_object_bodies)
@@ -1168,7 +1185,7 @@ struct PhysicsSystem
             u64 const  id     = player.id();
             /* Riders: hittable in the seat, but don't collide */
             bool const riding = info.riding.vehicle != 0;
-            bool const kinematic = riding ||
+            bool const kinematic = riding || info.suspended ||
                                    (info.is_remote() && !info.mode.simulated) ||
                                    !info.mode.physics;
             auto const shape = info.biped;
@@ -1327,8 +1344,11 @@ struct PhysicsSystem
                 frozen.insert(id);
                 continue;
             }
+            /* A flyer may be placed in mid-air, with no ground under it */
+            bool const flies = physics.drive && (physics.drive->type == VehicleDrive::alien_fighter ||
+                                                 physics.drive->type == VehicleDrive::human_plane);
             if(moves && !simulated &&
-               (!in_active_section(model.position) || !grounded(model.position)))
+               (!in_active_section(model.position) || (!flies && !grounded(model.position))))
                 continue;
             if(moves && section != m_object_sections.end())
                 section->second = m_built_section;
@@ -1381,6 +1401,14 @@ struct PhysicsSystem
                 /* Nothing drives it, so it has to stop on its own */
                 if(physics.upright && m_bodies.contains(id))
                     m_bodies.at(id).world_body->setFriction(1.f);
+                /* A flier hangs where it is until it moves itself */
+                if(physics.upright && physics.flying && m_bodies.contains(id))
+                {
+                    auto& flier = *m_bodies.at(id).world_body;
+                    flier.setFlags(flier.getFlags() | BT_DISABLE_WORLD_GRAVITY);
+                    flier.setGravity(btVector3(0, 0, 0));
+                    m_flyers.insert(id);
+                }
                 if(m_bodies.contains(id))
                 {
                     auto& body = *m_bodies.at(id).world_body;
@@ -1399,6 +1427,10 @@ struct PhysicsSystem
                     auto const& w    = physics.angular_velocity;
                     body.setLinearVelocity(btVector3(v.x, v.y, v.z));
                     body.setAngularVelocity(btVector3(w.x, w.y, w.z));
+                    /* An upright body walks its own way at once: thrown, it
+                     * carries the throw until it bleeds off */
+                    if(body.getAngularFactor().length2() == 0.f)
+                        m_bodies.at(id).carried = btVector3(v.x, v.y, 0.f);
                     /* Placed at rest: asleep until something touches it */
                     if(physics.sleeping)
                         body.setActivationState(ISLAND_SLEEPING);
@@ -1666,6 +1698,14 @@ struct PhysicsSystem
         }
     }
 
+    /* Outside the active section's bounds box altogether */
+    bool outside_section(Vecf3 const& pos) const
+    {
+        auto [p1, p2] = m_world_item->mesh->world_bounds.points();
+        return !glm::all(glm::greaterThanEqual(pos, glm::min(p1, p2))) ||
+               !glm::all(glm::lessThanEqual(pos, glm::max(p1, p2)));
+    }
+
     /* Whether an object is in the active section */
     bool in_active_section(Vecf3 const& pos) const
     {
@@ -1681,6 +1721,110 @@ struct PhysicsSystem
             if(m_world_item->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
                 return true;
         return false;
+    }
+
+    /* A body pushed into solid structure (a wall, through the floor) can't
+     * find its way out of the hollow mesh: back to where it was last in
+     * the open, still */
+    /* A hard landing sinks a walker's feet into the ground, where its
+     * capsule catches on the terrain's edges and won't walk: lifted back
+     * on top of the ground under it */
+    void lift_sunk_walkers()
+    {
+        for(auto& [id, body] : m_bodies)
+        {
+            if(body.group != Physics::BodyCreationShape::Character || !body.world_body ||
+               body.world_body->getInvMass() <= 0.f || m_corpses.contains(id))
+                continue;
+            btVector3 lo, hi;
+            body.world_body->getAabb(lo, hi);
+            btTransform     at   = body.world_body->getWorldTransform();
+            btVector3 const from = at.getOrigin();
+            btVector3 const to   = from - btVector3(0, 0, from.z() - lo.z() + sunk_most);
+            btCollisionWorld::ClosestRayResultCallback ground(from, to);
+            ground.m_collisionFilterMask = btBroadphaseProxy::StaticFilter;
+            m_world->rayTest(from, to, ground);
+            if(!ground.hasHit())
+                continue;
+            f32 const sunk = f32(ground.m_hitPointWorld.z() - lo.z());
+            if(sunk <= sunk_tolerance || sunk > sunk_most)
+                continue;
+            at.getOrigin() += btVector3(0, 0, sunk);
+            body.world_body->setWorldTransform(at);
+            if(auto* motion = body.world_body->getMotionState())
+                motion->setWorldTransform(at);
+            btVector3 v = body.world_body->getLinearVelocity();
+            v.setZ(std::max(f32(v.z()), 0.f));
+            body.world_body->setLinearVelocity(v);
+        }
+    }
+
+    void unstick()
+    {
+        if(!m_world_item || !m_world_item->mesh)
+            return;
+        for(auto& [id, body] : m_bodies)
+        {
+            auto* rb = body.world_body.get();
+            if(!rb || rb->getInvMass() <= 0.f || !rb->isActive())
+                continue;
+            btVector3 const at = rb->getCenterOfMassPosition();
+            Vecf3 const     point{at.x(), at.y(), at.z()};
+            /* Past open bounds (the RS2 world) no cluster is ever around:
+             * the level's walls say nothing of it */
+            if(m_open_bounds && outside_section(point))
+            {
+                body.has_open    = false;
+                body.solid_steps = 0;
+                continue;
+            }
+            if(m_world_item->find_cluster_tree(point) ||
+               m_world_item->find_cluster_tree(point + Vecf3{0.f, 0.f, .1f}))
+            {
+                body.open_at     = rb->getWorldTransform();
+                body.has_open    = true;
+                body.solid_steps = 0;
+                body.rescues     = 0;
+                continue;
+            }
+            /* Clusterless right at a surface is the render tree's edge, not
+             * solid: only through a collision surface since is */
+            btVector3 const was = body.open_at.getOrigin() +
+                                  (at - rb->getWorldTransform().getOrigin());
+            Vecf3 const     from{was.x(), was.y(), was.z()};
+            auto const      hit = body.has_open ? m_world_item->raycast(from, point) : std::nullopt;
+            /* Deep behind the surface crossed, not resting on it */
+            if(!hit || glm::dot(from + (point - from) * hit->t - point, hit->normal) < unstick_depth)
+            {
+                body.solid_steps = 0;
+                continue;
+            }
+            /* Put back again and again, something else holds it there */
+            if(++body.solid_steps < unstick_steps || body.rescues >= unstick_tries)
+                continue;
+            body.rescues++;
+            rb->setWorldTransform(body.open_at);
+            rb->setInterpolationWorldTransform(body.open_at);
+            rb->setLinearVelocity(btVector3(0, 0, 0));
+            rb->setAngularVelocity(btVector3(0, 0, 0));
+            rb->setInterpolationLinearVelocity(btVector3(0, 0, 0));
+            body.solid_steps = 0;
+        }
+    }
+
+    /* Fallen through the level onto the floor of its bounds: no cluster
+     * holds it, so no real floor is under it */
+    bool out_of_world(Vecf3 const& pos) const
+    {
+        if(!m_world_item || !m_world_item->mesh || m_open_bounds)
+            return false;
+        auto [p1, p2] = m_world_item->mesh->world_bounds.points();
+        if(pos.z > std::min(p1.z, p2.z) + out_of_world_depth)
+            return false;
+        for(f32 up : {0.f, .5f, 1.f})
+            if(m_world_item->find_cluster_tree(pos + Vecf3{0.f, 0.f, up}))
+                return false;
+        return true;
     }
 
     /* This section's ground somewhere below; otherwise it lies on another
@@ -2112,21 +2256,15 @@ struct PhysicsSystem
                 f32 const face = sign > 0.f ? lo[axis] : hi[axis];
                 btTransform at;
                 at.setIdentity();
-                std::unique_ptr<btCollisionShape> shape;
-                if(m_open_bounds)
-                {
-                    Vecf3 extent = half, origin = centre;
-                    extent[axis] = bounds_depth * .5f;
-                    origin[axis] = face - sign * bounds_depth * .5f;
-                    shape        = std::make_unique<btBoxShape>(
-                        btVector3(extent.x, extent.y, extent.z));
-                    at.setOrigin(btVector3(origin.x, origin.y, origin.z));
-                } else
-                {
-                    btVector3 normal(0, 0, 0);
-                    normal[axis] = sign;
-                    shape = std::make_unique<btStaticPlaneShape>(normal, sign * face);
-                }
+                /* A slab just outside the face, not a plane: a plane's box is
+                 * the whole world, so every hull of every body kept a contact
+                 * pair with each of the six */
+                Vecf3 extent = half, origin = centre;
+                extent[axis] = bounds_depth * .5f;
+                origin[axis] = face - sign * bounds_depth * .5f;
+                auto shape   = std::unique_ptr<btCollisionShape>(
+                    std::make_unique<btBoxShape>(btVector3(extent.x, extent.y, extent.z)));
+                at.setOrigin(btVector3(origin.x, origin.y, origin.z));
                 btRigidBody::btRigidBodyConstructionInfo info(0.f, nullptr, shape.get());
                 info.m_startWorldTransform = at;
                 auto body = std::make_unique<btRigidBody>(info);
@@ -3187,19 +3325,24 @@ struct PhysicsSystem
         m_bus->process(event, &hit);
     }
 
-    /* Where each biped's body was at each tick, for rays that look back */
+    /* Where each living biped's body was at each tick, players' and
+     * actors', for rays that look back */
     void record_bipeds(u64 tick)
     {
-        std::erase_if(m_biped_history, [this](auto const& e) {
-            return !m_player_bodies.contains(e.first);
+        auto const standing = [this](u64 id, auto const& body) {
+            return body.group == Physics::BodyCreationShape::Character && body.world_body &&
+                   !m_corpses.contains(id);
+        };
+        std::erase_if(m_biped_history, [&](auto const& e) {
+            auto it = m_bodies.find(e.first);
+            return it == m_bodies.end() || !standing(e.first, it->second);
         });
-        for(auto const& [id, _] : m_player_bodies)
+        for(auto const& [id, body] : m_bodies)
         {
-            auto it = m_bodies.find(id);
-            if(it == m_bodies.end())
+            if(!standing(id, body))
                 continue;
             auto& history = m_biped_history[id];
-            history.push_back({tick, it->second.world_body->getWorldTransform()});
+            history.push_back({tick, body.world_body->getWorldTransform()});
             while(history.size() > biped_history_ticks)
                 history.pop_front();
         }
@@ -3295,8 +3438,13 @@ struct PhysicsSystem
             for(auto const& [id, _] : m_biped_history)
             {
                 auto it    = m_bodies.find(id);
-                auto where = biped_at(id, *ray.rewind);
+                auto where = biped_at(id, id == ray.rewind_unit && ray.unit_rewind ? *ray.unit_rewind : *ray.rewind);
                 if(id == ray.ignore || id == ray.ignore_also || it == m_bodies.end() || !where)
+                    continue;
+                /* Nowhere near the ray then */
+                btVector3 const centre = where->getOrigin();
+                btScalar const  along  = std::clamp((centre - from).dot(to - from) / (to - from).length2(), btScalar(0), btScalar(1));
+                if((from + (to - from) * along - centre).length2() > rewind_reach * rewind_reach)
                     continue;
                 btTransform from_at, to_at;
                 from_at.setIdentity();
@@ -3349,10 +3497,9 @@ struct PhysicsSystem
     /* Carried momentum fades: fast against the ground, slowly in the air */
     void bleed_carried()
     {
-        for(auto const& [id, _] : m_player_bodies)
+        for(auto it = m_bodies.begin(); it != m_bodies.end(); ++it)
         {
-            auto it = m_bodies.find(id);
-            if(it == m_bodies.end() || it->second.carried.isZero())
+            if(it->second.carried.isZero())
                 continue;
             auto&     carried = it->second.carried;
             f32 const speed   = carried.length();
@@ -3384,8 +3531,9 @@ struct PhysicsSystem
         body.walked    = btVector3(vel.x(), vel.y(), 0.f);
         body.walked_at = m_frame;
         vel += body.carried;
+        /* A flier keeps its height unless it is asked to climb */
         if(velocity.preserve_z)
-            vel.setZ(body.world_body->getLinearVelocity().z());
+            vel.setZ(m_flyers.contains(velocity.entity_id) ? 0.f : body.world_body->getLinearVelocity().z());
         bool const grounded = on_ground(*body.world_body, true);
         bool const sliding  = velocity.preserve_z && hold_off_steep(body, vel).sliding();
         /* Grip while standing still, or slopes slide it; a body on its way
@@ -3603,6 +3751,12 @@ struct PhysicsSystem
     bool m_open_bounds{false};
     /* Thickness of open bounds, wu */
     static constexpr f32 bounds_depth = 64.f;
+    static constexpr f32 out_of_world_depth = 1.f; /* wu above the bounds floor */
+    static constexpr f32 sunk_tolerance     = .02f; /* wu of feet in the ground left alone */
+    static constexpr f32 sunk_most          = .5f;  /* wu; deeper is a wall or floor above, not ground */
+    static constexpr u32 unstick_steps      = 3;   /* in solid this long before it is put back */
+    static constexpr f32 unstick_depth      = .2f; /* wu behind a surface to count as in it */
+    static constexpr u32 unstick_tries      = 3;
     std::map<u64, u64>                          m_seated; /*!< Riders and their vehicles: hit by rays though they push nothing */
     std::unique_ptr<btSphereShape>              m_probe_shape;
     std::unique_ptr<btRigidBody>                m_probe_body;
@@ -3633,6 +3787,11 @@ struct PhysicsSystem
         Vecf3                                   child_offset{};
         /* Step it was made in; it settles silently for a while */
         u32 created{0};
+        /* Where it was last in open space, and steps it has since been in solid */
+        btTransform open_at{btTransform::getIdentity()};
+        bool        has_open{false};
+        u32         solid_steps{0};
+        u32         rescues{0}; /*!< Times put back since last in the open by itself */
         /* Horizontal momentum kept after exiting a vehicle, or stepping off
          * a moving one */
         btVector3 carried{0, 0, 0};
@@ -3913,6 +4072,7 @@ struct PhysicsSystem
     using biped_sample_t = std::pair<u64, btTransform>;
     std::map<u64, std::deque<biped_sample_t>> m_biped_history;
     static constexpr size_t biped_history_ticks = TickClock::rate * 6 / 5;
+    static constexpr btScalar rewind_reach = 4; /* Past any biped's hull from its origin */
     std::map<u64, ObjectPhysics::authority_t> m_object_bodies;
     /* The section an object's body was made in */
     std::map<u64, i16> m_object_sections;
@@ -3962,6 +4122,7 @@ struct PhysicsSystem
     std::set<u64>        m_passing; /* remote bodies inside another, not pushing */
     std::set<u64>        m_scripted; /* placed by a script, as its riders are */
     std::set<u64>        m_recorded; /* vehicles a recording drives */
+    std::set<u64>        m_flyers;   /* bipeds that fly */
     std::vector<u64>     m_released; /* let go by a script this frame */
     /* Bodies let go inside another (a rider in its seat): neither touches
      * the other until they are apart */
@@ -4215,6 +4376,10 @@ void alloc_physics(compo::EntityContainer& container)
     phys_bus.addEventFunction<Physics::Raycast>(
         0, [&physics](Physics::Event&, Physics::Raycast* ray) {
             physics.raycast(*ray);
+        });
+    phys_bus.addEventFunction<Physics::OutOfWorld>(
+        0, [&physics](Physics::Event&, Physics::OutOfWorld* query) {
+            query->out = physics.out_of_world(query->position);
         });
     phys_bus.addEventFunction<Physics::Drive>(
         0, [&physics](Physics::Event&, Physics::Drive* drive) {

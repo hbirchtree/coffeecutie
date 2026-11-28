@@ -2857,6 +2857,16 @@ void dump_antr(blam::antr::header const* animation)
         print_slots(weapon.animations);
     });
     fmt::print("  devices={}\n", animation->devices.count);
+    fmt::print("  unit_damages={}\n", animation->unit_damages.count);
+    {
+        auto clips = animation->animations.data(g_magic);
+        each(g_magic, animation->unit_damages, [&](size_t i, auto const& index) {
+            std::string_view name = "-";
+            if(clips.has_value() && index >= 0 && static_cast<size_t>(index) < clips.value().size())
+                name = clips.value()[static_cast<size_t>(index)].name.str();
+            fmt::print("    unit_damage {}: animation={} {}\n", i, index, name);
+        });
+    }
     fmt::print("  nodes={}\n", animation->nodes.count);
     each(g_magic, animation->nodes, [](size_t i, auto const& node) {
         auto joint = magic_enum::enum_name(node.joint_flags);
@@ -2881,7 +2891,7 @@ void dump_antr(blam::antr::header const* animation)
         auto anim_type = magic_enum::enum_name(anim.type);
         fmt::print(
             "    animation {}: name={} type={} frames={} loop={} key={},{} "
-            "sound={}@{} feet L@{} R@{} next={} nodes={} checksum={:#010x}{}"
+            "sound={}@{} feet L@{} R@{} next={} nodes={} checksum={:#010x}{}{}"
             " rot={:#x},{:#x} trans={:#x},{:#x} size={}\n",
             i,
             anim.name.str(),
@@ -2898,6 +2908,7 @@ void dump_antr(blam::antr::header const* animation)
             anim.node_count,
             static_cast<u32>(anim.node_list_checksum),
             anim.is_compressed() ? " compressed" : "",
+            anim.is_world_relative() ? " world-relative" : "",
             static_cast<u32>(anim.node_rot_flags[0]),
             static_cast<u32>(anim.node_rot_flags[1]),
             static_cast<u32>(anim.node_trans_flags[0]),

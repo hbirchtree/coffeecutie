@@ -204,7 +204,7 @@ struct ProjectileSystem
         if(ray.entity_id != 0)
             struck(p, flight, model, ray);
         if(response)
-            play(p, response->default_effect, ray.point, ray.normal, {}, flight.shooter);
+            play(p, response->default_effect, ray.point, ray.normal, {}, flight.shooter, direction(flight));
 
         switch(what)
         {
@@ -264,6 +264,10 @@ struct ProjectileSystem
                     : nullptr);
         case response_t::disappear:
         default:
+            /* Gone, yet a shot with a detonation of its own still sets it
+             * off: fuel rods, charged plasma */
+            if(tag.detonation_effect.valid())
+                return detonate(p, flight, ray.point, ray.normal, nullptr);
             return false;
         }
     }
@@ -510,7 +514,8 @@ struct ProjectileSystem
         Vecf3 const&          at,
         Vecf3 const&          direction,
         Vecf3 const&          velocity,
-        u64                   shooter = 0)
+        u64                   shooter  = 0,
+        Vecf3 const&          incident = {})
     {
         if(!effect.valid())
             return;
@@ -521,6 +526,7 @@ struct ProjectileSystem
             .direction = direction,
             .velocity  = velocity,
             .shooter   = shooter,
+            .incident  = incident,
         };
         p.template subsystem<GameEventBus>().inject(ev, &spawn);
     }

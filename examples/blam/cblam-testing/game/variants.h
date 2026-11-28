@@ -1,0 +1,109 @@
+#pragma once
+
+#include "ui/ui_game_setup.h"
+
+#include <array>
+#include <optional>
+#include <string_view>
+
+/* The built-in game variants, in the order of ui.map's
+ * ui\default_multiplayer_game_setting_names; their descriptions follow the
+ * ten custom ones in ui\shell\strings\game_variant_descriptions. Each is a
+ * game type and the rules program globals that make it what it says */
+namespace variants {
+
+using game_type_t = GameSetup::game_type_t;
+
+struct option_t
+{
+    std::string_view name;
+    std::string_view value;
+};
+
+struct variant_t
+{
+    std::string_view        key; /*!< --game-variant */
+    game_type_t             type;
+    std::array<option_t, 3> options{};
+    bool                    complete{true}; /*!< false: some of its rules aren't played yet */
+    std::u16string_view     name{};        /*!< Ours, past ui.map's list: its own words */
+    std::u16string_view     description{};
+    std::array<std::string_view, 2> weapons{}; /*!< Started with; none for the map's */
+    libc_types::i16                 grenades{-1};
+    std::string_view                weapon_set{};
+};
+
+constexpr std::string_view pistol  = "weapons\\pistol\\pistol";
+constexpr std::string_view rifle   = "weapons\\assault rifle\\assault rifle";
+constexpr std::string_view rockets = "weapons\\rocket launcher\\rocket launcher";
+constexpr std::string_view sniper  = "weapons\\sniper rifle\\sniper rifle";
+
+constexpr libc_types::u16 first_description = 10;
+
+/* Incomplete ones lack: lives, starting loadouts, weapon sets, invisibility,
+ * motion tracker and health options, respawn time growth, team play outside
+ * capture the flag */
+constexpr std::array<variant_t, 27> all = {{
+    {"slayer", game_type_t::slayer, {{{"score_limit", "15"}}}},
+    {"slayer_pro", game_type_t::slayer, {{{"score_limit", "25"}}}, true, {}, {}, {pistol, rifle}, 2},
+    {"elimination", game_type_t::slayer, {{{"lives", "1"}}}},
+    {"phantoms", game_type_t::slayer, {{{"unseen", "1"}}}, false},
+    {"endurance", game_type_t::slayer, {{{"score_limit", "10"}, {"lives", "5"}, {"respawn_growth", "2"}}}, false},
+    {"rockets", game_type_t::slayer, {{{"score_limit", "25"}, {"no_tracker", "1"}}}, true, {}, {}, {rockets}, -1, rockets},
+    {"snipers", game_type_t::slayer, {{{"score_limit", "15"}, {"respawn_growth", "2"}}}, true, {}, {}, {sniper, pistol}, -1, sniper},
+    {"oddball", game_type_t::oddball, {{{"score_limit", "120"}}}},
+    {"reverse_tag", game_type_t::oddball, {{{"ball_type", "1"}, {"score_limit", "120"}}}},
+    {"accumulate", game_type_t::oddball, {{{"score_limit", "300"}}}, false},
+    {"juggernaut", game_type_t::oddball, {{{"ball_type", "2"}, {"kill_limit", "10"}}}, false},
+    {"stalker", game_type_t::oddball, {{{"ball_type", "2"}, {"kill_limit", "10"}, {"unseen", "2"}}}},
+    {"king", game_type_t::koth, {{{"score_limit", "120"}}}},
+    {"king_pro", game_type_t::koth, {{{"score_limit", "120"}}}, true, {}, {}, {pistol, rifle}, 2},
+    {"crazy_king", game_type_t::koth, {{{"score_limit", "120"}, {"moving_hill", "true"}}}},
+    {"race", game_type_t::race, {{{"score_limit", "3"}}}},
+    {"rally", game_type_t::race, {{{"rally", "1"}, {"score_limit", "15"}}}},
+    {"ctf", game_type_t::ctf, {{{"score_limit", "3"}}}},
+    {"invasion", game_type_t::ctf, {{{"single_flag", "true"}, {"score_limit", "3"}, {"lives", "5"}}}},
+    {"iron_ctf", game_type_t::ctf, {{{"score_limit", "3"}, {"health", "2"}, {"scorpions", "1"}}}},
+    {"ctf_pro", game_type_t::ctf, {{{"score_limit", "3"}, {"flag_at_home", "true"}}}, true, {}, {}, {pistol, rifle}, 2},
+    {"team_race", game_type_t::race, {{{"score_limit", "3"}}}, false},
+    {"team_rally", game_type_t::race, {{{"rally", "1"}, {"score_limit", "5"}}}, false},
+    {"team_ball", game_type_t::oddball, {{{"score_limit", "120"}, {"respawn_delay", "10"}}}, false},
+    {"team_king", game_type_t::koth, {{{"score_limit", "120"}, {"respawn_delay", "10"}}}, false},
+    {"team_slayer", game_type_t::slayer, {{{"score_limit", "50"}}}, false},
+    {"infection",
+     game_type_t::infection,
+     {{{"time_limit", "600"}}},
+     true,
+     u"Infection",
+     u"One player starts\ninfected. The humans\nmust survive till\ntime runs out.\nDon't die!"},
+}};
+
+/* Sets the game up as the variant: its type and its rules' globals */
+inline void apply(GameSetup& setup, libc_types::u16 index)
+{
+    if(index >= all.size())
+        return;
+    auto const& v = all[index];
+    setup.variant   = index;
+    setup.game_type = v.type;
+    setup.variant_options.clear();
+    for(auto const& option : v.options)
+        if(!option.name.empty())
+            setup.variant_options.emplace_back(std::string(option.name), std::string(option.value));
+    setup.start_weapons.clear();
+    for(auto const& weapon : v.weapons)
+        if(!weapon.empty())
+            setup.start_weapons.emplace_back(weapon);
+    setup.start_grenades = v.grenades;
+    setup.weapon_set     = std::string(v.weapon_set);
+}
+
+inline std::optional<libc_types::u16> find(std::string_view key)
+{
+    for(libc_types::u16 i = 0; i < all.size(); ++i)
+        if(all[i].key == key)
+            return i;
+    return std::nullopt;
+}
+
+} // namespace variants

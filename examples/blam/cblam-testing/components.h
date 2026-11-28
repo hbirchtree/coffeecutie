@@ -315,6 +315,8 @@ struct Model
     libc_types::f32 item_age{0.f};
     /*! And the rounds left in it; see SpawnObjectEvent::rounds */
     std::optional<std::array<libc_types::u16, 2>> item_rounds;
+    /*! Dropped by a unit; see SpawnObjectEvent::litter */
+    bool litter{false};
 
     /*! Active camouflage: drawn as a refraction of what is behind it */
     bool camouflaged{false};
@@ -864,6 +866,7 @@ struct ObjectPhysics
     f32   mass{0.f};      /*!< 0 = static */
     bool  item{false};    /*!< Only collides with the world and other items */
     bool  upright{false}; /*!< Bipeds: never tip, hulls follow the pose */
+    bool  flying{false};  /*!< Bipeds that fly (sentinels, monitors): no gravity, they hold their height */
     /*! Items: Hz of a spring turning the model's +X (its tip) up, 0 = none */
     f32   tip_up{0.f};
     bool  player_enterable{true}; /*!< unit_set_enterable_by_player */
@@ -922,6 +925,7 @@ struct PhysicsData
     bool kinematic{false};
     bool grounded{false};
     Vecf3 walking{}; /*!< Its own stride, pushes left out */
+    Vecf3 moving{};  /*!< The body's velocity, as of the last physics step */
     u64   deck{0};   /*!< The vehicle it stands on, 0 on the ground */
 
     u64 grabbed{0}; /*!< Entity this player carries (forge), 0 = none */
@@ -996,6 +1000,10 @@ struct PlayerInfo
         f32 crouch_height{0.5f}; /*!< What it stands up to crouched */
         f32 crouch_time{0.2f};  /*!< Seconds to crouch or stand up */
         f32 crouch_speed{0.5f}; /*!< Ground speeds scale by this crouched */
+        f32 hard_death{0.f};    /*!< The unit's hard death threshold, of its body */
+        /*! Its ping thresholds, of its body; below 0, it never pings so */
+        f32 soft_ping{-1.f};
+        f32 hard_ping{-1.f};
         f32 max_slope{0.785398f}; /*!< Steepest ground walked up, radians, from the biped tag */
         /*! How far the camera looks down and up, radians; the cyborg's
          * tag leaves it empty */
@@ -1035,6 +1043,10 @@ struct PlayerInfo
     u32         player_idx{0};
     u32         seat_idx{0};
     u32         loading_progress{100};
+    /*! Their profile's armour colour, an index into PlayerProfile::colors;
+     *  none_color without one */
+    static constexpr u16 none_color = 0xFFFF;
+    u16         color{none_color};
 
     struct permissions_t
     {
@@ -1047,6 +1059,7 @@ struct PlayerInfo
 
     /*! False while held before spawning */
     bool spawned{true};
+    bool suspended{false}; /*!< unit_suspended: held where it is, no gravity */
 
     /*! The vehicle seat this player sits in, while vehicle != 0 */
     struct
@@ -1089,6 +1102,16 @@ struct PlayerInfo
         f32 vision{0.f};
     } powerups;
     f32 teleport_flash{0.f}; /*!< A teleporter's flash on its screen: 1 at the hop, fading to 0 */
+    /*! The screen flash of the last damage effect to reach it */
+    struct damage_flash_t
+    {
+        Vecf3 color{0.f};
+        u16   type{0};      /*!< blam::damage_effect::screen_flash_type_t */
+        u16   priority{0};
+        f32   intensity{0.f};
+        f32   duration{0.f};
+        f32   left{0.f};    /*!< s */
+    } damage_flash;
 
     /*! Double speed scales walking, firing and reloading */
     f32 speed_scale() const
@@ -1168,13 +1191,22 @@ struct Actor
     bool            berserk{false};     /*!< Charges to strike whatever it holds, until its target is gone */
     Vecf3           burst_aim{};        /*!< Where the burst is aimed now: off the target at first, returning */
     Vecf3           burst_from{};       /*!< The target as the burst tracks it */
+    libc_types::f32 spread{0.f};        /*!< Its gun's error from held fire, 0 to 1 of the error angles */
     libc_types::f32 hurt_body{-1.f};    /*!< Its body a frame ago, for what a blow took; -1 unknown */
     libc_types::u64 stuck_by{0};        /*!< The grenade stuck on it it has noticed */
     libc_types::u64 dodged{0};          /*!< The last grenade it chose whether to dodge */
     f32             dodge_in{0.f};      /*!< s left getting away from dodge_from */
     Vecf3           dodge_from{};
+    libc_types::u8  dodges{0};          /*!< Dodges begun, which its animation follows */
+    bool            diving{false};      /*!< The dodge is from a grenade, not a shot */
+    f32             evade_in{0.f};      /*!< s until it sidesteps another shot */
+    bool            fallen{false};      /*!< Its death has been seen by those it led */
+    bool            panicking{false};   /*!< Fleeing in a panic: it runs in its flee stance */
     bool            toughened{false};   /*!< Its vitality scaled for the difficulty */
     std::optional<Vecf3> walk_to{};     /*!< A command list's go-to, walked by its routes */
+    std::optional<Vecf3> shoot_at{};    /*!< A command list's shoot, fired at by its held gun */
+    bool                 breaking_off{false}; /*!< Driving: past the target, it runs out before coming round */
+    std::optional<Vecf3> drive_aim{};         /*!< Driving: where it steers, turned toward its goal at a rate */
     f32                  walk_best{0.f};  /*!< Nearest it has got to walk_to, wu */
     f32                  walk_stall{0.f}; /*!< s since it last got nearer */
     bool                 walk_done{false}; /*!< walk_to given up as out of reach */
@@ -1193,6 +1225,10 @@ struct Actor
     bool            blind{false};
     bool            deaf{false};
     bool            follow_players{false}; /*!< ai_follow_target_players: always knows where they are */
+    libc_types::u64 follow_leader{0};      /*!< ai_follow_target_ai: idle, it keeps near this actor */
+    f32             follow_distance{3.f};  /*!< wu, ai_follow_distance */
+    bool            no_melee{false};       /*!< object_set_melee_attack_inhibited */
+    bool            no_ranged{false};      /*!< object_set_ranged_attack_inhibited */
     order_t         order{order_t::none};
     state_t         state{state_t::idle};
 
@@ -1471,6 +1507,13 @@ struct BipedStatus
     bool invulnerable{false};
     /*! An over shield: shield above 1 lost per second */
     f32 overcharge_decay{0.f};
+    /*! The killing blow, which picks the death animation: the way it went
+     *  (none known when zero), and how it struck */
+    Vecf3                          blow{};
+    libc_types::u8                 blow_flags{0};
+    static constexpr libc_types::u8 blow_hard = 0x1, blow_head = 0x2, blow_high = 0x4;
+    /*! Blows it flinched from, by `blow`: a new one plays its ping */
+    libc_types::u8 pings{0};
 
     /*! What an over shield charges the shield to */
     static constexpr f32 over_shield = 3.f;
@@ -1530,6 +1573,7 @@ struct BipedEquipment
     bool reloading{false}; /*!< The held weapon, as everyone sees it */
     bool throwing{false};  /*!< A grenade, from wind-up to recovery */
     u8   zoom{0};          /*!< The held weapon's zoom level, 0 = none */
+    libc_types::i8 aimed{0}; /*!< What the reticle rests on: 1 an enemy, -1 a friend */
 
     weapon_t const* held(u32 generation) const
     {

@@ -55,6 +55,7 @@ const uint METER     = 2u;
 const uint SOLID     = 4u;
 const uint PREMULTIPLIED = 8u;
 const uint DARKEN    = 16u;
+const uint PLASMA    = 32u;
 
 vec4 unpack_rgba8(uint v)
 {
@@ -128,6 +129,29 @@ vec4 sample_color()
 
 layout(location = 0) out vec4 out_color;
 
+/* Xbox panels: two layers of the shield noise drift across each other in
+ * screen space; veins light where they meet */
+float plasma_noise(vec2 p, uvec4 extra)
+{
+    vec2 scale  = unpackHalf2x16(extra.z);
+    vec2 offset = unpackHalf2x16(extra.w);
+    vec2 uv     = fract(p) * scale + offset;
+    return texture(source_bc2, vec3(uv, float(extra.y & 0xFFFFFFu))).a;
+}
+
+vec3 plasma(uvec4 extra)
+{
+    if((extra.y >> 24) != TEX_BC2)
+        return vec3(0.0);
+    /* One wrap of the clock moves each layer a whole number of tiles */
+    float t  = float(extra.x >> 16) / 65536.0;
+    vec2  p  = gl_FragCoord.xy / 640.0;
+    float a  = plasma_noise(p + t * vec2(23.0, 11.0), extra);
+    float b  = plasma_noise(p * 1.3 + t * vec2(-17.0, 19.0), extra);
+    float vein = pow(clamp(1.0 - abs(a - b) * 9.0, 0.0, 1.0), 4.0);
+    return vec3(0.45, 0.6, 1.0) * vein * 0.15;
+}
+
 void main()
 {
     vec3 coloring = elements.instances[frag.element_id].color.rgb;
@@ -170,4 +194,6 @@ void main()
         out_color = vec4(color.rgb * background_color.rgb, background_color.a * color.a);
     else
         out_color = vec4(coloring.rgb * background_color.rgb, background_color.a);
+    if((extra.x & PLASMA) != 0u)
+        out_color.rgb += plasma(extra) * out_color.a;
 }

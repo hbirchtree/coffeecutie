@@ -32,6 +32,7 @@ using DamageManifest = compo::SubsystemManifest<
         const PlayerCamera,
         Model,
         const ObjectPhysics,
+        const PhysicsData,
         const Actor,
         const NetworkInfo>,
     type_list_t<
@@ -85,6 +86,10 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(std::exchange(m_generation, files.load_generation) != files.load_generation)
         {
             m_dying.clear();
+            m_fall_grace.clear();
+            m_corpse_age.clear();
+            m_fall_top.clear();
+            m_launched.clear();
             m_object_body.clear();
             m_gone.clear();
             m_destroyed.clear();
@@ -93,10 +98,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         /* Looked up each frame: a map loading in replaces what a cached
          * pointer saw */
         m_difficulty = difficulty_block(files);
+        m_falling    = falling_block(files);
         for(auto const& area : areas)
             blast(p, area);
         for(auto const& hit : hits)
             shove(p, hit);
+        ting(p, hits, areas);
+        feel(p, hits, areas, dt);
         bool const authority = !p.template subsystem<NetworkState>().replica;
         for(auto const& pickup : pickups)
             power_up(p, pickup, authority);
@@ -110,9 +118,16 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                         break_object(p, hit.target, *coll, *jpt, 1.f);
                         continue;
                     }
-                    if(hit.behind && assassinate(p, hit.target, player_of(p, hit.shooter)))
+                    /* A melee blow on a unit its tag says one kills (carriers) */
+                    if(jpt->category == jpt_t::category_t::melee && fatal_melee(p, hit.target) &&
+                       assassinate(p, hit.target, player_of(p, hit.shooter), true))
                         continue;
-                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter));
+                    /* Only a blow lethal to the unsuspecting kills from behind */
+                    if(hit.behind &&
+                       jpt->side_effect == blam::scn::damage_effect::side_effect_t::lethal_to_the_unsuspecting &&
+                       assassinate(p, hit.target, player_of(p, hit.shooter)))
+                        continue;
+                    hurt(p, hit.target, *jpt, 1.f, hit.part, hit.head, player_of(p, hit.shooter), hit.direction, hit.point);
                 }
             for(auto const& area : areas)
                 splash(p, area);
@@ -122,7 +137,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 revive(p, respawn);
             for(auto const& vitality : vitalities)
                 put_down(p, vitality);
+            fallen_out(p, dt);
+            fallen_too_far(p);
+            slammed(p, dt);
             fall_apart(p, dt);
+            clear_corpses(p, dt);
             let_out(p, areas, dt);
         }
         recharge(p, dt);
@@ -190,8 +209,11 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 left = {};
             for(f32* t : {&left.camouflage, &left.speed, &left.vision})
                 *t = std::max(*t - dt, 0.f);
+            /* Infection's infected fade from sight crouching */
             if(!info.is_remote())
-                info.camouflaged = left.camouflage > 0.f;
+                info.camouflaged = left.camouflage > 0.f ||
+                                   (info.crouched && p.template subsystem<GameState>().infected(info.player_idx)) ||
+                                   p.template subsystem<GameState>().unseen_by_game(info.player_idx);
         }
     }
 
@@ -249,14 +271,22 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     /* A strike in the back kills, unless the unit's tag says it shrugs
      * such off (hunters) */
-    bool assassinate(Proxy& p, u64 unit, u32 killer)
+    /* A unit whose tag makes any melee blow fatal */
+    bool fatal_melee(Proxy& p, u64 unit)
+    {
+        using flags_t = blam::scn::unit::unit_flags_t;
+        auto const* u = unit_of(p, unit);
+        return u && (u->unit_flags & flags_t::melee_attack_is_fatal) != flags_t::none;
+    }
+
+    bool assassinate(Proxy& p, u64 unit, u32 killer, bool fatal = false)
     {
         auto* status = p.template get<BipedStatus>(unit);
         if(!status || !status->coll || status->dead || status->invulnerable ||
            forging(p, unit))
             return false;
         using flags_t = blam::scn::unit::unit_flags_t;
-        if(auto const* model = p.template get<Model>(unit); model && model->origin_object)
+        if(auto const* model = p.template get<Model>(unit); !fatal && model && model->origin_object)
             if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic);
                u.has_value() && (u.value()[0].unit_flags & flags_t::not_instantly_killed_by_melee) !=
                                     flags_t::none)
@@ -274,7 +304,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     }
 
     /* A jpt! landing on a unit, at `scale` of its full strength */
-    void hurt(Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer)
+    void hurt(
+        Proxy& p, u64 unit, jpt_t const& jpt, f32 scale, i16 part, bool head, u32 killer, Vecf3 blow = {},
+        std::optional<Vecf3> at = {})
     {
         auto* status = p.template get<BipedStatus>(unit);
         if(!status || !status->coll || status->dead || status->invulnerable ||
@@ -318,6 +350,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 allegiance.betray(team, amount / std::max(status->maximum_body(), 1.f));
             }
         }
+        /* A variant's player health: as much more for the body to take */
+        if(p.template get<PlayerInfo>(unit))
+            body_mult /= std::max(p.template subsystem<GameState>().player_health, .01f);
         /* A spent arm shield is down: what struck it reaches the body */
         if(body_mult <= 0.f && status->shield <= 0.f)
             body_mult = 1.f;
@@ -328,11 +363,86 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         apply(*status, amount, shield_mult, body_mult, jpt.damage_flags, headshot, leak);
         if(before > 0.f && status->shield <= 0.f)
             shield_down(p, unit, true);
+        bool pinged = false;
+        if(status->dead)
+            mark_blow(p, unit, *status, amount, head || headshot, blow, at);
+        else
+            pinged = mark_ping(p, unit, *status, amount, head || headshot, blow, at);
         if(status->dead)
             last_words(p, unit, violent);
-        tell(p, unit, *status, {}, 0.f, false, false, violent);
+        tell(p, unit, *status, {}, 0.f, false, false, violent, false, pinged);
         if(status->dead)
             killed(p, unit, killer);
+    }
+
+    /* A blow past the unit's soft or hard ping threshold makes it flinch */
+    bool mark_ping(
+        Proxy& p, u64 unit, BipedStatus& status, f32 amount, bool head, Vecf3 const& blow, std::optional<Vecf3> at)
+    {
+        auto const* model = p.template get<Model>(unit);
+        if(!model || glm::dot(blow, blow) < 1e-8f)
+            return false;
+        f32 soft = -1.f, hard = -1.f, height = blow_waist * 2.f;
+        if(auto const* info = p.template get<PlayerInfo>(unit))
+        {
+            soft   = info->biped.soft_ping;
+            hard   = info->biped.hard_ping;
+            height = info->biped.height;
+        } else if(model->origin_object)
+            if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic); u.has_value())
+            {
+                using flags_t = blam::scn::unit::unit_flags_t;
+                auto const& t = u.value()[0];
+                if((t.unit_flags & flags_t::resists_pings) == flags_t::none)
+                {
+                    if(t.soft_ping_threshold > 0.f || t.soft_ping_interrupt_time > 0.f)
+                        soft = t.soft_ping_threshold;
+                    if(t.hard_ping_threshold > 0.f || t.hard_ping_interrupt_time > 0.f)
+                        hard = t.hard_ping_threshold;
+                }
+            }
+        f32 const share = amount / std::max(status.maximum_body(), 1e-3f);
+        bool const hard_ping = hard >= 0.f && share >= hard;
+        if(!hard_ping && !(soft >= 0.f && share >= soft))
+            return false;
+        status.blow       = blow;
+        status.blow_flags = (hard_ping ? BipedStatus::blow_hard : 0) | (head ? BipedStatus::blow_head : 0);
+        if(at && at->z > model->position.z + height * .5f)
+            status.blow_flags |= BipedStatus::blow_high;
+        status.pings++;
+        return true;
+    }
+
+    /* How the killing blow struck: hard past the unit's hard death
+     * threshold, high above its waist */
+    void mark_blow(
+        Proxy& p, u64 unit, BipedStatus& status, f32 amount, bool head, Vecf3 const& blow, std::optional<Vecf3> at)
+    {
+        status.blow       = blow;
+        status.blow_flags = head ? BipedStatus::blow_head : 0;
+        auto const* model = p.template get<Model>(unit);
+        if(!model)
+            return;
+        /* A player's body keeps its biped's numbers; an AI's has its tag */
+        std::optional<f32> hard_death;
+        f32                height = blow_waist * 2.f;
+        if(auto const* info = p.template get<PlayerInfo>(unit))
+        {
+            hard_death = info->biped.hard_death;
+            height     = info->biped.height;
+        } else if(model->origin_object)
+        {
+            if(auto u = model->origin_object->template data<blam::scn::unit>(*m_magic); u.has_value())
+                hard_death = u.value()[0].hard_death_threshold;
+            if(model->origin_object->matches(blam::tag_class_t::bipd))
+                if(auto b = model->origin_object->template data<blam::scn::biped>(*m_magic);
+                   b.has_value() && b.value()[0].standing_collision_height > 0.f)
+                    height = b.value()[0].standing_collision_height;
+        }
+        if(hard_death && amount >= *hard_death * std::max(status.maximum_body(), 1e-3f))
+            status.blow_flags |= BipedStatus::blow_hard;
+        if(at && at->z > model->position.z + height * .5f)
+            status.blow_flags |= BipedStatus::blow_high;
     }
 
     /* A jpt!'s modifier for a material type. A list with any entry set is
@@ -422,7 +532,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 flat || d <= inner
                     ? 1.f
                     : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
-            hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter));
+            hurt(p, unit.id(), *jpt, scale, -1, false, player_of(p, area.shooter), *centre - area.position, area.position);
         }
         for(auto ent : p.template select<Model>())
         {
@@ -545,6 +655,169 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .speed    = jpt->instantaneous_acceleration.x,
         };
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
+        for(auto ent : p.template select<BipedStatus, Model>())
+            if(glm::distance(ent.template get<Model>().position, area.position) <= jpt->radius.y)
+                launch(ent.id(), player_of(p, area.shooter));
+    }
+
+    /* In multiplayer a shot of a local player's that strikes another player
+     * tings for them, once a frame however many pellets landed */
+    /* What a damage effect does to those it reaches besides hurting them:
+     * its sound where it lands, and its screen flash for a local player */
+    void feel(Proxy& p, std::vector<ObjectHitEvent> const& hits, std::vector<AreaDamageEvent> const& areas, f32 dt)
+    {
+        for(auto player : p.template select<PlayerInfo>())
+        {
+            auto& flash = player.template get<PlayerInfo>().damage_flash;
+            flash.left  = std::max(flash.left - dt, 0.f);
+        }
+        auto const flash = [&](u64 unit, blam::scn::damage_effect const& jpt, f32 scale) {
+            auto* info = p.template get<PlayerInfo>(unit);
+            auto const& sf = jpt.screen_flash;
+            if(!info || info->is_remote() || sf.type == blam::scn::damage_effect::screen_flash_type_t::none ||
+               sf.duration <= 0.f || sf.maximum_intensity * scale <= 0.f)
+                return;
+            auto& now = info->damage_flash;
+            if(now.left > 0.f && static_cast<u16>(sf.priority) < now.priority)
+                return;
+            now = {
+                .color     = Vecf3(sf.color.y, sf.color.z, sf.color.w), /* argb */
+                .type      = static_cast<u16>(sf.type),
+                .priority  = static_cast<u16>(sf.priority),
+                .intensity = std::min(sf.maximum_intensity * scale, 1.f),
+                .duration  = sf.duration,
+                .left      = sf.duration,
+            };
+        };
+        auto* sounds = p.template service<comp_app::EventBus<SoundEvent>>();
+        auto const sound = [&](blam::scn::damage_effect const& jpt, Vecf3 const& at) {
+            if(!sounds || !jpt.sound.valid())
+                return;
+            SoundEvent     ev{.type = SoundEvent::play_sound};
+            PlaySoundEvent play{.sound = &static_cast<blam::tagref_t const&>(jpt.sound), .position = at};
+            sounds->inject(ev, &play);
+        };
+        for(auto const& hit : hits)
+            if(auto const* jpt = damage_of(hit.damage))
+            {
+                flash(hit.target, *jpt, 1.f);
+                if(p.template get<BipedStatus>(hit.target))
+                    sound(*jpt, hit.point);
+            }
+        for(auto const& area : areas)
+        {
+            auto const* jpt = damage_of(area.damage);
+            if(!jpt || jpt->radius.y <= 0.f)
+                continue;
+            sound(*jpt, area.position);
+            /* Full within the inner radius, none at the outer */
+            for(auto unit : p.template select<PlayerInfo, BipedStatus>())
+            {
+                auto const centre = centre_of(p, unit.id());
+                if(!centre || unit.template get<BipedStatus>().dead)
+                    continue;
+                f32 const d = glm::distance(*centre, area.position);
+                if(d > jpt->radius.y || shielded(p, area.position, *centre, unit.id()))
+                    continue;
+                f32 const inner = std::min(jpt->radius.x, jpt->radius.y);
+                f32 const scale = d <= inner ? 1.f : 1.f - (d - inner) / std::max(jpt->radius.y - inner, 1e-3f);
+                flash(unit.id(), *jpt, scale);
+            }
+        }
+    }
+
+    void ting(Proxy& p, std::vector<ObjectHitEvent> const& hits, std::vector<AreaDamageEvent> const& areas)
+    {
+        if(p.template subsystem<GameState>().kind != GameState::kind_t::multiplayer)
+            return;
+        std::set<u32> heard;
+        /* A blast of theirs reaching another player does too */
+        for(auto const& area : areas)
+        {
+            auto const* shooter = p.template get<PlayerInfo>(area.shooter);
+            auto const* jpt     = damage_of(area.damage);
+            if(!shooter || shooter->is_remote() || !jpt || jpt->radius.y <= 0.f || jpt->upper_bound.y <= 0.f ||
+               heard.contains(shooter->player_idx))
+                continue;
+            for(auto unit : p.template select<PlayerInfo, BipedStatus>())
+            {
+                auto const centre = centre_of(p, unit.id());
+                if(unit.id() == area.shooter || unit.template get<BipedStatus>().dead || !centre ||
+                   glm::distance(*centre, area.position) > jpt->radius.y ||
+                   shielded(p, area.position, *centre, unit.id()))
+                    continue;
+                heard.insert(shooter->player_idx);
+                GameEvent     ev{.type = GameEvent::Announce};
+                AnnounceEvent say{.sound = ting_sound, .player = shooter->player_idx};
+                p.template subsystem<GameEventBus>().inject(ev, &say);
+                break;
+            }
+        }
+        for(auto const& hit : hits)
+        {
+            auto const* shooter = p.template get<PlayerInfo>(hit.shooter);
+            auto const* target  = p.template get<PlayerInfo>(hit.target);
+            auto const* status  = p.template get<BipedStatus>(hit.target);
+            if(!shooter || !target || shooter->is_remote() || hit.shooter == hit.target || !status ||
+               status->dead || !heard.insert(shooter->player_idx).second)
+                continue;
+            GameEvent     ev{.type = GameEvent::Announce};
+            AnnounceEvent say{.sound = ting_sound, .player = shooter->player_idx};
+            p.template subsystem<GameEventBus>().inject(ev, &say);
+        }
+    }
+
+    /* Thrown: for a while, what it slams into hurts it */
+    void launch(u64 unit, u32 by)
+    {
+        m_launched[unit] = {.left = launch_window, .by = by};
+    }
+
+    /* A launched unit stopped hard by a wall, the floor or an object takes
+     * the globals' falling damage by how fast it hit: from nothing at a
+     * harmful fall's speed to all of it at a lethal one's, and on past it */
+    void slammed(Proxy& p, f32 dt)
+    {
+        if(dt <= 0.f || !m_falling)
+            return;
+        auto const* falling = damage_of(m_falling->falling);
+        Vecf2 const heights = m_falling->harmful_falling_distance;
+        f32 const   harmful = std::sqrt(2.f * halo_gravity * heights.x);
+        f32 const   lethal  = std::sqrt(2.f * halo_gravity * std::max(heights.y, heights.x + 1.f));
+        for(auto it = m_launched.begin(); it != m_launched.end();)
+        {
+            auto* status      = p.template get<BipedStatus>(it->first);
+            auto const* model = p.template get<Model>(it->first);
+            auto&       l     = it->second;
+            if(!status || !model || status->dead || (l.left -= dt) <= 0.f)
+            {
+                it = m_launched.erase(it);
+                continue;
+            }
+            auto const* body     = p.template get<PhysicsData>(it->first);
+            auto const* object   = p.template get<ObjectPhysics>(it->first);
+            Vecf3 const velocity = body && body->enabled ? body->moving
+                                   : object              ? object->linear_velocity
+                                                         : Vecf3{};
+            /* Moved faster than anything flies: teleported, start over */
+            if(glm::length(velocity) > teleport_speed)
+            {
+                l.primed = false;
+                ++it;
+                continue;
+            }
+            f32 const lost = glm::length(l.velocity - velocity);
+            if(l.primed && glm::length(velocity) < glm::length(l.velocity) && lost > harmful)
+            {
+                if(falling)
+                    hurt(p, it->first, *falling, (lost - harmful) / (lethal - harmful), -1, false, l.by);
+                it = m_launched.erase(it);
+                continue;
+            }
+            l.velocity = velocity;
+            l.primed   = true;
+            ++it;
+        }
     }
 
     /* A direct hit with an acceleration pushes what it struck along the
@@ -563,6 +836,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .direction = glm::normalize(hit.direction),
         };
         p.template subsystem<PhysicsBus>().inject(ev, &blast);
+        if(p.template get<BipedStatus>(hit.target))
+            launch(hit.target, player_of(p, hit.shooter));
     }
 
     /* A vehicle hurts what it runs into by how fast it came. A player in full
@@ -674,6 +949,75 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         killed(p, vitality.unit, ObjectHitEvent::no_player);
     }
 
+    /* A living unit that fell out of the level dies there; one just brought
+     * back is left a moment to be moved to its spawn */
+    void fallen_out(Proxy& p, f32 dt)
+    {
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            f32& grace           = m_fall_grace[ent.id()];
+            if(status.dead)
+            {
+                grace = revive_grace;
+                continue;
+            }
+            if(grace > 0.f)
+            {
+                grace -= dt;
+                continue;
+            }
+            /* A forge camera passes through walls and voids at will */
+            if(auto const* info = p.template get<PlayerInfo>(ent.id());
+               info && (!info->mode.physics || info->riding.vehicle))
+                continue;
+            Physics::Event      ev{Physics::Event::OutOfWorld};
+            Physics::OutOfWorld query{.position = model.position};
+            p.template subsystem<PhysicsBus>().process(ev, &query);
+            if(!query.out)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), false);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
+    }
+
+    /* No landing hurts, but a fall past the globals' maximum falling
+     * distance is death before the ground is reached */
+    void fallen_too_far(Proxy& p)
+    {
+        f32 const most = m_falling ? m_falling->maximum_falling_distance : 0.f;
+        if(most <= 0.f)
+            return;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto [status, model] = ent.components();
+            auto const* info     = p.template get<PlayerInfo>(ent.id());
+            auto const* object   = p.template get<ObjectPhysics>(ent.id());
+            auto const* body     = p.template get<PhysicsData>(ent.id());
+            bool const  held     = (info && (info->riding.vehicle || !info->mode.physics || info->suspended)) ||
+                              (object && (object->scripted || object->seated || object->teleported));
+            bool const grounded = (body && body->grounded) || (object && object->grounded);
+            /* A fall is counted from where the unit was first seen */
+            f32& top = m_fall_top.try_emplace(ent.id(), model.position.z).first->second;
+            if(status.dead || held || grounded || !(body || object))
+            {
+                top = model.position.z;
+                continue;
+            }
+            top = std::max(top, model.position.z);
+            if(top - model.position.z <= most)
+                continue;
+            status.shield = status.body = 0.f;
+            status.dead   = true;
+            last_words(p, ent.id(), true);
+            tell(p, ent.id(), status);
+            killed(p, ent.id(), ObjectHitEvent::no_player);
+        }
+    }
+
     /* Its time up, a dead unit bursts and is taken away the frame after,
      * once everyone has been told */
     void fall_apart(Proxy& p, f32 dt)
@@ -703,6 +1047,48 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                 m_destroyed.insert(it->first);
             }
             it = m_dying.erase(it);
+        }
+    }
+
+    /* Dead NPCs are taken away quietly: in multiplayer after a while, and
+     * anywhere the oldest past a cap; never from under a player's feet */
+    void clear_corpses(Proxy& p, f32 dt)
+    {
+        std::vector<Vecf3> players;
+        for(auto ent : p.template select<PlayerInfo, Model>())
+            if(ent.template get<PlayerInfo>().spawned)
+                players.push_back(ent.template get<Model>().position);
+        bool const timed = p.template subsystem<GameState>().kind == GameState::kind_t::multiplayer;
+        std::vector<std::pair<f32, u64>> bodies;
+        std::set<u64>                    lying;
+        for(auto ent : p.template select<BipedStatus, Model>())
+        {
+            auto const& [status, model] = ent.components();
+            auto const* net             = p.template get<NetworkInfo>(ent.id());
+            if(!status.dead || !net || net->instance_id == 0 || !p.template get<Actor>(ent.id()) ||
+               m_dying.contains(ent.id()) || m_destroyed.contains(ent.id()))
+                continue;
+            lying.insert(ent.id());
+            f32& age = m_corpse_age[ent.id()];
+            age += dt;
+            bool const near = std::any_of(players.begin(), players.end(), [&](Vecf3 const& at) {
+                return glm::distance(at, model.position) < corpse_clear_distance;
+            });
+            if(!near)
+                bodies.emplace_back(age, ent.id());
+        }
+        std::erase_if(m_corpse_age, [&](auto const& kv) { return !lying.contains(kv.first); });
+        std::sort(bodies.begin(), bodies.end(), std::greater<>());
+        size_t const over = lying.size() > max_corpses ? lying.size() - max_corpses : 0;
+        for(size_t i = 0; i < bodies.size(); i++)
+        {
+            if(i >= over && !(timed && bodies[i].first >= corpse_time))
+                continue;
+            auto const id = bodies[i].second;
+            GameEvent          ev{.type = GameEvent::DespawnObject};
+            DespawnObjectEvent gone{.net_id = p.template get<NetworkInfo>(id)->instance_id};
+            p.template subsystem<GameEventBus>().inject(ev, &gone);
+            m_destroyed.insert(id);
         }
     }
 
@@ -789,7 +1175,8 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
                     .position     = it->at + out * hatch_spread + Vecf3{0.f, 0.f, spawn_lift},
                     .rotation     = glm::angleAxis(turn, Vecf3{0.f, 0.f, 1.f}),
                     .server_owned = true,
-                    .velocity     = glm::normalize(out + Vecf3{0.f, 0.f, 1.f}) * it->speed,
+                    /* Flung out more than up, so they land spread round it */
+                    .velocity     = glm::normalize(out + Vecf3{0.f, 0.f, .35f}) * it->speed,
                     .held         = it->weapon,
                 };
                 GameEvent ev{.type = GameEvent::SpawnObject};
@@ -816,7 +1203,7 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
 
     void tell(Proxy& p, u64 unit, BipedStatus const& status,
               std::optional<Vecf3> respawn_at = {}, f32 facing = 0.f, bool arrived = false,
-              bool fresh = false, bool violent = false, bool destroyed = false)
+              bool fresh = false, bool violent = false, bool destroyed = false, bool ping = false)
     {
         auto const*       info = p.template get<PlayerInfo>(unit);
         GameEvent         ev{.type = GameEvent::UnitVitality};
@@ -832,6 +1219,9 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
             .arrived        = arrived,
             .fresh          = fresh,
             .destroyed      = destroyed,
+            .blow           = status.dead || ping ? status.blow : Vecf3{},
+            .blow_flags     = status.dead || ping ? status.blow_flags : libc_types::u8(0),
+            .ping           = ping && !status.dead,
         };
         p.template subsystem<GameEventBus>().inject(ev, &vitality);
     }
@@ -902,6 +1292,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
         if(vitality.dead && !status->dead)
             last_words(p, vitality.unit, vitality.violent);
         status->dead       = vitality.dead;
+        if(vitality.dead || vitality.ping)
+        {
+            status->blow       = vitality.blow;
+            status->blow_flags = vitality.blow_flags;
+        }
+        if(vitality.ping)
+            status->pings++;
         if(vitality.destroyed)
             burst(p, vitality.unit);
         if(vitality.shield < 1.f)
@@ -1108,11 +1505,13 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     static constexpr f32   unit_middle      = .35f; /* wu above the feet */
     static constexpr f32   spawn_lift       = .05f; /* wu */
     static constexpr f32   default_stun     = 1.f;  /* s */
+    static constexpr f32   blow_waist       = .35f; /* wu above the feet, without a biped height */
+    static constexpr u16   ting_sound       = 43;   /* matg's multiplayer sounds: game_modes::announcer::ting */
     static constexpr f32 recent_fade = .75f; /* seconds a shield hit glows */
     static constexpr f32   default_recharge = 2.f;  /* s */
     static constexpr f32   dead_below       = 1e-4f;
     static constexpr f32   hatch_wait       = .5f;  /* s, at most, for the burst */
-    static constexpr f32   hatch_spread     = .3f;  /* wu */
+    static constexpr f32   hatch_spread     = .7f;  /* wu, about a carrier's bound radius */
 
     struct brood_t
     {
@@ -1138,6 +1537,25 @@ struct DamageSystem : compo::RestrictedSubsystem<DamageSystem, DamageManifest>
     std::vector<ObjectHitEvent>      m_hits;
     std::vector<AreaDamageEvent>     m_areas;
     std::vector<UnitVitalityEvent>   m_vitality;
+    std::map<u64, f32>               m_fall_grace; /*!< s until out of the world kills again */
+    std::map<u64, f32>               m_corpse_age; /*!< s each dead NPC has lain */
+    static constexpr f32             corpse_time           = 45.f;
+    static constexpr size_t          max_corpses           = 48;
+    static constexpr f32             corpse_clear_distance = 3.f;
+    std::map<u64, f32>               m_fall_top;   /*!< Highest point since last on the ground */
+    struct launched_t
+    {
+        f32   left{0.f}; /*!< s it still counts as thrown */
+        u32   by{ObjectHitEvent::no_player};
+        Vecf3 velocity{};
+        bool  primed{false};
+    };
+    std::map<u64, launched_t>        m_launched;
+    static constexpr f32             launch_window = 3.f;
+    static constexpr f32             teleport_speed = 50.f; /* wu/s */
+    static constexpr f32             halo_gravity  = 9.81f / 3.048f; /* wu/s^2 */
+    blam::globals::falling_damage const* m_falling{nullptr};
+    static constexpr f32             revive_grace = 1.f;
     std::vector<Physics::UnitStruck> m_struck;
     std::shared_ptr<GameEventBus::queue_type<RespawnUnitEvent>> m_respawn_queue;
     std::vector<RespawnUnitEvent>    m_respawns;

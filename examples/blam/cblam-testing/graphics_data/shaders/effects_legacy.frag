@@ -70,7 +70,7 @@ vec4 sample_texture()
 void main()
 {
     vec4 c = sample_texture();
-    if(frag_tex.w > 0.5)
+    if(mod(frag_tex.w, 16.0) > 0.5)
         c.a = 1.0;
     c *= frag_color;
     if(blend_mode > 2.5)

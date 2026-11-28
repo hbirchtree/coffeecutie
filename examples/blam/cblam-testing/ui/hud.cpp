@@ -1,6 +1,7 @@
 #include "ui/hud.h"
 #include "game/game_mode.h"
 #include "ui/chat_input.h"
+#include "ui/ui_profile.h"
 
 #include "loading/blam_files.h"
 #include "scripting/cinematic.h"
@@ -11,6 +12,7 @@
 #include "ui/ui_data.h"
 #include "combat/weapons.h"
 
+#include <blam/volta/blam_effects.h>
 #include <blam/volta/blam_bitm.h>
 #include <blam/volta/blam_globals.h>
 #include <blam/volta/blam_strings.h>
@@ -70,6 +72,7 @@ struct state_t
     f32 heat{0.f};
     f32 battery{1.f}; /*!< What is left of it */
     u8  zoom{0};      /*!< Zoom level, 0 = none */
+    libc_types::i8 aimed{0}; /*!< The reticle is on an enemy (1) or a friend (-1) */
 };
 
 /* Drawn premultiplied: alpha is how much of what is behind an element it
@@ -77,6 +80,20 @@ struct state_t
 Vecf4 color_of(blam::argb8_t c)
 {
     return Vecf4(c.r, c.g, c.b, c.a) / 255.f;
+}
+
+/* A reticle that flashes when active takes its flashing colour over an
+ * enemy, and a friend's green over a friend, at its own alpha */
+template<typename Overlay>
+Vecf4 reticle_color(Overlay const& ov, libc_types::i8 aimed)
+{
+    using flags_t       = typename Overlay::flags_t;
+    Vecf4 const resting = color_of(ov.colors.default_color);
+    if(aimed == 0 || (ov.flags & flags_t::flashes_when_active) == flags_t::none)
+        return resting;
+    Vecf3 const friend_color{0.f, 1.f, 0.f};
+    Vecf3 const tint = aimed > 0 ? Vecf3(color_of(ov.colors.flashing_color)) : friend_color;
+    return Vecf4(tint * resting.a, resting.a);
 }
 
 bool blank(blam::argb8_t c)
@@ -455,7 +472,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
         if(shown.health)
             health_panel(hud, watch, health, blink.health);
-        if(!shown.motion_sensor)
+        if(!shown.motion_sensor || p.template subsystem<GameState>().no_tracker)
             return;
         /* The motion sensor keeps to the bottom left */
         background(anchor_t::bottom_left, hud.motion_sensor_background, blink.motion_sensor);
@@ -798,7 +815,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
                                           ? static_cast<i16>(std::max(s.zoom - 1, 0))
                                           : i16(0);
                     push(anchor_t::center, ov, ch.crosshair_bitmap, ov.sequence_index,
-                         color_of(ov.colors.default_color), -1.f, {}, level);
+                         reticle_color(ov, s.aimed), -1.f, {}, level);
                 }
             }
 
@@ -1364,6 +1381,11 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         text_suicide       = 81,
         text_you_betrayed  = 82,
         text_you_killed    = 88,
+        text_even          = 134,
+        text_winning       = 135,
+        text_losing        = 136,
+        text_tied          = 137,
+        text_standing_time = 155,
     };
 
     std::u16string game_text(game_text_t index, std::string_view fallback) const
@@ -1486,6 +1508,44 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         };
     }
 
+    /* Timed games: where this player (or team) stands, and its time so far */
+    void standing(Proxy& p, PlayerInfo const& viewer)
+    {
+        auto const& game = p.template subsystem<GameState>();
+        auto const* mine = game.player(viewer.player_idx);
+        if(game.kind != GameState::kind_t::multiplayer || !game.timed || !mine || !m_hudg)
+            return;
+        i32  own = mine->score, best_other = 0;
+        bool anyone = false;
+        if(game.teams && mine->team >= 0)
+        {
+            own        = game.team_scores[static_cast<size_t>(mine->team & 1)];
+            best_other = game.team_scores[static_cast<size_t>(1 - (mine->team & 1))];
+            anyone     = true;
+        } else
+            for(auto const& other : game.players)
+                if(other.player_idx != viewer.player_idx)
+                {
+                    best_other = anyone ? std::max<i32>(best_other, other.score) : other.score;
+                    anyone     = true;
+                }
+        auto const word = !anyone            ? game_text(text_even, "even")
+                          : own > best_other ? game_text(text_winning, "winning")
+                          : own < best_other ? game_text(text_losing, "losing")
+                                             : game_text(text_tied, "tied");
+        std::u16string line = fill(game_text(text_standing_time, "%s (%d seconds)"), {word});
+        if(auto at = line.find(u"%d"); at != std::u16string::npos)
+            line.replace(at, 2, wide(std::to_string(own)));
+        Vecf4 const color = Vecf4(m_hudg->text_color.y, m_hudg->text_color.z, m_hudg->text_color.w, 1.f);
+        m_view->typeset.push_back({
+            .runs   = {{utf8::utf16to8(line), color}},
+            .at     = {safe_inset.x, safe_inset.y + standing_top},
+            .size   = feed_em,
+            .shadow = true,
+        });
+    }
+    static constexpr f32 standing_top = 44.f; /* HUD px under the safe inset: below the weapon panel, my pick */
+
     struct feed_t
     {
         KillFeedEvent                kill;
@@ -1580,6 +1640,118 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
         }
     }
 
+    /* As the Xbox draws it after a game: team totals, then each player's
+     * place, name, score, kills, assists and deaths; B quits, A picks the
+     * next game. Laid out in 640x480 HUD units, centred on wider screens */
+    void carnage_report(Proxy& p, GameState const& game, HudScene& scene, Vecf2 screen, u32 seat)
+    {
+        using run_t = HudScene::typeset_t::run_t;
+        auto&       view  = scene.views.emplace_back(HudScene::view_t{
+                   .seat  = seat,
+                   .width = HudScene::height * screen.x / std::max(screen.y, 1.f),
+        });
+        f32 const   left  = (view.width - 640.f) * .5f;
+        /* Clip space: black bands above and below a blue panel */
+        auto band = [&scene](f32 top, f32 bottom, Vecf4 color) {
+            scene.backdrops.push_back({
+                .min   = {-1.f, 1.f - bottom / HudScene::height * 2.f},
+                .max   = {1.f, 1.f - top / HudScene::height * 2.f},
+                .color = color,
+            });
+        };
+        band(0.f, HudScene::height, report_black);
+        band(report_panel_top, report_panel_mid, report_panel_light);
+        band(report_panel_mid, report_panel_bottom, report_panel_dark);
+        band(report_panel_bottom, report_panel_bottom + 1.f, report_title);
+        auto text = [&](std::string s, f32 x, f32 y, Vecf4 color, f32 size = report_em) {
+            view.typeset.push_back({
+                .runs   = {{std::move(s), color}},
+                .at     = {left + x, y},
+                .size   = size,
+                .shadow = true,
+            });
+        };
+        auto name_of = [&p](u32 player_idx) {
+            for(auto player : p.template select<PlayerInfo>())
+                if(auto const& info = player.template get<PlayerInfo>();
+                   info.player_idx == player_idx && !info.name.empty())
+                    return std::string(info.name);
+            return fmt::format("Player {}", player_idx + 1);
+        };
+        auto colour_of = [&](GameState::player_t const& player) {
+            if(game.teams && player.team >= 0)
+                return player.team == 0 ? red : blue;
+            for(auto ent : p.template select<PlayerInfo>())
+                if(auto const& info = ent.template get<PlayerInfo>();
+                   info.player_idx == player.player_idx && info.color < PlayerProfile::colors.size())
+                    return Vecf4(PlayerProfile::colors[info.color].rgb, 1.f);
+            return plain;
+        };
+
+        text("POSTGAME CARNAGE REPORT", 64.f, 57.f, report_title, report_title_em);
+        f32 y = 83.f;
+        if(game.teams)
+        {
+            std::array<i32, 2> order{0, 1};
+            if(game.team_scores[1] > game.team_scores[0])
+                std::swap(order[0], order[1]);
+            for(i32 team : order)
+            {
+                text(team == 0 ? "Red Team" : "Blue Team", 51.f, y, report_heading);
+                text(std::to_string(game.team_scores[static_cast<size_t>(team)]), 205.f, y, report_heading);
+                y += report_row;
+            }
+            y += report_row;
+        }
+        static constexpr std::array<std::pair<std::string_view, f32>, 6> columns = {{
+            {"Place", 51.f}, {"Name", 127.f}, {"Score", 253.f}, {"Kills", 354.f}, {"Assists", 415.f}, {"Deaths", 505.f},
+        }};
+        for(auto const& [title, x] : columns)
+            text(std::string(title), x, y, report_heading);
+        y += report_row;
+        auto ranked = game.players;
+        std::stable_sort(ranked.begin(), ranked.end(), [](auto const& a, auto const& b) {
+            return a.score != b.score ? a.score > b.score : a.kills > b.kills;
+        });
+        static constexpr std::array<std::string_view, 16> places = {
+            "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th",
+            "9th", "10th", "11th", "12th", "13th", "14th", "15th", "16th"};
+        for(size_t i = 0; i < ranked.size() && i < places.size(); i++)
+        {
+            auto const& player = ranked[i];
+            text(std::string(places[i]), 51.f, y, report_place);
+            text(name_of(player.player_idx), 127.f, y, colour_of(player));
+            text(std::to_string(player.score), 253.f, y, plain);
+            text(std::to_string(player.kills), 354.f, y, plain);
+            text("0", 415.f, y, plain);
+            text(std::to_string(player.deaths), 505.f, y, plain);
+            y += report_row;
+        }
+        /* B =quit  A =pick game, the buttons in their colours */
+        for(auto const& [x, button, color, what] :
+            {std::tuple{385.f, "B", report_b, " =quit"}, std::tuple{470.f, "A", report_a, " =pick game"}})
+            view.typeset.push_back({
+                .runs   = {{button, color}, {what, report_heading}},
+                .at     = {left + x, 428.f},
+                .size   = report_em,
+                .shadow = true,
+            });
+    }
+    static constexpr f32 report_em          = 20.f;
+    static constexpr f32 report_title_em    = 38.f;
+    static constexpr f32 report_row         = 21.f;
+    static constexpr f32 report_panel_top    = 61.f;
+    static constexpr f32 report_panel_mid    = 200.f;
+    static constexpr f32 report_panel_bottom = 409.f;
+    static inline Vecf4 const report_black{0.f, 0.f, 0.f, 1.f};
+    static inline Vecf4 const report_panel_light{.03f, .11f, .24f, 1.f};
+    static inline Vecf4 const report_panel_dark{.01f, .05f, .12f, 1.f};
+    static inline Vecf4 const report_title{.12f, .55f, 1.f, 1.f};
+    static inline Vecf4 const report_heading{.6f, .78f, 1.f, 1.f};
+    static inline Vecf4 const report_place{1.f, 1.f, 0.f, 1.f};
+    static inline Vecf4 const report_b{.95f, .3f, .25f, 1.f};
+    static inline Vecf4 const report_a{.3f, .9f, .3f, 1.f};
+
     /* In 640x480 HUD units */
     static constexpr f32 scoreboard_top   = 110.f;
     static constexpr f32 scoreboard_row   = 22.f;
@@ -1600,6 +1772,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
     {
         auto& scene = p.template subsystem<HudScene>();
         scene.views.clear();
+        scene.backdrops.clear();
         m_post = &p.template subsystem<PostProcessParameters>();
         m_post->zoom_blurs.clear();
 
@@ -1662,8 +1835,13 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             auto const* input = p.template get<PlayerInput>(seat.second);
             return input && input->scores;
         });
-        if(game.kind == GameState::kind_t::multiplayer &&
-           (asked || game.shows_results()))
+        /* A finished game: the carnage report, over the whole screen */
+        if(game.kind == GameState::kind_t::multiplayer && game.shows_results() && !seats.empty())
+        {
+            carnage_report(p, game, scene, screen, seats.front().first);
+            return;
+        }
+        if(game.kind == GameState::kind_t::multiplayer && asked)
             scoreboard(p, game, screen);
         Vecf2 const view = seats.size() <= 1   ? screen
                            : seats.size() == 2 ? Vecf2(screen.x, screen.y / 2)
@@ -1690,6 +1868,26 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             /* Full spectrum vision, fading out over its last second */
             if(info && info->powerups.vision > 0.f)
                 out.tint = vision_tint * std::min(info->powerups.vision, 1.f);
+            /* A damage effect's flash, fading: lighten adds its colour,
+             * darken dims, the rest lay their colour over */
+            if(info && info->damage_flash.left > 0.f && info->damage_flash.duration > 0.f)
+            {
+                using type_t      = blam::scn::damage_effect::screen_flash_type_t;
+                auto const& flash = info->damage_flash;
+                f32 const   a     = flash.intensity * flash.left / flash.duration;
+                switch(static_cast<type_t>(flash.type))
+                {
+                case type_t::lighten:
+                    out.tint += Vecf4(flash.color * a, 0.f);
+                    break;
+                case type_t::darken:
+                    out.tint = out.tint * (1.f - a) + Vecf4(0.f, 0.f, 0.f, a);
+                    break;
+                default:
+                    out.tint = out.tint * (1.f - a) + Vecf4(flash.color * a, a);
+                    break;
+                }
+            }
             /* A teleporter's white flash, fading */
             if(info && info->teleport_flash > 0.f)
             {
@@ -1725,17 +1923,21 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             if(riding.mounted.weapon)
             {
                 auto hud = m_index.find(riding.mounted.weapon->hud_interface.tag_id);
+                auto s = state_of(riding.mounted, {}, *m_magic);
+                s.aimed = equip->aimed;
                 weapon_hud(
                     riding.mounted.weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                         : nullptr,
-                    state_of(riding.mounted, {}, *m_magic));
+                    s);
             } else if(auto const* held = riding.armed ? equip->held(files.load_generation) : nullptr)
             {
                 auto hud = m_index.find(held->weapon->hud_interface.tag_id);
+                auto s  = state_of(*held, equip->weapons[1], *m_magic, equip->zoom);
+                s.aimed = equip->aimed;
                 weapon_hud(
                     held->weapon->hud_interface.valid() && hud != m_index.end() ? &(*hud)
                                                                                 : nullptr,
-                    state_of(*held, equip->weapons[1], *m_magic, equip->zoom));
+                    s);
             }
             /* The grenades it would throw */
             if(equip->grenade < equip->equipment.size())
@@ -1747,6 +1949,7 @@ struct HudSystem : compo::RestrictedSubsystem<HudSystem, HudManifest>
             }
             messages(p, cinematic, *info, *cam, *equip);
             kill_feed(p, *info);
+            standing(p, *info);
             nav_points(p, *info, *cam);
         }
         m_view = nullptr;

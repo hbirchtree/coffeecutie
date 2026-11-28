@@ -6,8 +6,9 @@
 #include <blam/volta/blam_globals.h>
 #include <coffee/components/entity_container.h>
 
-/*! matg's capture-the-flag flag, a weapon; null without one */
-inline blam::tag_t const* flag_weapon(BlamFiles<halo_version> const& files)
+/*! matg's capture-the-flag flag, or Oddball's ball: a weapon; null
+ *  without one */
+inline blam::tag_t const* flag_weapon(BlamFiles<halo_version> const& files, bool ball = false)
 {
     auto const&                        magic = files.container.magic;
     blam::tag_index_view<halo_version> index(files.container);
@@ -18,9 +19,12 @@ inline blam::tag_t const* flag_weapon(BlamFiles<halo_version> const& files)
     if(!globals.has_value())
         return nullptr;
     auto mp = globals.value()->multiplayer.data(magic);
-    if(!mp.has_value() || mp.value().empty() || !mp.value()[0].flag.valid())
+    if(!mp.has_value() || mp.value().empty())
         return nullptr;
-    auto it = index.find(mp.value()[0].flag);
+    auto const& weapon = ball ? mp.value()[0].ball : mp.value()[0].flag;
+    if(!weapon.valid())
+        return nullptr;
+    auto it = index.find(weapon);
     return it != index.end() ? &*it : nullptr;
 }
 

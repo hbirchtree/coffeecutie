@@ -144,7 +144,8 @@ void queue_input_event(
     comp_app::BasicEventBus<Coffee::Input::CIEvent>* bus,
     DummyControllerInput*                            controllers,
     type_t                                           type,
-    nlohmann::json const&                            event)
+    nlohmann::json const&                            event,
+    std::function<compo::duration(compo::duration)> const& at = {})
 {
     using Coffee::Input::CIControllerAtomicEvent;
     using Coffee::Input::CIControllerConnectEvent;
@@ -155,7 +156,12 @@ void queue_input_event(
     using libc_types::u8;
 
     CIEvent    ievent;
-    const auto start_time = std::chrono::milliseconds(event.value("time", 0u));
+    /* Presses and releases each on the tick boundary at or after them */
+    auto const when = [&at](libc_types::u32 ms) -> compo::duration {
+        compo::duration const d = std::chrono::milliseconds(ms);
+        return at ? at(d) : d;
+    };
+    const auto start_time = when(event.value("time", 0u));
     /* QueueImmediate rather than QueueShot: both honor the scheduled time,
      * but QueueShot drops tasks whose deadline has already passed — a slow
      * frame (or "time": 0) would silently swallow synthetic input */
@@ -213,8 +219,7 @@ void queue_input_event(
         if(event.contains("duration"))
         {
             const auto release_time =
-                start_time +
-                std::chrono::milliseconds(event.value("duration", 0u));
+                when(event.value("time", 0u) + event.value("duration", 0u));
             atomic.value = 0;
             emit_future_event(release_time, ievent, atomic);
             if(controllers)
@@ -233,7 +238,7 @@ void queue_input_event(
         const auto controller = event.value("index", 0u);
         const auto bit        = static_cast<u8>(button - CK_BUTTON_BASE);
         const auto release_time =
-            start_time + std::chrono::milliseconds(event.value("duration", 0u));
+            when(event.value("time", 0u) + event.value("duration", 0u));
 
         /* CIControllerAtomicEvent is BaseEvent<CIEvent::Controller>;
          * this previously went out as ControllerUpdate, which readers
@@ -1127,6 +1132,14 @@ void insert_dummy_plug(
              * this process's own, the rest on the session's when there is
              * one */
             auto const queue_events = [&](bool local, auto const& start_of) {
+                /* On a stepped clock, input waits for the app's next tick;
+                 * delays count from now, the app's rounding from 0 */
+                auto const base = dummy_plug.now();
+                std::function<compo::duration(compo::duration)> on_ticks;
+                if(config.contains("frame_delta") && dummy_plug.tick_round)
+                    on_ticks = [&dummy_plug, base](compo::duration d) {
+                        return std::chrono::duration_cast<compo::duration>(dummy_plug.tick_round(base + d) - base);
+                    };
                 for(auto const& event : config["events"])
                 {
                     if(!event.contains("type"))
@@ -1152,8 +1165,7 @@ void insert_dummy_plug(
                     case type_t::mouse_move: {
                         auto shifted    = event;
                         shifted["time"] = start_of(event).count();
-                        queue_input_event(
-                            input_bus, &dummy_controllers, type, shifted);
+                        queue_input_event(input_bus, &dummy_controllers, type, shifted, on_ticks);
                         break;
                     }
                     case type_t::screenshot: {
@@ -1279,9 +1291,11 @@ void insert_dummy_plug(
                     dummy_plug.session = false;
                 }
             }
-            /* Event times are on the session clock, which has run a while */
+            /* Event times are on the session clock, which has run a while,
+             * or on a stepped one from the loaded frame: the frames before
+             * queueing would otherwise shift them by the frame rate */
             auto const elapsed =
-                dummy_plug.session
+                dummy_plug.session || config.contains("frame_delta")
                     ? std::chrono::duration_cast<std::chrono::milliseconds>(
                           dummy_plug.now())
                     : std::chrono::milliseconds(0);

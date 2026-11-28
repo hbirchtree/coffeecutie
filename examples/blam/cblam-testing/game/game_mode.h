@@ -100,8 +100,9 @@ struct GameState : compo::SubsystemBase
     };
     std::vector<nav_point_t> nav_points;
 
-    /*! Capture the flag: each team's flag (red 0, blue 1). The authority
-     *  keeps them; the rest is told whether each is taken and by whom */
+    /*! Capture the flag: each team's flag (red 0, blue 1), and Oddball's
+     *  ball (2). The authority keeps them; the rest is told whether each is
+     *  taken and by whom */
     struct flag_t
     {
         typing::vector_types::Vecf3 base{};
@@ -109,9 +110,35 @@ struct GameState : compo::SubsystemBase
         bool                        taken{false};  /*!< Gone from its base since an enemy took it */
         i32                         carrier{-1};   /*!< Player index holding it */
         f32                         idle{0.f};     /*!< Seconds lying away from its base */
+        bool                        removed{false}; /*!< Out of play, e.g. the attackers' in single flag */
         libc_types::u64             object{0};     /*!< Where it lies, on the authority */
     };
-    std::array<flag_t, 2> flags{};
+    std::array<flag_t, 3> flags{};
+    static constexpr size_t ball = 2; /*!< Oddball's, among the flags */
+    i32                   juggernaut{-1}; /*!< Juggernaut: the player index who is it */
+    bool                  timed{false};   /*!< Scores are seconds (King of the hill, Oddball) */
+    bool                  no_tracker{false}; /*!< Nobody has a motion tracker */
+    libc_types::f32       player_health{1.f}; /*!< Players' body vitality, times the coll's */
+    /*! Who is camouflaged by the game: nobody, everyone, or whoever is "it" */
+    enum class unseen_t : libc_types::u8
+    {
+        nobody,
+        everyone,
+        it,
+    } unseen{unseen_t::nobody};
+
+    bool unseen_by_game(u32 player_idx) const
+    {
+        return unseen == unseen_t::everyone ||
+               (unseen == unseen_t::it && juggernaut >= 0 && juggernaut == static_cast<i32>(player_idx));
+    }
+    i16                   hill{-1};        /*!< King of the hill: the hill in play */
+    /*! Who holds it: a player (with teams, any of the one team in it), -1
+     *  for nobody, contested for more than one side */
+    i16                   hill_holder{-1};
+    static constexpr i16  contested = -2;
+    i16                   capture_blocked{-1}; /*!< A carrier kept from scoring, for a moment */
+    f32                   capture_blocked_for{0.f};
     f32                   flag_reach{.8f}; /*!< wu, set by the rules */
 
     player_t* player(u32 player_idx)
@@ -127,6 +154,14 @@ struct GameState : compo::SubsystemBase
         return const_cast<GameState*>(this)->player(player_idx);
     }
 
+    /*! Infection's infected are its team 1 */
+    static constexpr i16 infected_team = 1;
+    bool infected(u32 player_idx) const
+    {
+        auto const* p = player(player_idx);
+        return game_type == GameSetup::game_type_t::infection && p && p->team == infected_team;
+    }
+
     static std::string_view title(GameSetup::game_type_t type, bool teams)
     {
         using t = GameSetup::game_type_t;
@@ -140,6 +175,8 @@ struct GameState : compo::SubsystemBase
             return "Oddball";
         case t::race:
             return "Race";
+        case t::infection:
+            return "Infection";
         default:
             return teams ? "Team Slayer" : "Slayer";
         }

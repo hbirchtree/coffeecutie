@@ -80,7 +80,8 @@ struct AnimationPlayback
         sway_slot     = 17, /* first person: the moving overlay, by the walk */
         fp_sway_slot  = 18, /* first person: the overlays frames, one axis each */
         fp_sway_axes  = 5,
-        max_layers    = 23,
+        ping_slot     = 23, /* units: the flinch from a blow */
+        max_layers    = 24,
     };
 
     std::array<AnimationLayer, max_layers> layers{};
@@ -90,6 +91,8 @@ struct AnimationPlayback
 
     /* The unit (stance) its animations come from, as unit_set_seat picks */
     std::string stance{"stand"};
+    /* Units: 1 + the unit weapon slot (evade, dive) of a dodge under way */
+    libc_types::u8 dodge{0};
 
     /* Faces: how open the mouth is (0-1), and the emotion frame shown */
     libc_types::f32 mouth{0.f};
@@ -131,6 +134,10 @@ struct AnimationPlayback
 
     /* Seconds past the last tick to draw it at, so it moves between ticks */
     libc_types::f32 lookahead{0.f};
+
+    /* The object's transform undone: a world-relative clip's root is
+     * already where the object stands */
+    typing::vector_types::Matf4 object_inverse{1.f};
 
     /* Where this instance's bones landed in its bucket's window, negative if
      * unposed. Scratch owned by DrawListBuilder. */

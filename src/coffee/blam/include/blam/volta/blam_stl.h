@@ -198,6 +198,18 @@ struct map_container
 
     semantic::mem_chunk<const char> store;
     std::vector<char>               decompressed{};
+    /*! The tag index with the classes "protection" stripped put back; in
+     *  place of the map's own when set */
+    std::shared_ptr<std::vector<tag_t> const> repaired{};
+
+    inline semantic::Span<tag_t const> tag_span() const
+    {
+        if(repaired)
+            return semantic::Span<tag_t const>(repaired->data(), repaired->size());
+        if(!tags)
+            return {};
+        return semantic::Span<tag_t const>(tags->tags(map), from_le(tags->tag_count));
+    }
 
     inline std::string_view name() const
     {
@@ -229,10 +241,11 @@ struct map_container
 template<typename Ver>
 class tag_index_view
 {
-    tag_index_t<Ver> const*            m_idx;
-    file_header_t const*               m_file;
-    map_ptr                            m_ptr;
-    std::map<atlas_type_t, atlas_view> m_atlases;
+    tag_index_t<Ver> const*                   m_idx;
+    file_header_t const*                      m_file;
+    map_ptr                                   m_ptr;
+    std::map<atlas_type_t, atlas_view>        m_atlases;
+    std::shared_ptr<std::vector<tag_t> const> m_repaired;
 
   public:
     using span_type = semantic::Span<const tag_t>;
@@ -248,6 +261,7 @@ class tag_index_view
         : m_idx(map.tags)
         , m_file(map.map)
         , m_ptr(map.magic)
+        , m_repaired(map.repaired)
     {
     }
 
@@ -265,6 +279,8 @@ class tag_index_view
     {
         if(!m_idx)
             return span_type();
+        if(m_repaired)
+            return span_type(m_repaired->data(), m_repaired->size());
         return span_type(m_idx->tags(m_file), m_idx->tag_count);
     }
 
@@ -597,9 +613,7 @@ class tag_index_view
 template<typename Ver>
 inline Span<tag_t const> tags_of(map_container<Ver> const& map)
 {
-    if(!map.tags)
-        return {};
-    return Span<tag_t const>(map.tags->tags(map.map), from_le(map.tags->tag_count));
+    return map.tag_span();
 }
 
 template<typename Ver>

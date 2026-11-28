@@ -69,8 +69,9 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
                                                              : GameState::kind_t::none;
         state.phase       = GameState::phase_t::playing;
         state.game_type   = setup.game_type;
-        /* Capture the flag is played in teams */
-        state.teams       = setup.game_type == GameSetup::game_type_t::ctf;
+        /* Capture the flag is played in teams, as is Infection: humans and infected */
+        state.teams       = setup.game_type == GameSetup::game_type_t::ctf ||
+                      setup.game_type == GameSetup::game_type_t::infection;
         state.difficulty  = setup.difficulty;
         state.players.clear();
         state.team_scores = {};
@@ -87,14 +88,31 @@ struct GameModeSystem : compo::RestrictedSubsystem<GameModeSystem, GameModeManif
     /* Players are counted from when they are first in the game */
     void join(Proxy& p, GameState& state)
     {
+        auto const& setup = p.template subsystem<GameSetup>();
         for(auto player : p.template select<PlayerInfo, PlayerCamera, NetworkInfo>())
         {
             auto [info, cam, net] = player.components();
             if(!biped_shown(info, cam, net) || state.player(info.player_idx))
                 continue;
+            /* A local seat plays on the team its controller chose; anyone
+             * else joins the smaller team (a peer's seats number from 4n) */
+            auto const pad  = cam.controller.index.value_or(info.seat_idx);
+            i16        team = 0;
+            if(setup.game_type == GameSetup::game_type_t::infection)
+                team = 0; /* everyone starts human; the rules infect one */
+            else if(!info.is_remote() && pad < setup.seat_team.size())
+                team = static_cast<i16>(setup.seat_team[pad] & 1);
+            else
+            {
+                std::array<size_t, 2> sizes{};
+                for(auto const& other : state.players)
+                    if(other.team >= 0)
+                        sizes[static_cast<size_t>(other.team & 1)]++;
+                team = sizes[1] < sizes[0] ? 1 : 0;
+            }
             state.players.push_back({
                 .player_idx = info.player_idx,
-                .team = state.teams ? static_cast<i16>(info.player_idx % 2) : i16(-1),
+                .team       = state.teams ? team : i16(-1),
             });
         }
     }

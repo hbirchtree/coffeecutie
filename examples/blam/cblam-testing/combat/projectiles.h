@@ -31,6 +31,11 @@ blam::shader::radiosity_properties::physics_material struck_material(
         return surface.has_value() ? surface.value()[0].physics
                                    : material_t::stone;
     }
+    /* A unit's shield, while it holds, is what a shot meets first */
+    if(auto const* status = p.template get<BipedStatus>(ray.entity_id);
+       status && status->coll && !status->dead && status->shield > 0.f && status->maximum_shield() > 0.f &&
+       status->coll->shield_material_type < blam::scn::material_type_count)
+        return static_cast<material_t>(status->coll->shield_material_type);
     /* The struck part's own, an energy shield's included */
     if(ray.material_type < blam::scn::material_type_count)
         return static_cast<material_t>(ray.material_type);

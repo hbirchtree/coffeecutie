@@ -49,6 +49,7 @@ struct Event
         UnitStruck, /*!< A moving vehicle ran into a unit */
         Blast,      /*!< An explosion throws what is near */
         OpenBounds, /*!< Bounds stop at the section's box, for worlds beyond it */
+        OutOfWorld, /*!< Whether a point fell out of the level, answered in place */
     } type{};
 };
 
@@ -249,6 +250,9 @@ struct Raycast
     u64                   ignore_also{0}; /*!< And another, e.g. a vehicle's shooter */
     /*! Trace bipeds where they were at this tick */
     std::optional<libc_types::u64> rewind{};
+    /*! And this one where it was at its own tick */
+    u64                            rewind_unit{0};
+    std::optional<libc_types::u64> unit_rewind{};
 
     bool                  hit{false};
     f32                   fraction{1.f};
@@ -327,6 +331,14 @@ struct Reset
 struct OpenBounds
 {
     static constexpr auto event_type = Event::OpenBounds;
+};
+
+/*! Down at the active section's bounds floor and in no cluster: fallen out */
+struct OutOfWorld
+{
+    static constexpr auto event_type = Event::OutOfWorld;
+    Vecf3                 position{};
+    bool                  out{false};
 };
 
 } // namespace Physics

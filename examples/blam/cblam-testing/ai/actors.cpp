@@ -124,7 +124,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         m_preferred   = &p.template subsystem<GameState>().preferred_targets;
         m_dialogue_ok = p.template subsystem<GameState>().ai_dialogue;
         refresh_nav(p);
+        if(m_fire_queue)
+            m_fire_queue->poll();
         hear(p);
+        leaders_fallen(p);
         if((m_obstacles_in -= dt) <= 0.f)
         {
             m_obstacles_in = 1.f;
@@ -138,6 +141,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         for(auto ent : p.template select<Actor, Model, AnimationPlayback, BipedStatus, ObjectPhysics>())
         {
             auto [actor, model, anim, status, physics] = ent.components();
+            /* Its variant's vitality, whatever it is doing: an infection form
+             * is one blow, scripted or not */
+            if(!status.dead)
+                if(auto const* kind = kind_of(p, actor); kind && kind->variant)
+                    toughen(actor, status, *kind->variant);
             /* Seated: it fights from where it sits */
             if(physics.seated && actor.active() && !actor.braindead && !status.dead)
             {
@@ -210,6 +218,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                         move_toward(p, ent.id(), actor, model, anim, *kind, *actor.walk_to, dt, false);
                 } else if(actor.walk_to)
                     stop(p, ent.id(), actor);
+                if(actor.shoot_at)
+                    shoot_scripted(p, ent.id(), actor, model, *kind, dt);
                 if(actor.may_fight && !actor.blind && (actor.look_in -= dt) <= 0.f)
                 {
                     actor.look_in = look_period;
@@ -229,6 +239,29 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             toughen(actor, status, *kind->variant);
             think(p, ent.id(), actor, model, anim, status, *kind, dt);
         }
+    }
+
+    /* Told to follow another actor: idle, it keeps within its follow
+     * distance of it, running when far behind */
+    bool follows(Proxy& p, u64 id, Actor& actor, Model& model, AnimationPlayback& anim, kind_t const& kind, f32 dt)
+    {
+        if(!actor.follow_leader)
+            return false;
+        auto const* status = p.template get<BipedStatus>(actor.follow_leader);
+        auto const* leader = p.template get<Model>(actor.follow_leader);
+        if(!status || status->dead || !leader)
+        {
+            actor.follow_leader = 0;
+            return false;
+        }
+        f32 const apart = glm::distance(Vecf2(model.position), Vecf2(leader->position));
+        if(apart <= actor.follow_distance)
+        {
+            actor.post = model.position;
+            return false;
+        }
+        move_toward(p, id, actor, model, anim, kind, leader->position, dt, apart > actor.follow_distance * 3.f);
+        return true;
     }
 
     /* The difficulty's scale on a row, 1 without a globals block */
@@ -259,7 +292,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
 
   private:
     static constexpr f32 look_period     = .25f; /* s between looks around */
+    static constexpr f32 drive_turn_rate = 1.2f; /* rad/s an AI driver swings its heading */
+    static constexpr f32 drive_lookahead = 12.f; /* wu it looks ahead for what it would hit */
+    static constexpr f32 drive_pull_up   = 12.f; /* wu out a flyer pulls up over its target */
+    static constexpr f32 drive_pass_distance = 8.f; /* wu: passing this near, its run is over */
+    static constexpr f32 fixed_gun_cos   = .985f; /* about 10 degrees: a fixed gun's target ahead */
     static constexpr f32 arrive_radius   = .35f; /* wu */
+    static constexpr f32 flier_hover     = 1.5f; /* wu a flier fights above its position */
+    static constexpr f32 retreat_reach   = 8.f;  /* wu a retreat with no position puts between it and the threat */
     static constexpr f32 drift_speed     = .05f; /* wu/s a standing actor is let slide before it is held */
     static constexpr f32 post_leeway     = 1.f;  /* wu a standing actor may be pushed off its spot before it walks back */
     static constexpr f32 walk_progress   = .25f; /* wu nearer a go-to that counts as getting there */
@@ -280,6 +320,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 slow_shot_speed = 20.f; /* wu/s and under, an explosive shot is seen coming */
     static constexpr f32 grenade_dodge_time = 2.f; /* s spent getting away from one */
     static constexpr f32 dodge_reach        = 3.f; /* wu ahead it runs for, away from the grenade */
+    static constexpr f32 evade_time         = .5f; /* s of a sidestep off a shot's line */
+    static constexpr f32 evade_delay        = 2.f; /* s between sidesteps, when its actor names none */
+    static constexpr f32 leader_fall_reach  = 10.f; /* wu a leader's death is seen from by its followers */
+    static constexpr char const* flee_stance = "flee";
     static constexpr f32 spread_weight   = 2.f;  /* wu of cost for a position on a platoon mate's bearing */
     static constexpr f32 flank_weight    = 1.5f; /* wu of cost for a position straight in the target's face */
     static constexpr f32 move_reach      = 15.f; /* wu, the farthest firing position an actor on foot moves to */
@@ -289,13 +333,20 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     static constexpr f32 halo_gravity    = 9.81f / 3.048f; /* wu/s^2 */
     static constexpr f32 tick_rate       = 30.f;
     static constexpr f32 lob_limit       = 1.2217f; /* rad, 70 degrees: steeper lobs fall to the flat shot */
+    static constexpr f32 grenade_seen    = 1.f;   /* s since the target was in view, for "visible target" */
+    static constexpr f32 grenade_lead    = .5f;   /* how far ahead of a moving target a grenade is thrown */
+    static constexpr f32 grenade_miss    = 2.f;   /* wu a throw may land from its target, at the least */
+    static constexpr f32 grenade_drift   = 2.f;   /* wu friends are kept clear by, past the blast: it rolls, they walk */
+    static constexpr f32 grenade_flight  = 4.f;   /* s of a throw's arc that is traced */
+    static constexpr f32 grenade_step    = .05f;  /* s per traced segment */
+    static constexpr f32 grenade_throw_speed = 10.f; /* wu/s, for a unit whose tag names none */
     static constexpr f32 footstep_share  = .25f; /* of the hearing distance, footsteps carry */
     static constexpr f32 sighting_memory = 1.f;  /* s a target out of view still draws a new burst */
     static constexpr f32 threat_range    = 25.f; /* wu: other fighting enemies whose sight a spot avoids */
     static constexpr size_t max_threats  = 4;
     static constexpr f32 threat_weight   = 6.f;  /* score off a spot per other enemy that sees it */
     static constexpr f32 footstep_speed  = 1.f;  /* wu/s below which a unit is quiet */
-    static constexpr f32 camouflage_sight = 2.f; /* wu within which camouflage is noticed */
+    static constexpr f32 camouflage_sight = 1.f; /* wu within which camouflage is noticed: arm's reach, my pick */
     static constexpr f32 flyby_radius    = 3.f;  /* wu a shot passes a head by to be noticed */
     static constexpr f32 drop_lift       = .4f;  /* wu above the feet belongings fall from */
     static constexpr f32 drop_speed      = 1.5f; /* wu/s they are tossed out at */
@@ -326,9 +377,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.look_in -= dt;
         actor.fire_in -= dt;
         actor.stance_in -= dt;
+        actor.evade_in -= dt;
         actor.state_in -= dt;
         actor.reposition_in -= dt;
         react(p, id, actor, status, actr);
+        /* The flee stance is only a run */
+        if(anim.stance == flee_stance && (!actor.panicking || !actor.moving))
+            anim.stance = "stand";
 
         /* A look around now and then: the nearest enemy in view */
         if(actor.look_in <= 0.f)
@@ -402,6 +457,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             if((actor.migrated || actor.order == Actor::order_t::attack) && actor.position >= 0)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
+            else if(follows(p, id, actor, model, anim, kind, dt))
+                ;
             else if(!patrol(p, id, actor, model, anim, kind, dt))
                 move_toward(p, id, actor, model, anim, kind, actor.post, dt, false);
             glance(actor, model, anim, actr, dt);
@@ -435,9 +492,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             bool const seen   = actor.seen_ago < look_period * 2.f;
             f32 const  begin  = actv.melee_range;
             f32 const  give_up = std::max(actv.melee_abort_range, begin * 1.25f);
-            if(begin > 0.f && seen && apart < (actor.charging ? give_up : begin))
+            if(begin > 0.f && seen && !actor.no_melee && apart < (actor.charging ? give_up : begin))
                 actor.charging = true;
-            else if(!seen || apart > give_up || begin <= 0.f)
+            else if(!seen || apart > give_up || begin <= 0.f || actor.no_melee)
                 actor.charging = false;
             /* To arm's reach to strike; with a gun but nowhere to fight
              * from, only to the far edge of the range it fights at */
@@ -527,7 +584,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(actor.position >= 0)
                     actor.goal = position_of(kind, actor.position);
             }
-            if(actor.position >= 0 && glm::distance(model.position, actor.goal) > arrive_radius)
+            /* Nowhere to fall back to (the Flood's encounters have few
+             * positions): it backs straight off from what threatens it */
+            Vecf3 const threat = actor.danger.value_or(actor.last_seen);
+            Vecf3       away   = model.position - threat;
+            away.z             = 0.f;
+            if(actor.position < 0 && glm::dot(away, away) > 1e-4f &&
+               glm::length(away) < retreat_reach)
+                move_toward(p, id, actor, model, anim, kind,
+                            threat + glm::normalize(away) * retreat_reach, dt, true);
+            else if(actor.position >= 0 && glm::distance(model.position, actor.goal) > arrive_radius)
                 move_toward(p, id, actor, model, anim, kind, actor.goal, dt, true);
             else
                 stop(p, id, actor);
@@ -610,7 +676,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         } else if(flee && !actor.berserk && actor.state != state_t::retreat && actr.panic.cowering_time.y > 0.f)
         {
             enter(actor, state_t::retreat);
-            actor.state_in = uniform(actr.panic.cowering_time);
+            actor.state_in  = uniform(actr.panic.cowering_time);
+            actor.panicking = true;
         }
     }
 
@@ -645,7 +712,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.delay_up = false;
         if(!feval(flags & flags_t::magic_sight_after_timer))
             return;
-        if(u64 const player = nearest_player(p, model))
+        if(u64 const player = nearest_player(p, model, true))
             if(auto const* seen = p.template get<Model>(player))
             {
                 actor.target    = player;
@@ -682,6 +749,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         actor.reposition_in = 0.f;
         actor.stance_in     = 0.f;
         actor.covering      = false;
+        actor.panicking     = false;
     }
 
     bool chance(f32 probability)
@@ -816,6 +884,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             }
             /* Leaders gone: the followers scatter */
             if(pl.leaders == 0 && kept.leaders > 0)
+            if(pl.leaders == 0 && kept.leaders > 0)
                 panic(p, key);
             kept.leaders = pl.leaders;
         }
@@ -861,6 +930,37 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return actr.panic.leader_type == actr.type || actr.panic.leader_type == blam::scn::actor_type_t::none;
     }
 
+    /* A leader falling in sight scatters followers of its side, whatever
+     * encounter they are in */
+    void leaders_fallen(Proxy& p)
+    {
+        for(auto ent : p.template select<Actor, Model, BipedStatus>())
+        {
+            auto [actor, model, status] = ent.components();
+            if(!status.dead || std::exchange(actor.fallen, true))
+                continue;
+            auto const* kind = kind_of(p, actor);
+            if(!kind || !kind->actor)
+                continue;
+            auto const type = kind->actor->type;
+            for(auto other : p.template select<Actor, Model, BipedStatus>())
+            {
+                auto [theirs, at, alive] = other.components();
+                auto const* them = kind_of(p, theirs);
+                if(alive.dead || !theirs.active() || theirs.scripted || theirs.berserk || theirs.team != actor.team ||
+                   !them || !them->actor || them->actor->panic.leader_type != type || leads(*them->actor) ||
+                   theirs.state == state_t::retreat)
+                    continue;
+                if(glm::distance(at.position, model.position) > leader_fall_reach ||
+                   !chance(them->actor->panic.leader_killed_panic_change))
+                    continue;
+                enter(theirs, state_t::retreat);
+                theirs.state_in  = uniform(them->actor->panic.cowering_time, 5.f);
+                theirs.panicking = true;
+            }
+        }
+    }
+
     void panic(Proxy& p, std::pair<i16, i16> const& key)
     {
         for(auto ent : p.template select<Actor, BipedStatus>())
@@ -875,7 +975,8 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             if(!chance(kind->actor->panic.leader_killed_panic_change))
                 continue;
             enter(actor, state_t::retreat);
-            actor.state_in = uniform(kind->actor->panic.cowering_time, 5.f);
+            actor.state_in  = uniform(kind->actor->panic.cowering_time, 5.f);
+            actor.panicking = true;
         }
     }
 
@@ -890,7 +991,16 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         return it != m_platoons.end() && it->second.defending;
     }
 
-    u64 nearest_player(Proxy& p, Model const& model)
+    static bool cloaked(Proxy& p, u64 unit)
+    {
+        auto const* info  = p.template get<PlayerInfo>(unit);
+        auto const* model = p.template get<Model>(unit);
+        return (info && info->camouflaged) || (model && model->camouflaged);
+    }
+
+    /* The nearest living player; `sighted` leaves out the camouflaged but
+     * up close, for knowing where one is rather than following */
+    u64 nearest_player(Proxy& p, Model const& model, bool sighted = false)
     {
         u64 best   = 0;
         f32 best_d = std::numeric_limits<f32>::max();
@@ -899,7 +1009,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             auto [info, target, status] = player.components();
             if(!info.mode.physics || status.dead)
                 continue;
-            if(f32 const d = glm::distance(target.position, model.position); d < best_d)
+            f32 const d = glm::distance(target.position, model.position);
+            if(sighted && (info.camouflaged || target.camouflaged) && d > camouflage_sight)
+                continue;
+            if(d < best_d)
             {
                 best_d = d;
                 best   = player.id();
@@ -980,7 +1093,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         f32 const   heard   = (seen.hearing_dist > 0.f ? seen.hearing_dist : 15.f) * footstep_share;
         u64   best     = 0;
         f32   best_d   = std::numeric_limits<f32>::max();
+        /* Only blows to fight with: what flies is out of its reach */
+        bool const grounded_only = !holds_gun(p, id);
         auto  consider = [&](u64 other, Model const& target, u64 vehicle, bool quiet, bool cloaked) {
+            if(grounded_only)
+                if(auto const* flier = p.template get<ObjectPhysics>(other); flier && flier->flying)
+                    return;
             Vecf3 const to = target.position + chest_of(p, other) - eye;
             f32 const   d  = glm::length(to);
             /* A preferred target counts as much nearer */
@@ -1104,8 +1222,32 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 return;
             actor.dodge_from = nearest;
             actor.dodge_in   = grenade_dodge_time;
+            actor.diving     = true;
+            actor.dodges++;
             return;
         }
+    }
+
+    /* Fire past it: a sidestep off the line, then not again for its
+     * evasion delay. The thresholds read as a rate, higher on elites */
+    void evade(Actor& actor, Model const& model, actr_t const& actr, Vecf3 const& by)
+    {
+        auto const& defensive = actr.defensive;
+        f32 const   rate      = actor.state == state_t::combat && !actor.covering ? defensive.attacking_evasion_threshold
+                                                                                  : defensive.defending_evasion_threshold;
+        if(actor.dodge_in > 0.f || actor.evade_in > 0.f || actor.berserk || rate <= 0.f)
+            return;
+        actor.evade_in = defensive.evasion_delay_time > 0.f ? defensive.evasion_delay_time : evade_delay;
+        if(!chance(1.f - std::exp(-rate)))
+            return;
+        Vecf3 off = model.position - by;
+        off.z     = 0.f;
+        if(glm::dot(off, off) < 1e-4f)
+            off = model.rotation * Vecf3{0.f, chance(.5f) ? 1.f : -1.f, 0.f};
+        actor.dodge_from = model.position - glm::normalize(off);
+        actor.dodge_in   = evade_time;
+        actor.diving     = false;
+        actor.dodges++;
     }
 
     bool clear(Proxy& p, u64 self, Vecf3 const& from, Vecf3 const& to, u64 target, u64 vehicle = 0)
@@ -1134,9 +1276,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                                 glm::distance(target.position, model->position) <= reach;
             if(!encounter && !nearby)
                 continue;
+            /* A flier is no target for one with only blows */
+            if(auto const* flier = p.template get<ObjectPhysics>(actor.target);
+               flier && flier->flying && !holds_gun(p, other.id()))
+                continue;
             theirs.target    = actor.target;
             theirs.last_seen = actor.last_seen;
-            theirs.seen_ago  = look_period * 1.5f;
+            /* Told of someone camouflaged, they search; they don't shoot unseen */
+            theirs.seen_ago  = cloaked(p, actor.target) ? sighting_memory * 2.f : look_period * 1.5f;
             theirs.fire_in   = std::max(theirs.fire_in, 1.f);
             if(theirs.state == state_t::idle)
                 enter(theirs, state_t::combat);
@@ -1155,21 +1302,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 if(!actor.active() || actor.scripted || actor.deaf || actor.braindead || status.dead ||
                    ent.id() == shot.shooter)
                     continue;
-                /* Busy with a target in view already */
-                if(actor.target && actor.seen_ago < look_period * 4.f)
-                    continue;
                 auto const* kind = kind_of(p, actor);
                 auto const* actr = kind ? kind->actor : nullptr;
-                f32 const   reach = actr && actr->perception.hearing_dist > 0.f ? actr->perception.hearing_dist : 15.f;
-                bool const  near  = glm::distance(model.position, shot.position) <= reach;
                 /* A shot past its head, by its chance to notice one */
                 Vecf3 const head  = model.position + Vecf3{0, 0, eye_height};
                 f32 const   along = glm::dot(head - shot.position, shot.direction);
-                bool const  past  = along > 0.f && along < flyby_reach &&
-                                   glm::distance(shot.position + shot.direction * along, head) < flyby_radius &&
+                Vecf3 const by    = shot.position + shot.direction * along;
+                bool const  past  = along > 0.f && along < flyby_reach && glm::distance(by, head) < flyby_radius &&
                                    chance(actr && actr->perception.projectile_awareness > 0.f
                                               ? actr->perception.projectile_awareness
                                               : .5f);
+                if(past && actr && enemy_unit(p, actor, shot.shooter))
+                    evade(actor, model, *actr, by);
+                /* Busy with a target in view already */
+                if(actor.target && actor.seen_ago < look_period * 4.f)
+                    continue;
+                f32 const  reach = actr && actr->perception.hearing_dist > 0.f ? actr->perception.hearing_dist : 15.f;
+                bool const near  = glm::distance(model.position, shot.position) <= reach;
                 if(!near && !past)
                     continue;
                 actor.last_seen = shot.position;
@@ -1514,6 +1663,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             stop(p, id, actor);
             return;
         }
+        /* A graph with no strides keeps the unit where it stands, facing
+         * its way (c10's crazy marine) */
+        if(auto const* physics = p.template get<ObjectPhysics>(id);
+           strides(p, id, anim).rooted && !(physics && physics->flying))
+        {
+            stop(p, id, actor);
+            turn(actor, model, goal, dt, true);
+            return;
+        }
         /* Around what is in the way, by its encounter's positions */
         Vecf3 to = waypoint(p, id, actor, model, kind, goal, dt) - model.position;
         to.z     = 0.f;
@@ -1544,8 +1702,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             to               = (actor.steer_other ? -side : side) * std::max(glm::length(to), 1.f);
         }
         f32 const left = std::max(glm::length(to), 1e-3f);
-        if(anim.stance != "stand")
-            anim.stance = "stand";
+        char const* const stance = actor.panicking && flees(p, id, anim) ? flee_stance : "stand";
+        if(anim.stance != stance)
+            anim.stance = stance;
         f32 const speed = stride(p, id, anim, kind) * (running ? 1.f : .6f);
         Vecf3 const dir = to / left;
         if(actor.seen_ago > look_period * 2.f || actor.state != state_t::combat ||
@@ -1554,6 +1713,14 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         Physics::Event    ev{Physics::Event::Velocity};
         Physics::Velocity walking{
             .entity_id = id, .velocity = dir * std::min(speed, left / std::max(dt, 1e-3f)), .preserve_z = true};
+        /* A flier rises or sinks to its goal: a script's point as given, a
+         * place to fight from at a hover over it */
+        if(auto const* physics = p.template get<ObjectPhysics>(id); physics && physics->flying)
+        {
+            f32 const height = goal.z + (actor.scripted ? 0.f : flier_hover) - model.position.z;
+            walking.velocity.z = std::clamp(height * 2.f, -speed, speed);
+            walking.preserve_z = false;
+        }
         p.template subsystem<PhysicsBus>().process(ev, &walking);
         actor.moving = true;
     }
@@ -1790,6 +1957,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.stuck_at = model.position;
             actor.stuck_in = stuck_time;
         }
+        /* A goal moved by less than a replan still ends the path */
+        if(!actor.path.empty())
+            actor.path.back() = goal;
         /* Points reached, or that can be cut straight past, are dropped */
         while(actor.path.size() > 1 &&
               (glm::distance(Vecf2(model.position), Vecf2(actor.path.front())) < arrive_radius * 2.f ||
@@ -1806,11 +1976,13 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     void stop(Proxy& p, u64 id, Actor& actor)
     {
         /* Standing, it holds its ground: a push from a mate beside it
-         * would have it slide about where it stands */
+         * would have it slide about where it stands. Not a walk someone
+         * else gives it, a script's recording */
         if(!actor.moving)
         {
             auto const* physics = p.template get<ObjectPhysics>(id);
-            if(!physics || glm::length(Vecf2(physics->linear_velocity)) < drift_speed)
+            if(!physics || glm::length(Vecf2(physics->linear_velocity)) < drift_speed ||
+               glm::length(Vecf2(physics->walking)) > drift_speed)
                 return;
         }
         actor.moving = false;
@@ -1888,14 +2060,15 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     struct stride_t
     {
         f32 speed{0.f};
-        u8  clips{0}; /*!< Bits in moves order: which strides it has */
+        u8   clips{0}; /*!< Bits in moves order: which strides it has */
+        bool rooted{false}; /*!< No stride holding anything at all */
     };
 
     /* Its run and the strides it has, from its move clips holding what it
      * holds */
     stride_t const& strides(Proxy& p, u64 id, AnimationPlayback const& anim)
     {
-        static stride_t const none{.speed = default_speed, .clips = 0xf};
+        static stride_t const none{.speed = default_speed, .clips = 0xf, .rooted = false};
         if(!anim.graph)
             return none;
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
@@ -1910,8 +2083,30 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             for(size_t i = 0; i < 4; i++)
                 if(move_clip(*anim.graph, moves[i], *s_magic, "stand", weapon) >= 0)
                     it->second.clips |= static_cast<u8>(1u << i);
+            it->second.rooted = it->second.clips == 0 && !any_stride(*anim.graph);
         }
         return it->second;
+    }
+
+    /* A move clip in any weapon block of its stand */
+    static bool any_stride(blam::antr::header const& graph)
+    {
+        auto units = graph.units.data(*s_magic);
+        if(!units.has_value())
+            return false;
+        for(auto const& unit : units.value())
+        {
+            if(unit.label.str() != "stand")
+                continue;
+            auto weapons = unit.weapons.data(*s_magic);
+            if(!weapons.has_value())
+                continue;
+            for(auto const& weapon : weapons.value())
+                for(auto slot : moves)
+                    if(move_clip(graph, slot, *s_magic, "stand", weapon.name.str()) >= 0)
+                        return true;
+        }
+        return false;
     }
 
     f32 stride(Proxy& p, u64 id, AnimationPlayback const& anim, kind_t const&)
@@ -1930,6 +2125,18 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         size_t const way  = std::abs(local.x) >= std::abs(local.y) ? (local.x >= 0.f ? 0 : 1)
                                                                    : (local.y >= 0.f ? 2 : 3);
         return (clips & (1u << way)) != 0;
+    }
+
+    /* Its graph has a run in the flee stance for what it holds */
+    bool flees(Proxy& p, u64 id, AnimationPlayback const& anim)
+    {
+        if(!anim.graph)
+            return false;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto const* equip = p.template get<BipedEquipment>(id);
+        auto const* gun   = equip ? equip->held(files.load_generation) : nullptr;
+        std::string const weapon = gun ? std::string(gun->weapon->label.str()) : std::string("unarmed");
+        return move_clip(*anim.graph, moves[0], *s_magic, flee_stance, weapon) >= 0;
     }
 
     /* At its position it ducks and rises by its variant's times */
@@ -1958,7 +2165,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto const& files = p.template subsystem<BlamFiles<halo_version>>();
         auto*       equip = p.template get<BipedEquipment>(id);
         auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
-        if(!gun || !gun->tag)
+        if(!gun || !gun->tag || actor.no_ranged)
             return;
         firing_t const firing = firing_of(gun->tag);
         /* A charging trigger shows how far along it is */
@@ -1971,8 +2178,10 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(glm::distance(model.position, actor.last_seen) > reach)
             return;
         /* None given: as fast as its weapon fires */
-        f32 const rate = (actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate) *
-                         scaled(&blam::globals::difficulty::rate_of_fire);
+        /* No faster than its weapon fires, whatever its variant asks */
+        f32 const asked = actv.rate_of_fire > 0.f ? actv.rate_of_fire : firing.rate;
+        f32 const scaled_rate = asked * scaled(&blam::globals::difficulty::rate_of_fire);
+        f32 const rate        = firing.cap > 0.f ? std::min(scaled_rate, firing.cap) : scaled_rate;
         bool const starting = actor.burst_left <= 0;
         /* A burst starts on a target in view, not at the cover it went behind */
         if(starting && actor.seen_ago > sighting_memory)
@@ -2010,6 +2219,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .shooter    = id,
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
+            .error      = actor.spread,
             .position   = muzzle,
             .direction  = dir,
             .target     = actor.target,
@@ -2019,6 +2229,41 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+        spread(actor, firing, actor.burst_left > 0 ? actor.fire_in : 0.f, actor.fire_in);
+    }
+
+    /* A command list's shoot: at its point, as fast as the variant fires */
+    void shoot_scripted(Proxy& p, u64 id, Actor& actor, Model& model, kind_t const& kind, f32 dt)
+    {
+        Vecf3 const at = *actor.shoot_at;
+        turn(actor, model, at, dt, false);
+        if((actor.fire_in -= dt) > 0.f)
+            return;
+        auto const& files = p.template subsystem<BlamFiles<halo_version>>();
+        auto*       equip = p.template get<BipedEquipment>(id);
+        auto*       gun   = equip ? equip->held(files.load_generation) : nullptr;
+        if(!gun || !gun->tag)
+            return;
+        firing_t const firing = firing_of(gun->tag);
+        f32 const      asked  = kind.variant && kind.variant->rate_of_fire > 0.f ? kind.variant->rate_of_fire : firing.rate;
+        f32 const      rate   = firing.cap > 0.f ? std::min(asked, firing.cap) : asked;
+        Vecf3 const    eye    = eye_of(p, id);
+        Vecf3 const    muzzle = trigger_of(p, *gun).value_or(
+            eye + glm::normalize(at - eye) * WeaponFireEvent::muzzle_distance);
+        Vecf3 const to = at - muzzle;
+        if(glm::dot(to, to) < 1e-6f)
+            return;
+        GameEvent       ev{.type = GameEvent::WeaponFire};
+        WeaponFireEvent shot{
+            .weapon     = gun->tag->as_ref(),
+            .shooter    = id,
+            .player_idx = ObjectHitEvent::no_player,
+            .seed       = static_cast<u32>(m_random()),
+            .position   = muzzle,
+            .direction  = glm::normalize(to),
+        };
+        p.template subsystem<GameEventBus>().inject(ev, &shot);
+        actor.fire_in = 1.f / std::max(rate, .1f);
     }
 
     /* How far ahead of a moving target it aims: its variant's leading, as
@@ -2202,8 +2447,11 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     struct firing_t
     {
         f32  rate{3.f};
+        f32  cap{0.f}; /* the trigger's top rate; 0 none given */
         f32  charging{0.f};
         bool single{false};
+        f32  error_rise{0.f}; /* s to full error held, 0 = at once */
+        f32  error_fall{0.f}; /* s back to none let go */
     };
 
     firing_t firing_of(blam::tag_t const* tag) const
@@ -2217,11 +2465,23 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 {
                     auto const& trigger = triggers.value()[0];
                     if(trigger.maximum_rate_of_fire.y > 0.f)
-                        out.rate = trigger.maximum_rate_of_fire.y;
-                    out.charging = trigger.charging_time;
+                        out.rate = out.cap = trigger.maximum_rate_of_fire.y;
+                    out.charging   = trigger.charging_time;
+                    out.error_rise = trigger.error_acceleration_time;
+                    out.error_fall = trigger.error_deceleration_time;
                     out.single   = (trigger.flags & flags_t::does_not_repeat_automatically) != flags_t::none;
                 }
         return out;
+    }
+
+    /* Its gun spreads as a player's does under held fire: through a burst
+     * the trigger is held, over the separation after it let go */
+    static void spread(Actor& actor, firing_t const& firing, f32 held, f32 released)
+    {
+        if(held > 0.f)
+            actor.spread = firing.error_rise > 0.f ? std::min(actor.spread + held / firing.error_rise, 1.f) : 1.f;
+        else
+            actor.spread = firing.error_fall > 0.f ? std::max(actor.spread - released / firing.error_fall, 0.f) : 0.f;
     }
 
     /* Starts a burst: so many shots at the rate, or one shot a pull after
@@ -2267,7 +2527,9 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.look_in <= 0.f)
         {
             actor.look_in = look_period;
-            if(u64 const seen = actor.blind ? 0 : look(p, id, actor, model, *kind.actor, true))
+            if(u64 const seen = actor.blind            ? 0
+                                : actor.follow_players ? nearest_player(p, model)
+                                                       : look(p, id, actor, model, *kind.actor, true))
             {
                 if(seen != actor.target)
                 {
@@ -2280,8 +2542,6 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 actor.seen_ago = 0.f;
             }
         }
-        if(!actor.target || actor.seen_ago > look_period * 2.f || !alive(p, actor.target))
-            return;
         auto const* vehicle = p.template get<Model>(physics.seated_in);
         if(!vehicle || !vehicle->origin_object)
             return;
@@ -2291,19 +2551,133 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         auto seats = unit.value()[0].seats.data(*s_magic);
         if(!seats.has_value() || physics.seat < 0 || static_cast<size_t>(physics.seat) >= seats.value().size())
             return;
-        auto const flags = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        auto const flags  = seats.value()[static_cast<size_t>(physics.seat)].flags;
+        bool const engaged = actor.target && actor.seen_ago <= look_period * 2.f && alive(p, actor.target);
+        /* Carriers fly by their scripts, never by their pilots */
+        bool const carrier = std::any_of(seats.value().begin(), seats.value().end(), [](auto const& seat) {
+            return (seat.flags & flags_t::allow_ai_noncombatants) != flags_t::none;
+        });
+        if((flags & flags_t::driver) != flags_t::none && !carrier && !actor.scripted)
+            drive(p, id, actor, physics.seated_in, *vehicle, kind, engaged, dt);
+        if(!engaged)
+            return;
         /* A carrier's seats take AI as passengers, not fighters */
         if((flags & flags_t::allow_ai_noncombatants) != flags_t::none)
             return;
+        /* A driver's guns are fixed to the hull, save a tank's turret */
+        auto const* hull  = p.template get<ObjectPhysics>(physics.seated_in);
+        bool const  fixed = (flags & flags_t::driver) != flags_t::none &&
+                           !(hull && hull->drive && hull->drive->type == VehicleDrive::human_tank);
         if((flags & flags_t::gunner) != flags_t::none)
-            fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind);
+            fire_mounted(p, id, actor, physics.seated_in, *vehicle, unit.value()[0], kind, fixed);
         else if((flags & flags_t::allows_weapons) != flags_t::none)
             fire(p, id, actor, model, kind, dt);
     }
 
+    /* At the wheel. Flyers make attack runs: in at the target, past it and
+     * out to the far edge of their combat range, then round again; ground
+     * vehicles close in and circle. The heading turns at a rate, and swings
+     * up and aside from what lies ahead. A script's recording drives it
+     * instead */
+    void drive(Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, kind_t const& kind, bool engaged, f32 dt)
+    {
+        auto const* ride = p.template get<ObjectPhysics>(vehicle);
+        if(!ride || !ride->drive || ride->recorded || ride->scripted || ride->drive->type == VehicleDrive::turret)
+            return;
+        bool const  flies   = ride->drive->type == VehicleDrive::alien_fighter || ride->drive->type == VehicleDrive::human_plane;
+        Vecf3 const forward = body.rotation * Vecf3{1.f, 0.f, 0.f};
+        Vecf3       want    = forward;
+        f32         throttle = 0.f;
+        if(engaged)
+        {
+            Vecf2 const range = kind.variant->desired_combat_range.y > 0.f ? kind.variant->desired_combat_range
+                                                                           : Vecf2{5.f, 15.f};
+            Vecf3 const target = actor.last_seen + chest_of(p, actor.target);
+            Vecf3       to     = target - body.position;
+            f32 const   flat   = glm::length(Vecf2(to));
+            if(flies)
+            {
+                /* Over it, it runs on to the far edge before turning back */
+                if(glm::length(to) < drive_pass_distance)
+                    actor.breaking_off = true;
+                else if(flat > range.y * .8f)
+                    actor.breaking_off = false;
+                if(actor.breaking_off)
+                {
+                    /* Straight on, or away from it when the nose points up */
+                    Vecf3 out = Vecf3(Vecf2(forward), 0.f);
+                    if(glm::dot(out, out) < .1f)
+                        out = -Vecf3(Vecf2(to), 0.f);
+                    out = glm::dot(out, out) > 1e-4f ? glm::normalize(out) : Vecf3{1.f, 0.f, 0.f};
+                    /* Climbing back to its attack height on the way out */
+                    f32 const climb = std::clamp((target.z + range.x * .4f - body.position.z) * .1f, -.3f, .4f);
+                    want            = glm::normalize(out + Vecf3{0.f, 0.f, climb});
+                } else
+                {
+                    /* Close in, it pulls up to pass over rather than into it */
+                    Vecf3 const over = glm::length(to) < drive_pull_up ? to + Vecf3{0.f, 0.f, drive_pull_up * .6f} : to;
+                    want             = glm::normalize(over);
+                }
+                throttle = 1.f;
+            } else
+            {
+                to.z           = 0.f;
+                Vecf3 const in = glm::dot(to, to) > 1e-4f ? glm::normalize(to) : forward;
+                if(flat > range.y)
+                    want = in, throttle = 1.f;
+                else
+                {
+                    /* In range: round it, facing half in */
+                    want     = glm::normalize(glm::cross(Vecf3{0.f, 0.f, 1.f}, in) + in * .5f);
+                    throttle = .6f;
+                }
+            }
+        }
+        if(throttle > 0.f)
+            want = clear_way(p, id, vehicle, body.position, want, flies);
+        /* It turns as a driver would, not in one frame */
+        Vecf3 aim = actor.drive_aim.value_or(forward);
+        f32 const angle = std::acos(std::clamp(glm::dot(aim, want), -1.f, 1.f));
+        f32 const step  = drive_turn_rate * dt;
+        if(angle > step && angle > 1e-3f)
+        {
+            Vecf3 axis = glm::cross(aim, want);
+            if(glm::dot(axis, axis) < 1e-6f)
+                axis = Vecf3{0.f, 0.f, 1.f};
+            aim = glm::normalize(glm::angleAxis(step, glm::normalize(axis)) * aim);
+        } else
+            aim = want;
+        actor.drive_aim = aim;
+        Physics::Drive input{.vehicle = vehicle, .throttle = throttle, .aim = aim};
+        Physics::Event ev{Physics::Event::Drive};
+        p.template subsystem<PhysicsBus>().process(ev, &input);
+    }
+
+    /* Swings a heading up and to the clearer side when it runs into
+     * something within reach */
+    Vecf3 clear_way(Proxy& p, u64 driver, u64 vehicle, Vecf3 const& from, Vecf3 const& want, bool flies)
+    {
+        auto blocked = [&](Vecf3 const& dir) {
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = from + dir * drive_lookahead, .ignore = vehicle, .ignore_also = driver};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            return ray.hit && ray.entity_id == 0 ? ray.fraction : 1.f;
+        };
+        if(blocked(want) >= 1.f)
+            return want;
+        Vecf3 const side = glm::normalize(glm::cross(Vecf3{0.f, 0.f, 1.f}, want) + Vecf3{0.f, 0.f, 1e-4f});
+        Vecf3 const up   = flies ? Vecf3{0.f, 0.f, .7f} : Vecf3{};
+        Vecf3 const left = glm::normalize(want + side + up), right = glm::normalize(want - side + up);
+        f32 const   l = blocked(left), r = blocked(right);
+        if(flies && l < 1.f && r < 1.f)
+            return glm::normalize(want * .3f + Vecf3{0.f, 0.f, 1.f});
+        return l >= r ? left : right;
+    }
+
     /* The vehicle's gun, from its trigger marker as the vehicle is posed */
     void fire_mounted(
-        Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, blam::scn::unit const& unit, kind_t const& kind)
+        Proxy& p, u64 id, Actor& actor, u64 vehicle, Model const& body, blam::scn::unit const& unit, kind_t const& kind,
+        bool fixed)
     {
         actv_t const& actv = *kind.variant;
         if(actor.fire_in > 0.f)
@@ -2329,7 +2703,24 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             at = at * anim->pose[static_cast<size_t>(marker->node)];
         Vecf3 const muzzle = Vecf3((at * marker->transform)[3]);
         Vecf3 const aim    = actor.last_seen + chest_of(p, actor.target);
-        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc_of(p, &(*weapon), true), leading(actv));
+        auto const  arc    = arc_of(p, &(*weapon), true);
+        Vecf3       dir    = aim_direction(p, actor, muzzle, aim, arc, leading(actv));
+        /* Fixed guns fire along the barrel, once the target is ahead of it;
+         * a lobbing one keeps its elevation */
+        if(fixed)
+        {
+            Vecf3 barrel = Vecf3((at * marker->transform) * Vecf4{1.f, 0.f, 0.f, 0.f});
+            if(glm::dot(barrel, barrel) < 1e-6f)
+                return;
+            barrel = glm::normalize(barrel);
+            Vecf2 const flat = Vecf2(barrel);
+            Vecf3 const along = arc && arc->gravity > 0.f && glm::dot(flat, flat) > 1e-6f
+                                    ? glm::normalize(Vecf3(glm::normalize(flat) * glm::length(Vecf2(dir)), dir.z))
+                                    : barrel;
+            if(glm::dot(along, dir) < fixed_gun_cos)
+                return;
+            dir = along;
+        }
         if(f32 const error = actv.projectile_error * scaled(&blam::globals::difficulty::projectile_error); error > 0.f)
         {
             std::uniform_real_distribution<f32> unit_spread(-1.f, 1.f);
@@ -2351,6 +2742,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .vehicle    = vehicle,
             .player_idx = ObjectHitEvent::no_player,
             .seed       = static_cast<u32>(m_random()),
+            .error      = actor.spread,
             .position   = muzzle,
             .direction  = dir,
             .target     = actor.target,
@@ -2360,6 +2752,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             actor.fire_in = 1.f / rate;
         else
             actor.fire_in = uniform(actv.burst_separation, 1.f) * scaled(&blam::globals::difficulty::burst_separation);
+        spread(actor, firing, actor.burst_left > 0 ? actor.fire_in : 0.f, actor.fire_in);
     }
 
     /* A kill it saw is crowed over, one voice at a time */
@@ -2415,7 +2808,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
     {
         actv_t const& actv = *kind.variant;
         actor.melee_in -= look_period / 8.f;
-        if(actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
+        if(actor.no_melee || actv.melee_range <= 0.f || glm::distance(model.position, actor.last_seen) > strike_reach * 1.3f)
         {
             /* Out of reach: a swing under way is called off */
             actor.swinging  = false;
@@ -2538,6 +2931,7 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
                 .position     = model.position + out * .2f + Vecf3{0.f, 0.f, drop_lift},
                 .server_owned = true,
                 .velocity     = out * drop_speed + Vecf3{0.f, 0.f, drop_speed},
+                .litter       = true,
             };
             GameEvent ev{.type = GameEvent::SpawnObject};
             p.template subsystem<GameEventBus>().inject(ev, &spawn);
@@ -2546,8 +2940,12 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         u32 dropped = 0;
         if(actor.grenades > 0 && !chance(actv.dont_drop_grenades_chance))
             if(auto const* grenade = grenade_of(p, actv.grenade_type); grenade && grenade->equipment.valid())
-                for(; dropped < static_cast<u32>(actor.grenades); dropped++)
+            {
+                /* No more than a player could carry, whatever it threw from */
+                u32 const most = std::min<u32>(actor.grenades, std::max<i16>(grenade->maximum_count, 1));
+                for(; dropped < most; dropped++)
                     toss(static_cast<blam::tagref_t const&>(grenade->equipment));
+            }
         if(actv.equipment.valid())
             toss(static_cast<blam::tagref_t const&>(actv.equipment));
         actor.grenades = 0;
@@ -2564,20 +2962,33 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
         if(actor.grenade_in > 0.f)
             return;
         actor.grenade_in = actv.grenade_check_time > 0.f ? actv.grenade_check_time : 2.f;
+        using stimulus_t = actv_t::grenade_stimulus_t;
         f32 const d = glm::distance(model.position, actor.last_seen);
         if(d < actv.grenade_ranges.x || d > actv.grenade_ranges.y || !chance(actv.grenade_chance))
             return;
+        /* Some never throw, some only at a target in view */
+        if(actv.grenade_stimulus == stimulus_t::never ||
+           (actv.grenade_stimulus == stimulus_t::visible_target && actor.seen_ago > grenade_seen))
+            return;
+        if(actv.minimum_enemy_count > 1 &&
+           enemies_near(p, actor, actor.last_seen, std::max(actv.enemy_radius, 1.f)) < actv.minimum_enemy_count)
+            return;
         blam::tagref_t const* projectile = grenade_projectile(p, actv.grenade_type);
-        if(!projectile || friends_in_blast(p, id, actor, actor.last_seen, blast_of(p, *projectile)))
+        if(!projectile)
+            return;
+        Vecf3 const eye = eye_of(p, id);
+        auto const  arc = throw_arc(p, model, actv, *projectile);
+        if(!arc)
+            return;
+        Vecf3 const dir = aim_direction(p, actor, eye, actor.last_seen, arc, grenade_lead);
+        /* Where it comes down: short of the target behind a wall it bounces
+         * back from, it isn't thrown; nor where friends would be caught */
+        auto const lands = landing(p, id, eye + dir * WeaponFireEvent::muzzle_distance, dir * arc->speed, arc->gravity);
+        f32 const  blast = std::max(blast_of(p, *projectile), actv.collateral_damage_radius);
+        if(!lands || glm::distance(*lands, actor.last_seen) > std::max(blast, grenade_miss) ||
+           friends_in_blast(p, id, actor, *lands, blast + grenade_drift))
             return;
         actor.grenades--;
-        Vecf3 const eye  = eye_of(p, id);
-        Vecf3       flat = actor.last_seen - eye;
-        f32 const   len  = glm::length(flat);
-        if(len < 1e-3f)
-            return;
-        /* Lofted a little, more the farther it goes */
-        Vecf3 const dir = glm::normalize(flat / len + Vecf3{0, 0, std::clamp(len / 20.f, .15f, .5f)});
         GameEvent       ev{.type = GameEvent::WeaponFire};
         WeaponFireEvent shot{
             .weapon     = *projectile,
@@ -2590,6 +3001,65 @@ struct ActorSystem : compo::RestrictedSubsystem<ActorSystem, ActorManifest>
             .target     = actor.target,
         };
         p.template subsystem<GameEventBus>().inject(ev, &shot);
+    }
+
+    /* How an actor's grenade flies: the unit's throwing speed, the
+     * projectile's fall, tossed flat or lobbed high as its variant says */
+    std::optional<arc_t> throw_arc(Proxy& p, Model const& model, actv_t const& actv, blam::tagref_t const& projectile)
+    {
+        blam::tag_index_view<halo_version> index(p.template subsystem<BlamFiles<halo_version>>().container);
+        auto proj_tag = index.find(projectile.tag_id);
+        if(proj_tag == index.end())
+            return std::nullopt;
+        auto proj = (*proj_tag).template data<blam::scn::projectile>(*s_magic);
+        if(!proj.has_value())
+            return std::nullopt;
+        f32 speed = grenade_throw_speed;
+        if(model.origin_object)
+            if(auto u = model.origin_object->template data<blam::scn::unit>(*s_magic);
+               u.has_value() && u.value()[0].grenade_velocity > 0.f)
+                speed = u.value()[0].grenade_velocity;
+        return arc_t{
+            .speed   = speed,
+            .gravity = halo_gravity * std::max(proj.value()[0].air_gravity_scale, 0.f),
+            .lob     = actv.trajectory_type == actv_t::trajectory_type_t::lob,
+        };
+    }
+
+    /* Where a throw first meets the world or a body, along its arc */
+    std::optional<Vecf3> landing(Proxy& p, u64 self, Vecf3 from, Vecf3 velocity, f32 gravity)
+    {
+        for(f32 t = 0.f; t < grenade_flight; t += grenade_step)
+        {
+            Vecf3 const to = from + velocity * grenade_step + Vecf3{0.f, 0.f, -.5f * gravity * grenade_step * grenade_step};
+            Physics::Event   ev{Physics::Event::Raycast};
+            Physics::Raycast ray{.from = from, .to = to, .ignore = self};
+            p.template subsystem<PhysicsBus>().process(ev, &ray);
+            if(ray.hit)
+                return ray.point;
+            velocity.z -= gravity * grenade_step;
+            from = to;
+        }
+        return std::nullopt;
+    }
+
+    /* Living enemies of the actor within `radius` of a point */
+    i32 enemies_near(Proxy& p, Actor const& actor, Vecf3 const& at, f32 radius)
+    {
+        i32 count = 0;
+        for(auto other : p.template select<Actor, Model, BipedStatus>())
+        {
+            auto [theirs, model, status] = other.components();
+            if(!status.dead && enemies(actor.team, static_cast<team_t>(theirs.team)) &&
+               glm::distance(model.position, at) <= radius)
+                count++;
+        }
+        if(enemies(actor.team, team_t::player))
+            for(auto player : p.template select<PlayerInfo, Model, BipedStatus>())
+                if(auto [info, model, status] = player.components();
+                   !status.dead && glm::distance(model.position, at) <= radius)
+                    count++;
+        return count;
     }
 
     /* The globals' grenade of a type, by its projectile */

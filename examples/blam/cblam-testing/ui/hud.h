@@ -89,6 +89,14 @@ struct HudScene : compo::SubsystemBase
 
     std::vector<view_t> views;
 
+    /* Under every view, in clip space: a full screen page's panels */
+    struct backdrop_t
+    {
+        Vecf2 min{}, max{};
+        Vecf4 color{1.f};
+    };
+    std::vector<backdrop_t> backdrops;
+
     /* Over every view: a cutscene's fade, and its letterbox bars as a
      * fraction of the height each */
     Vecf4 fade{0.f};

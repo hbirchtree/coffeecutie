@@ -27,6 +27,7 @@
 #include "game/checkpoint.h"
 #include "game/save_state.h"
 #include "game/game_mode.h"
+#include "game/variants.h"
 #include "ai/actors.h"
 #include "combat/damage.h"
 #include "world/devices.h"
@@ -48,6 +49,7 @@
 #include "audio/sounds.h"
 #include "ui/ui.h"
 #include "ui/ui_game_setup.h"
+#include "ui/ui_server_browser.h"
 #include "ui/ui_profile.h"
 #include "ui/ui_caching.h"
 
@@ -135,8 +137,8 @@ i32 blam_main()
         options.add_options("Networking (shared)")
             //
             ("gateway-register",
-             "webrtc-gateway /server-signal URL to register this --listen "
-             "server with, so browser clients can be routed to it",
+             "webrtc-gateway to register this --listen server with, "
+             "ws://host[:port], so browser clients can be routed to it",
              cxxopts::value<std::string>())
             //
             ("password",
@@ -181,6 +183,11 @@ i32 blam_main()
              cxxopts::value<bool>()->default_value("false"));
         options.add_options("Networking (client)")
             //
+            ("gateway",
+             "webrtc-gateway whose servers the join screen lists, "
+             "ws://host[:port] or wss://host[:port]",
+             cxxopts::value<std::string>())
+            //
             ("server",
              "Server to connect to on startup. Pass the join string the "
              "server prints, which carries its key so the connection is "
@@ -195,9 +202,16 @@ i32 blam_main()
              "join string, which carries the key",
              cxxopts::value<std::string>());
         options.add_options("Game")(
+            "difficulty",
+            "Campaign difficulty: easy, normal, heroic or legendary (default normal)",
+            cxxopts::value<std::string>())(
             "game-type",
             "Multiplayer game type a map given on the command line is played as, offline or "
-            "hosting (a client plays the server's): slayer, ctf",
+            "hosting (a client plays the server's): slayer, ctf, oddball, juggernaut, koth, race",
+            cxxopts::value<std::string>())(
+            "game-variant",
+            "A built-in variant instead, as the Xbox shell lists them: slayer, slayer_pro, oddball, "
+            "reverse_tag, juggernaut, king, crazy_king, race, ctf, ctf_pro, ... (game/variants.h)",
             cxxopts::value<std::string>())(
             "ctf-flag-at-home",
             "Capture the flag: a capture needs the team's own flag at home (default false)",
@@ -641,12 +655,39 @@ i32 blam_main()
             alloc_ui_system(e);
             alloc_profile_provider(e);
             alloc_game_setup_provider(e);
+            alloc_server_browser(e, arguments.count("gateway") ? arguments["gateway"].as<std::string>() : std::string());
             /* The server decides the game; a client is told it */
             if(arguments.count("game-type") && !arguments.count("server"))
             {
                 using game_type_t = GameSetup::game_type_t;
                 auto const name   = arguments["game-type"].as<std::string>();
-                e.subsystem_cast<GameSetup>().game_type = name == "ctf" ? game_type_t::ctf : game_type_t::slayer;
+                auto&      setup  = e.subsystem_cast<GameSetup>();
+                setup.game_type   = name == "ctf"                                ? game_type_t::ctf
+                                    : name == "oddball" || name == "juggernaut" ? game_type_t::oddball
+                                    : name == "koth"                            ? game_type_t::koth
+                                    : name == "race"                            ? game_type_t::race
+                                    : name == "infection"                       ? game_type_t::infection
+                                                                                 : game_type_t::slayer;
+                /* Juggernaut is one of Oddball's ball types */
+                if(name == "juggernaut")
+                    setup.options.emplace_back("ball_type", "2");
+            }
+            if(arguments.count("difficulty"))
+            {
+                auto const name = arguments["difficulty"].as<std::string>();
+                constexpr std::array<std::string_view, 4> levels{"easy", "normal", "heroic", "legendary"};
+                if(auto it = std::find(levels.begin(), levels.end(), name); it != levels.end())
+                    e.subsystem_cast<GameSetup>().difficulty = static_cast<u16>(it - levels.begin());
+                else
+                    cWarning("Unknown difficulty {}", name);
+            }
+            if(arguments.count("game-variant") && !arguments.count("server"))
+            {
+                auto const name = arguments["game-variant"].as<std::string>();
+                if(auto index = variants::find(name))
+                    variants::apply(e.subsystem_cast<GameSetup>(), *index);
+                else
+                    cWarning("Unknown game variant {}", name);
             }
             if(arguments.count("ctf-flag-at-home"))
                 e.subsystem_cast<GameSetup>().ctf_flag_at_home = arguments["ctf-flag-at-home"].as<bool>();
@@ -688,6 +729,16 @@ i32 blam_main()
                 plug.ticks_per_second = TickClock::rate;
                 plug.tick_clock       = [&clock = e.subsystem_cast<TickClock>()]()
                     -> std::optional<libc_types::u64> { return clock.simulated(); };
+                /* Plug time is the frame clock's */
+                plug.tick_round = [&clock = e.subsystem_cast<TickClock>()](
+                                      compo::clock::duration at) -> compo::clock::duration {
+                    using std::chrono::microseconds;
+                    libc_types::i64 const abs =
+                        std::chrono::duration_cast<microseconds>(at).count();
+                    libc_types::i64 const past = std::max<libc_types::i64>(abs - clock.origin_us(), 0);
+                    libc_types::i64 const next = (past + TickClock::tick_us - 1) / TickClock::tick_us * TickClock::tick_us;
+                    return at + microseconds(next - past);
+                };
             }
 #endif
 #if defined(BLAM_CURSED_ENABLED)

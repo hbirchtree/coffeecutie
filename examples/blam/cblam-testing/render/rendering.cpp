@@ -995,12 +995,23 @@ struct DrawListBuilder
                     bsp_draw.draw.data.front(), bsp.sort_center, mat_cls);
             else
             {
-                /* Opaque BSP keeps its single instanced bucket; only record
-                 * which family it holds. */
+                /* Opaque BSP keeps one instanced bucket per shader family,
+                 * as each family is its own program */
                 wf.bucket_classes.resize(wf.draws.size(), 0);
-                wf.bucket_classes[0] |= mat_cls;
-                wf.draws[0].push_back(bsp_draw.draw.data.front());
-                slot.draw = static_cast<u16>(wf.draws[0].size() - 1);
+                u8 const family = wf.split_family(mat_cls);
+                size_t   bucket = 0;
+                while(bucket < wf.draws.size() && !wf.draws[bucket].empty() &&
+                      wf.split_family(wf.bucket_classes[bucket]) != family)
+                    bucket++;
+                if(bucket == wf.draws.size())
+                {
+                    wf.draws.emplace_back();
+                    wf.bucket_classes.push_back(0);
+                }
+                wf.bucket_classes[bucket] |= mat_cls;
+                wf.draws[bucket].push_back(bsp_draw.draw.data.front());
+                slot.bucket = static_cast<u16>(bucket);
+                slot.draw   = static_cast<u16>(wf.draws[bucket].size() - 1);
             }
             if(per_draw_cubes)
                 record_reflection_cube(wf, bsp.shader, slot.bucket, slot.draw);
@@ -3364,6 +3375,10 @@ struct MeshRenderer
             [](auto const& a, auto const& b) {
                 return a.seat_idx < b.seat_idx;
             });
+        /* The menu's backdrop is one view, whoever joined a split screen game */
+        if(auto const* map = p.template subsystem<BlamFiles<Version>>().container.map;
+           map && map->map_type == blam::maptype_t::ui && m_players.size() > 1)
+            m_players.resize(1);
 
         // Performance is terrible on Emscripten when updating every frame
         // We need a more efficient way to update the buffer in that case
